@@ -1,9 +1,109 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // Ajusta estas reglas antes de usar en produccion.
-      allow read, write: if true;
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function currentUserPath() {
+      return /databases/$(database)/documents/users/$(request.auth.uid);
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && exists(currentUserPath())
+        && get(currentUserPath()).data.role == 'admin'
+        && get(currentUserPath()).data.status == 'active';
+    }
+
+    function validRole(role) {
+      return role == 'admin' || role == 'user';
+    }
+
+    function validStatus(status) {
+      return status == 'active' || status == 'disabled';
+    }
+
+    function validValuationStatus(status) {
+      return status == 'pending' || status == 'completed';
+    }
+
+    function validProgressStep(step) {
+      return step is int && step >= 1 && step <= 14;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isAdmin();
+
+      allow create: if isSignedIn() && (
+        (
+          request.auth.uid == userId
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.emailLower == request.auth.token.email.lower()
+          && request.resource.data.role == 'user'
+          && request.resource.data.status == 'active'
+        )
+        ||
+        (
+          isAdmin()
+          && request.resource.data.uid == userId
+          && validRole(request.resource.data.role)
+          && request.resource.data.status == 'active'
+        )
+      );
+
+      allow update: if isSignedIn() && (
+        (
+          request.auth.uid == userId
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.role == resource.data.role
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.emailLower == resource.data.emailLower
+        )
+        ||
+        (
+          isAdmin()
+          && request.resource.data.uid == resource.data.uid
+          && request.resource.data.email == resource.data.email
+          && request.resource.data.emailLower == resource.data.emailLower
+          && validRole(request.resource.data.role)
+          && validStatus(request.resource.data.status)
+        )
+      );
+
+      allow delete: if false;
+    }
+
+    match /clientes/{clientId} {
+      allow get, list: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid;
+
+      allow update: if isSignedIn()
+        && request.resource.data.createdBy == resource.data.createdBy;
+
+      allow delete: if false;
+    }
+
+    match /valoraciones/{valuationId} {
+      allow get, list: if isSignedIn();
+
+      allow create: if isSignedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && validValuationStatus(request.resource.data.status)
+        && validProgressStep(request.resource.data.currentStep)
+        && request.resource.data.totalSteps == 14;
+
+      allow update: if isSignedIn()
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.totalSteps == resource.data.totalSteps
+        && validValuationStatus(request.resource.data.status)
+        && validProgressStep(request.resource.data.currentStep);
+
+      allow delete: if false;
     }
   }
 }

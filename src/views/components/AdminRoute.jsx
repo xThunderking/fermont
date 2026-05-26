@@ -1,8 +1,8 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 
-function ProtectedRoute() {
-  const { authResolved, isAuthenticated } = useAuthController()
+function AdminRoute({ children }) {
+  const { authResolved, isAuthenticated, isAdmin } = useAuthController()
   const location = useLocation()
 
   if (!authResolved) {
@@ -20,7 +20,11 @@ function ProtectedRoute() {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  return <Outlet />
+  if (!isAdmin) {
+    return <Navigate to="/app" replace />
+  }
+
+  return children
 }
 
-export default ProtectedRoute
+export default AdminRoute

@@ -3,20 +3,24 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 
 function UsersView() {
-  const { isAdmin, users, createUser, changeRole, deleteUser } = useAuthController()
+  const { currentUser, isAdmin, users, createUser, changeRole, deleteUser } = useAuthController()
   const navigate = useNavigate()
 
   const [managerError, setManagerError] = useState('')
   const [managerMessage, setManagerMessage] = useState('')
   const [newUsername, setNewUsername] = useState('')
+  const [newEmail, setNewEmail] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [newRole, setNewRole] = useState('user')
+  const [isWorking, setIsWorking] = useState(false)
 
-  const handleCreateUser = (event) => {
+  const handleCreateUser = async (event) => {
     event.preventDefault()
+    setIsWorking(true)
 
-    const result = createUser({
+    const result = await createUser({
       username: newUsername.trim(),
+      email: newEmail.trim(),
       password: newPassword,
       role: newRole,
     })
@@ -24,40 +28,49 @@ function UsersView() {
     if (!result.ok) {
       setManagerError(result.message)
       setManagerMessage('')
+      setIsWorking(false)
       return
     }
 
     setManagerError('')
     setManagerMessage(result.message)
     setNewUsername('')
+    setNewEmail('')
     setNewPassword('')
     setNewRole('user')
+    setIsWorking(false)
   }
 
-  const handleRoleChange = (userId, role) => {
-    const result = changeRole({ userId, role })
+  const handleRoleChange = async (userId, role) => {
+    setIsWorking(true)
+    const result = await changeRole({ userId, role })
 
     if (!result.ok) {
       setManagerError(result.message)
       setManagerMessage('')
+      setIsWorking(false)
       return
     }
 
     setManagerError('')
     setManagerMessage(result.message)
+    setIsWorking(false)
   }
 
-  const handleDeleteUser = (userId) => {
-    const result = deleteUser(userId)
+  const handleDeleteUser = async (userId) => {
+    setIsWorking(true)
+    const result = await deleteUser(userId)
 
     if (!result.ok) {
       setManagerError(result.message)
       setManagerMessage('')
+      setIsWorking(false)
       return
     }
 
     setManagerError('')
     setManagerMessage(result.message)
+    setIsWorking(false)
   }
 
   return (
@@ -77,11 +90,21 @@ function UsersView() {
         <section className="admin-box">
           <form className="simple-form user-form" onSubmit={handleCreateUser}>
             <label>
-              Usuario nuevo
+              Nombre de usuario
               <input
                 required
                 value={newUsername}
                 onChange={(event) => setNewUsername(event.target.value)}
+              />
+            </label>
+
+            <label>
+              Correo
+              <input
+                required
+                type="email"
+                value={newEmail}
+                onChange={(event) => setNewEmail(event.target.value)}
               />
             </label>
 
@@ -104,7 +127,7 @@ function UsersView() {
             </label>
 
             <button type="submit" className="main-button">
-              Crear usuario
+              {isWorking ? 'Procesando...' : 'Crear usuario'}
             </button>
           </form>
 
@@ -113,19 +136,20 @@ function UsersView() {
 
           <ul className="users-list">
             {users.map((user) => {
-              const isRootAdmin = user.username === 'admin'
+              const isCurrentAdmin = user.id === currentUser?.id
+              const isProtectedUser = isCurrentAdmin
 
               return (
                 <li className="user-row" key={user.id}>
                   <div>
                     <strong>{user.username}</strong>
-                    {isRootAdmin ? <small className="small-tag">Cuenta principal</small> : null}
+                    <small className="small-tag">{user.email}</small>
                   </div>
 
                   <div className="row-actions">
                     <select
                       value={user.role}
-                      disabled={isRootAdmin}
+                      disabled={isProtectedUser || isWorking}
                       onChange={(event) => handleRoleChange(user.id, event.target.value)}
                     >
                       <option value="user">usuario</option>
@@ -135,9 +159,9 @@ function UsersView() {
                       type="button"
                       className="main-button danger"
                       onClick={() => handleDeleteUser(user.id)}
-                      disabled={isRootAdmin}
+                      disabled={isProtectedUser || isWorking}
                     >
-                      Eliminar
+                      Desactivar
                     </button>
                   </div>
                 </li>

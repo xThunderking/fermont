@@ -1,78 +1,141 @@
-import { createContext, useContext, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import {
-  clearSession,
   createUserAccount,
   deleteUserAccount,
   listUsers,
-  persistSession,
-  readStoredSession,
+  loginWithGoogle,
+  logoutSession,
+  observeAuthSession,
+  resolveGoogleRedirectLogin,
   updateUserRole,
-  validateCredentials,
 } from '../models/authModel'
-
-const AuthContext = createContext(null)
+import { AuthContext } from './authContext'
 
 export const AuthProvider = ({ children }) => {
-  const [users, setUsers] = useState(listUsers)
+  const [users, setUsers] = useState([])
+  const [currentUser, setCurrentUser] = useState(null)
+  const [authResolved, setAuthResolved] = useState(false)
+  const [authError, setAuthError] = useState('')
 
-  const [currentUser, setCurrentUser] = useState(() => {
-    const storedSession = readStoredSession()
+  useEffect(() => {
+    let isMounted = true
+    let unsubscribe = () => {}
 
-    if (!storedSession) {
-      return null
+    const setupAuth = async () => {
+      const redirectResult = await resolveGoogleRedirectLogin()
+
+      if (!isMounted) {
+        return
+      }
+
+      if (!redirectResult.ok) {
+        setAuthError(redirectResult.message)
+      }
+
+      unsubscribe = observeAuthSession(async ({ user, error }) => {
+        if (!isMounted) {
+          return
+        }
+
+        if (error) {
+          setAuthError(error)
+        } else if (user) {
+          setAuthError('')
+        }
+
+        setCurrentUser(user)
+        setAuthResolved(true)
+
+        if (user?.role === 'admin') {
+          try {
+            const nextUsers = await listUsers()
+            if (isMounted) {
+              setUsers(nextUsers)
+            }
+          } catch {
+            if (isMounted) {
+              setUsers([])
+            }
+          }
+
+          return
+        }
+
+        setUsers([])
+      })
     }
 
-    const matchedUser = listUsers().find((user) => user.id === storedSession.id)
+    setupAuth()
 
-    if (!matchedUser) {
-      clearSession()
-      return null
+    return () => {
+      isMounted = false
+      unsubscribe()
     }
+  }, [])
 
-    return matchedUser
-  })
-
-  const login = (username, password) => {
-    const user = validateCredentials(username, password)
-
-    if (!user) {
-      return { ok: false, message: 'Credenciales invalidas.' }
-    }
-
-    persistSession(user)
-    setCurrentUser(user)
-    setUsers(listUsers())
-    return { ok: true, user }
+  const refreshUsers = async () => {
+    const nextUsers = await listUsers()
+    setUsers(nextUsers)
+    return nextUsers
   }
 
-  const logout = () => {
-    clearSession()
-    setCurrentUser(null)
-  }
+  const loginGoogle = async () => {
+    setAuthError('')
+    const result = await loginWithGoogle()
 
-  const createUser = ({ username, password, role }) => {
-    if (currentUser?.role !== 'admin') {
-      return { ok: false, message: 'Solo un admin puede crear usuarios.' }
+    if (!result.ok) {
+      return result
     }
 
-    const result = createUserAccount({ username, password, role })
+    if (result.redirecting) {
+      return result
+    }
 
-    if (result.ok) {
-      setUsers(result.users)
+    setCurrentUser(result.user)
+    setAuthResolved(true)
+
+    if (result.user.role === 'admin') {
+      await refreshUsers()
+    } else {
+      setUsers([])
     }
 
     return result
   }
 
-  const changeRole = ({ userId, role }) => {
+  const logout = async () => {
+    await logoutSession()
+    setCurrentUser(null)
+    setUsers([])
+  }
+
+  const createUser = async ({ username, email, password, role }) => {
+    if (currentUser?.role !== 'admin') {
+      return { ok: false, message: 'Solo un admin puede crear usuarios.' }
+    }
+
+    const result = await createUserAccount({ username, email, password, role })
+
+    if (result.ok) {
+      await refreshUsers()
+    }
+
+    return result
+  }
+
+  const changeRole = async ({ userId, role }) => {
     if (currentUser?.role !== 'admin') {
       return { ok: false, message: 'Solo un admin puede cambiar roles.' }
     }
 
-    const result = updateUserRole({ userId, role })
+    if (currentUser?.id === userId && role !== 'admin') {
+      return { ok: false, message: 'No puedes quitarte el rol admin desde tu sesion activa.' }
+    }
+
+    const result = await updateUserRole({ userId, role })
 
     if (result.ok) {
-      setUsers(result.users)
+      await refreshUsers()
 
       if (currentUser?.id === userId) {
         setCurrentUser((previous) =>
@@ -89,7 +152,7 @@ export const AuthProvider = ({ children }) => {
     return result
   }
 
-  const deleteUser = (userId) => {
+  const deleteUser = async (userId) => {
     if (currentUser?.role !== 'admin') {
       return { ok: false, message: 'Solo un admin puede eliminar usuarios.' }
     }
@@ -98,10 +161,10 @@ export const AuthProvider = ({ children }) => {
       return { ok: false, message: 'No puedes eliminar tu propio usuario activo.' }
     }
 
-    const result = deleteUserAccount(userId)
+    const result = await deleteUserAccount(userId)
 
     if (result.ok) {
-      setUsers(result.users)
+      await refreshUsers()
     }
 
     return result
@@ -109,10 +172,12 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     currentUser,
+    authResolved,
+    authError,
     isAuthenticated: Boolean(currentUser),
     isAdmin: currentUser?.role === 'admin',
     users,
-    login,
+    loginWithGoogle: loginGoogle,
     logout,
     createUser,
     changeRole,
