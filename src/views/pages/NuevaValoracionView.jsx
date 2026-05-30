@@ -3,9 +3,22 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 import { listClients, saveClientFromStepOne } from '../../models/clientModel.js'
 import {
+  STEP_EIGHT_OPTIONS,
+  STEP_FOUR_OPTIONS,
+  STEP_NINE_OPTIONS,
+  STEP_SEVEN_OPTIONS,
+  STEP_TEN_OPTIONS,
   STEP_TWO_OPTIONS,
   getValuationForEdition,
+  saveStepEightValuation,
+  saveStepNineValuation,
   saveStepOneValuation,
+  saveStepFourValuation,
+  saveStepFiveValuation,
+  saveStepSixValuation,
+  saveStepSevenValuation,
+  saveStepTenValuation,
+  saveStepThreeValuation,
   saveStepTwoValuation,
 } from '../../models/valuationModel.js'
 
@@ -30,6 +43,140 @@ const createStepTwoInitialData = () => ({
   motivosFaciales: [],
   motivosCorporales: [],
 })
+
+const createStepThreeInitialData = () => ({
+  mejoraPrincipal: '',
+  resultadoEsperado: '',
+  tiempoEsperado: '',
+  zonaIncomoda: '',
+  notasAdicionalesPielCuerpo: '',
+})
+
+const createStepFourInitialData = () => ({
+  enfermedades: [],
+  enfermedadesOtro: '',
+  medicamentosActuales: [],
+  medicamentosActualesOtro: '',
+  alergias: [],
+  alergiasOtro: '',
+  embarazoActual: '',
+  lactanciaActual: '',
+  embarazoProximo: '',
+})
+
+const createStepFiveInitialData = () => ({
+  aguaDiaria: '',
+  calidadAlimentacion: '',
+  consumeAzucarLacteos: '',
+  fuma: '',
+  consumeAlcohol: '',
+  realizaEjercicio: '',
+  ejercicioFrecuenciaSemanal: '',
+  horasSueno: '',
+  estresAlto: '',
+  desvelosFrecuentes: '',
+})
+
+const createStepSixInitialData = () => ({
+  usaProtectorDiario: '',
+  spfUtilizado: '',
+  frecuenciaReaplicacion: '',
+  tiempoProlongadoSol: '',
+  quemadurasSolaresRecientes: '',
+})
+
+const createStepSevenInitialData = () => ({
+  procedimientosPrevios: [],
+  procedimientosPreviosOtro: '',
+  facialesPrevios: '',
+  facialesPreviosCuales: '',
+  aparatologiaCorporal: '',
+  aparatologiaCorporalCuales: '',
+  fechaUltimoProcedimiento: '',
+  tratamientoIrrito: '',
+  tratamientoIrritoDetalle: '',
+  quemadurasOMalasExperiencias: '',
+  pielReaccionaFacilmente: '',
+  toleraBienDolor: '',
+})
+
+const createStepEightInitialData = () => ({
+  mananaProductos: [],
+  mananaOtro: '',
+  nocheProductos: [],
+  nocheOtro: '',
+  usaRetinol: '',
+  usaAcidos: '',
+  productosIrritaron: '',
+  brotesPorProducto: '',
+  constanteRutina: '',
+  seguiriaCuidadosCasa: '',
+  tiempoDedicadoPiel: '',
+})
+
+const createStepNineInitialData = () => ({
+  tipoPiel: [],
+  estadoActual: [],
+  condicionesPresentes: [],
+})
+
+const createStepTenInitialData = () => ({
+  acneEmpeoraPeriodo: '',
+  cambiosHormonalesRecientes: '',
+  usaAnticonceptivos: '',
+  desdeCuandoBrotes: '',
+  manipulaGranitos: '',
+  acneDoloroso: '',
+  manchasOrigenes: [],
+  pielEnrojeceFacilmente: '',
+  pielArdeIrritaFacil: '',
+  escalaFitzpatrick: '',
+  escalaGlogau: '',
+  sensibilidadCutaneaDetalle: '',
+})
+
+const STEP_FOUR_OTHER_CONFIG = {
+  enfermedades: {
+    option: 'Otro',
+    textField: 'enfermedadesOtro',
+    label: 'Cual enfermedad?',
+    placeholder: 'Escribe la enfermedad',
+  },
+  medicamentosActuales: {
+    option: 'Otros medicamentos',
+    textField: 'medicamentosActualesOtro',
+    label: 'Cual medicamento?',
+    placeholder: 'Escribe el medicamento',
+  },
+  alergias: {
+    option: 'Otras alergias',
+    textField: 'alergiasOtro',
+    label: 'Cual alergia?',
+    placeholder: 'Escribe la alergia',
+  },
+}
+
+const STEP_SEVEN_OTHER_CONFIG = {
+  option: 'Otro',
+  textField: 'procedimientosPreviosOtro',
+  label: 'Cual procedimiento?',
+  placeholder: 'Escribe el procedimiento',
+}
+
+const STEP_EIGHT_OTHER_CONFIG = {
+  mananaProductos: {
+    option: 'Otro',
+    textField: 'mananaOtro',
+    label: 'Cual producto de mañana?',
+    placeholder: 'Escribe el producto',
+  },
+  nocheProductos: {
+    option: 'Otro',
+    textField: 'nocheOtro',
+    label: 'Cual producto de noche?',
+    placeholder: 'Escribe el producto',
+  },
+}
 
 const normalizeExistingStepTwoData = (rawStepTwo) => {
   const fallback = createStepTwoInitialData()
@@ -75,6 +222,247 @@ const normalizeExistingStepTwoData = (rawStepTwo) => {
   return fallback
 }
 
+const normalizeExistingStepThreeData = (rawStepThree) => {
+  const fallback = createStepThreeInitialData()
+
+  if (!rawStepThree) {
+    return fallback
+  }
+
+  return {
+    mejoraPrincipal: String(rawStepThree.mejoraPrincipal ?? ''),
+    resultadoEsperado: String(rawStepThree.resultadoEsperado ?? ''),
+    tiempoEsperado: String(rawStepThree.tiempoEsperado ?? ''),
+    zonaIncomoda: String(rawStepThree.zonaIncomoda ?? ''),
+    notasAdicionalesPielCuerpo: String(rawStepThree.notasAdicionalesPielCuerpo ?? ''),
+  }
+}
+
+const normalizeExistingStepFourData = (rawStepFour) => {
+  const fallback = createStepFourInitialData()
+
+  if (!rawStepFour) {
+    return fallback
+  }
+
+  const allowedEnfermedades = new Set(STEP_FOUR_OPTIONS.enfermedades)
+  const allowedMedicamentos = new Set(STEP_FOUR_OPTIONS.medicamentos)
+  const allowedAlergias = new Set(STEP_FOUR_OPTIONS.alergias)
+
+  const normalizeBinaryValue = (value) => {
+    const normalized = String(value ?? '').trim().toLowerCase()
+    return normalized === 'si' || normalized === 'no' ? normalized : ''
+  }
+
+  return {
+    enfermedades: Array.isArray(rawStepFour.enfermedades)
+      ? rawStepFour.enfermedades.filter((item) => allowedEnfermedades.has(item))
+      : [],
+    enfermedadesOtro: String(rawStepFour.enfermedadesOtro ?? ''),
+    medicamentosActuales: Array.isArray(rawStepFour.medicamentosActuales)
+      ? rawStepFour.medicamentosActuales.filter((item) => allowedMedicamentos.has(item))
+      : [],
+    medicamentosActualesOtro: String(rawStepFour.medicamentosActualesOtro ?? ''),
+    alergias: Array.isArray(rawStepFour.alergias)
+      ? rawStepFour.alergias.filter((item) => allowedAlergias.has(item))
+      : [],
+    alergiasOtro: String(rawStepFour.alergiasOtro ?? ''),
+    embarazoActual: normalizeBinaryValue(rawStepFour.embarazoActual),
+    lactanciaActual: normalizeBinaryValue(rawStepFour.lactanciaActual),
+    embarazoProximo: normalizeBinaryValue(rawStepFour.embarazoProximo),
+  }
+}
+
+const normalizeExistingStepFiveData = (rawStepFive) => {
+  const fallback = createStepFiveInitialData()
+
+  if (!rawStepFive) {
+    return fallback
+  }
+
+  const normalizeBinaryValue = (value) => {
+    const normalized = String(value ?? '').trim().toLowerCase()
+    return normalized === 'si' || normalized === 'no' ? normalized : ''
+  }
+
+  return {
+    aguaDiaria: String(rawStepFive.aguaDiaria ?? ''),
+    calidadAlimentacion: String(rawStepFive.calidadAlimentacion ?? ''),
+    consumeAzucarLacteos: normalizeBinaryValue(rawStepFive.consumeAzucarLacteos),
+    fuma: normalizeBinaryValue(rawStepFive.fuma),
+    consumeAlcohol: normalizeBinaryValue(rawStepFive.consumeAlcohol),
+    realizaEjercicio: normalizeBinaryValue(rawStepFive.realizaEjercicio),
+    ejercicioFrecuenciaSemanal: String(rawStepFive.ejercicioFrecuenciaSemanal ?? ''),
+    horasSueno: String(rawStepFive.horasSueno ?? ''),
+    estresAlto: normalizeBinaryValue(rawStepFive.estresAlto),
+    desvelosFrecuentes: normalizeBinaryValue(rawStepFive.desvelosFrecuentes),
+  }
+}
+
+const normalizeExistingStepSixData = (rawStepSix) => {
+  const fallback = createStepSixInitialData()
+
+  if (!rawStepSix) {
+    return fallback
+  }
+
+  const normalizeBinaryValue = (value) => {
+    const normalized = String(value ?? '').trim().toLowerCase()
+    return normalized === 'si' || normalized === 'no' ? normalized : ''
+  }
+
+  return {
+    usaProtectorDiario: normalizeBinaryValue(rawStepSix.usaProtectorDiario),
+    spfUtilizado: String(rawStepSix.spfUtilizado ?? ''),
+    frecuenciaReaplicacion: String(rawStepSix.frecuenciaReaplicacion ?? ''),
+    tiempoProlongadoSol: normalizeBinaryValue(rawStepSix.tiempoProlongadoSol),
+    quemadurasSolaresRecientes: normalizeBinaryValue(rawStepSix.quemadurasSolaresRecientes),
+  }
+}
+
+const normalizeExistingStepSevenData = (rawStepSeven) => {
+  const fallback = createStepSevenInitialData()
+
+  if (!rawStepSeven) {
+    return fallback
+  }
+
+  const allowedProcedimientos = new Set(STEP_SEVEN_OPTIONS.procedimientosPrevios)
+
+  const normalizeBinaryValue = (value) => {
+    const normalized = String(value ?? '').trim().toLowerCase()
+    return normalized === 'si' || normalized === 'no' ? normalized : ''
+  }
+
+  const facialesPrevios = normalizeBinaryValue(rawStepSeven.facialesPrevios)
+  const aparatologiaCorporal = normalizeBinaryValue(rawStepSeven.aparatologiaCorporal)
+  const tratamientoIrrito = normalizeBinaryValue(rawStepSeven.tratamientoIrrito)
+
+  return {
+    procedimientosPrevios: Array.isArray(rawStepSeven.procedimientosPrevios)
+      ? rawStepSeven.procedimientosPrevios.filter((item) => allowedProcedimientos.has(item))
+      : [],
+    procedimientosPreviosOtro: Array.isArray(rawStepSeven.procedimientosPrevios)
+      && rawStepSeven.procedimientosPrevios.includes(STEP_SEVEN_OTHER_CONFIG.option)
+      ? String(rawStepSeven.procedimientosPreviosOtro ?? '')
+      : '',
+    facialesPrevios,
+    facialesPreviosCuales: facialesPrevios === 'si' ? String(rawStepSeven.facialesPreviosCuales ?? '') : '',
+    aparatologiaCorporal,
+    aparatologiaCorporalCuales:
+      aparatologiaCorporal === 'si' ? String(rawStepSeven.aparatologiaCorporalCuales ?? '') : '',
+    fechaUltimoProcedimiento: String(rawStepSeven.fechaUltimoProcedimiento ?? ''),
+    tratamientoIrrito,
+    tratamientoIrritoDetalle:
+      tratamientoIrrito === 'si' ? String(rawStepSeven.tratamientoIrritoDetalle ?? '') : '',
+    quemadurasOMalasExperiencias: normalizeBinaryValue(rawStepSeven.quemadurasOMalasExperiencias),
+    pielReaccionaFacilmente: normalizeBinaryValue(rawStepSeven.pielReaccionaFacilmente),
+    toleraBienDolor: normalizeBinaryValue(rawStepSeven.toleraBienDolor),
+  }
+}
+
+const normalizeExistingStepEightData = (rawStepEight) => {
+  const fallback = createStepEightInitialData()
+
+  if (!rawStepEight) {
+    return fallback
+  }
+
+  const allowedManana = new Set(STEP_EIGHT_OPTIONS.manana)
+  const allowedNoche = new Set(STEP_EIGHT_OPTIONS.noche)
+
+  const normalizeBinaryValue = (value) => {
+    const normalized = String(value ?? '').trim().toLowerCase()
+    return normalized === 'si' || normalized === 'no' ? normalized : ''
+  }
+
+  const mananaProductos = Array.isArray(rawStepEight.mananaProductos)
+    ? rawStepEight.mananaProductos.filter((item) => allowedManana.has(item))
+    : []
+  const nocheProductos = Array.isArray(rawStepEight.nocheProductos)
+    ? rawStepEight.nocheProductos.filter((item) => allowedNoche.has(item))
+    : []
+
+  return {
+    mananaProductos,
+    mananaOtro: mananaProductos.includes(STEP_EIGHT_OTHER_CONFIG.mananaProductos.option)
+      ? String(rawStepEight.mananaOtro ?? '')
+      : '',
+    nocheProductos,
+    nocheOtro: nocheProductos.includes(STEP_EIGHT_OTHER_CONFIG.nocheProductos.option)
+      ? String(rawStepEight.nocheOtro ?? '')
+      : '',
+    usaRetinol: normalizeBinaryValue(rawStepEight.usaRetinol),
+    usaAcidos: normalizeBinaryValue(rawStepEight.usaAcidos),
+    productosIrritaron: String(rawStepEight.productosIrritaron ?? ''),
+    brotesPorProducto: normalizeBinaryValue(rawStepEight.brotesPorProducto),
+    constanteRutina: normalizeBinaryValue(rawStepEight.constanteRutina),
+    seguiriaCuidadosCasa: normalizeBinaryValue(rawStepEight.seguiriaCuidadosCasa),
+    tiempoDedicadoPiel: String(rawStepEight.tiempoDedicadoPiel ?? ''),
+  }
+}
+
+const normalizeExistingStepNineData = (rawStepNine) => {
+  const fallback = createStepNineInitialData()
+
+  if (!rawStepNine) {
+    return fallback
+  }
+
+  const allowedTipoPiel = new Set(STEP_NINE_OPTIONS.tipoPiel)
+  const allowedEstadoActual = new Set(STEP_NINE_OPTIONS.estadoActual)
+  const allowedCondiciones = new Set(STEP_NINE_OPTIONS.condicionesPresentes)
+
+  return {
+    tipoPiel: Array.isArray(rawStepNine.tipoPiel)
+      ? rawStepNine.tipoPiel.filter((item) => allowedTipoPiel.has(item))
+      : [],
+    estadoActual: Array.isArray(rawStepNine.estadoActual)
+      ? rawStepNine.estadoActual.filter((item) => allowedEstadoActual.has(item))
+      : [],
+    condicionesPresentes: Array.isArray(rawStepNine.condicionesPresentes)
+      ? rawStepNine.condicionesPresentes.filter((item) => allowedCondiciones.has(item))
+      : [],
+  }
+}
+
+const normalizeExistingStepTenData = (rawStepTen) => {
+  const fallback = createStepTenInitialData()
+
+  if (!rawStepTen) {
+    return fallback
+  }
+
+  const allowedManchas = new Set(STEP_TEN_OPTIONS.manchasOrigenes)
+  const allowedFitzpatrick = new Set(STEP_TEN_OPTIONS.escalaFitzpatrick)
+  const allowedGlogau = new Set(STEP_TEN_OPTIONS.escalaGlogau)
+
+  const normalizeBinaryValue = (value) => {
+    const normalized = String(value ?? '').trim().toLowerCase()
+    return normalized === 'si' || normalized === 'no' ? normalized : ''
+  }
+
+  const normalizedFitzpatrick = String(rawStepTen.escalaFitzpatrick ?? '').trim()
+  const normalizedGlogau = String(rawStepTen.escalaGlogau ?? '').trim()
+
+  return {
+    acneEmpeoraPeriodo: normalizeBinaryValue(rawStepTen.acneEmpeoraPeriodo),
+    cambiosHormonalesRecientes: normalizeBinaryValue(rawStepTen.cambiosHormonalesRecientes),
+    usaAnticonceptivos: normalizeBinaryValue(rawStepTen.usaAnticonceptivos),
+    desdeCuandoBrotes: String(rawStepTen.desdeCuandoBrotes ?? ''),
+    manipulaGranitos: normalizeBinaryValue(rawStepTen.manipulaGranitos),
+    acneDoloroso: normalizeBinaryValue(rawStepTen.acneDoloroso),
+    manchasOrigenes: Array.isArray(rawStepTen.manchasOrigenes)
+      ? rawStepTen.manchasOrigenes.filter((item) => allowedManchas.has(item))
+      : [],
+    pielEnrojeceFacilmente: normalizeBinaryValue(rawStepTen.pielEnrojeceFacilmente),
+    pielArdeIrritaFacil: normalizeBinaryValue(rawStepTen.pielArdeIrritaFacil),
+    escalaFitzpatrick: allowedFitzpatrick.has(normalizedFitzpatrick) ? normalizedFitzpatrick : '',
+    escalaGlogau: allowedGlogau.has(normalizedGlogau) ? normalizedGlogau : '',
+    sensibilidadCutaneaDetalle: String(rawStepTen.sensibilidadCutaneaDetalle ?? ''),
+  }
+}
+
 const clearClientCoreData = (data) => ({
   ...data,
   apellidoPaterno: '',
@@ -99,6 +487,49 @@ function NuevaValoracionView() {
   const [selectedClientId, setSelectedClientId] = useState('')
   const [stepOneData, setStepOneData] = useState(createStepOneInitialData)
   const [stepTwoData, setStepTwoData] = useState(createStepTwoInitialData)
+  const [stepThreeData, setStepThreeData] = useState(createStepThreeInitialData)
+  const [stepFourData, setStepFourData] = useState(createStepFourInitialData)
+  const [stepFiveData, setStepFiveData] = useState(createStepFiveInitialData)
+  const [stepSixData, setStepSixData] = useState(createStepSixInitialData)
+  const [stepSevenData, setStepSevenData] = useState(createStepSevenInitialData)
+  const [stepEightData, setStepEightData] = useState(createStepEightInitialData)
+  const [stepNineData, setStepNineData] = useState(createStepNineInitialData)
+  const [stepTenData, setStepTenData] = useState(createStepTenInitialData)
+  const [stepTwoModal, setStepTwoModal] = useState({
+    open: false,
+    field: '',
+    title: '',
+    options: [],
+  })
+  const [stepFourModal, setStepFourModal] = useState({
+    open: false,
+    field: '',
+    title: '',
+    options: [],
+  })
+  const [stepSevenModal, setStepSevenModal] = useState({
+    open: false,
+    section: '',
+    title: '',
+  })
+  const [stepEightModal, setStepEightModal] = useState({
+    open: false,
+    field: '',
+    title: '',
+    options: [],
+  })
+  const [stepNineModal, setStepNineModal] = useState({
+    open: false,
+    field: '',
+    title: '',
+    options: [],
+  })
+  const [stepTenModal, setStepTenModal] = useState({
+    open: false,
+    field: '',
+    title: '',
+    options: [],
+  })
   const [availableClients, setAvailableClients] = useState([])
   const [clientSearch, setClientSearch] = useState('')
   const [isLoadingClients, setIsLoadingClients] = useState(false)
@@ -153,6 +584,20 @@ function NuevaValoracionView() {
         setSelectedClientId('')
         setStepOneData(createStepOneInitialData())
         setStepTwoData(createStepTwoInitialData())
+        setStepThreeData(createStepThreeInitialData())
+        setStepFourData(createStepFourInitialData())
+        setStepFiveData(createStepFiveInitialData())
+        setStepSixData(createStepSixInitialData())
+        setStepSevenData(createStepSevenInitialData())
+        setStepEightData(createStepEightInitialData())
+        setStepNineData(createStepNineInitialData())
+        setStepTenData(createStepTenInitialData())
+        setStepTwoModal({ open: false, field: '', title: '', options: [] })
+        setStepFourModal({ open: false, field: '', title: '', options: [] })
+        setStepSevenModal({ open: false, section: '', title: '' })
+        setStepEightModal({ open: false, field: '', title: '', options: [] })
+        setStepNineModal({ open: false, field: '', title: '', options: [] })
+        setStepTenModal({ open: false, field: '', title: '', options: [] })
         setIsLoading(false)
         return
       }
@@ -177,11 +622,39 @@ function NuevaValoracionView() {
 
       setError('')
       setValuationDocId(result.valuation.id)
-      setActiveStep(result.valuation.currentStep >= 2 ? 2 : 1)
+      if (result.valuation.currentStep >= 10) {
+        setActiveStep(10)
+      } else if (result.valuation.currentStep >= 9) {
+        setActiveStep(9)
+      } else if (result.valuation.currentStep >= 8) {
+        setActiveStep(8)
+      } else if (result.valuation.currentStep >= 7) {
+        setActiveStep(7)
+      } else if (result.valuation.currentStep >= 6) {
+        setActiveStep(6)
+      } else if (result.valuation.currentStep >= 5) {
+        setActiveStep(5)
+      } else if (result.valuation.currentStep >= 4) {
+        setActiveStep(4)
+      } else if (result.valuation.currentStep >= 3) {
+        setActiveStep(3)
+      } else if (result.valuation.currentStep >= 2) {
+        setActiveStep(2)
+      } else {
+        setActiveStep(1)
+      }
       setClientFlowType(loadedStepOne.tipoCliente === 'recurrente' ? 'recurrente' : 'nuevo')
       setSelectedClientId(String(loadedStepOne.clienteId ?? result.valuation.clienteId ?? ''))
       setStepOneData(loadedStepOne)
       setStepTwoData(normalizeExistingStepTwoData(result.valuation.step2))
+      setStepThreeData(normalizeExistingStepThreeData(result.valuation.step3))
+      setStepFourData(normalizeExistingStepFourData(result.valuation.step4))
+      setStepFiveData(normalizeExistingStepFiveData(result.valuation.step5))
+      setStepSixData(normalizeExistingStepSixData(result.valuation.step6))
+      setStepSevenData(normalizeExistingStepSevenData(result.valuation.step7))
+      setStepEightData(normalizeExistingStepEightData(result.valuation.step8))
+      setStepNineData(normalizeExistingStepNineData(result.valuation.step9))
+      setStepTenData(normalizeExistingStepTenData(result.valuation.step10))
       setIsLoading(false)
     }
 
@@ -212,6 +685,8 @@ function NuevaValoracionView() {
     return 'Nueva Valoracion'
   }, [valuationDocId])
 
+  const showClientFlowToggle = !valuationDocId
+
   const setFieldValue = (field, value) => {
     setStepOneData((previous) => ({
       ...previous,
@@ -236,6 +711,374 @@ function NuevaValoracionView() {
         [field]: [...currentValues, motivo],
       }
     })
+  }
+
+  const getStepTwoList = (field) => {
+    const value = stepTwoData[field]
+    return Array.isArray(value) ? value : []
+  }
+
+  const openStepTwoModal = (field, title, options) => {
+    setStepTwoModal({
+      open: true,
+      field,
+      title,
+      options,
+    })
+  }
+
+  const closeStepTwoModal = () => {
+    setStepTwoModal({
+      open: false,
+      field: '',
+      title: '',
+      options: [],
+    })
+  }
+
+  const setStepThreeFieldValue = (field, value) => {
+    setStepThreeData((previous) => ({
+      ...previous,
+      [field]: value,
+    }))
+  }
+
+  const setStepFourFieldValue = (field, value) => {
+    setStepFourData((previous) => ({
+      ...previous,
+      [field]: value,
+    }))
+  }
+
+  const setStepFiveFieldValue = (field, value) => {
+    setStepFiveData((previous) => ({
+      ...previous,
+      [field]: value,
+    }))
+  }
+
+  const setStepSixFieldValue = (field, value) => {
+    setStepSixData((previous) => ({
+      ...previous,
+      [field]: value,
+    }))
+  }
+
+  const setStepSevenFieldValue = (field, value) => {
+    setStepSevenData((previous) => ({
+      ...previous,
+      [field]: value,
+    }))
+  }
+
+  const setStepEightFieldValue = (field, value) => {
+    setStepEightData((previous) => ({
+      ...previous,
+      [field]: value,
+    }))
+  }
+
+  const setStepTenFieldValue = (field, value) => {
+    setStepTenData((previous) => ({
+      ...previous,
+      [field]: value,
+    }))
+  }
+
+  const getStepFourList = (field) => {
+    const value = stepFourData[field]
+    return Array.isArray(value) ? value : []
+  }
+
+  const getStepEightList = (field) => {
+    const value = stepEightData[field]
+    return Array.isArray(value) ? value : []
+  }
+
+  const getStepNineList = (field) => {
+    const value = stepNineData[field]
+    return Array.isArray(value) ? value : []
+  }
+
+  const getStepTenList = (field) => {
+    const value = stepTenData[field]
+    return Array.isArray(value) ? value : []
+  }
+
+  const toggleStepFourOption = (field, option) => {
+    setStepFourData((previous) => {
+      const currentValues = Array.isArray(previous[field]) ? previous[field] : []
+      const exists = currentValues.includes(option)
+      const otherConfig = STEP_FOUR_OTHER_CONFIG[field]
+
+      if (exists) {
+        const nextValues = currentValues.filter((value) => value !== option)
+        const nextState = {
+          ...previous,
+          [field]: nextValues,
+        }
+
+        if (otherConfig && !nextValues.includes(otherConfig.option)) {
+          nextState[otherConfig.textField] = ''
+        }
+
+        return {
+          ...nextState,
+        }
+      }
+
+      return {
+        ...previous,
+        [field]: [...currentValues, option],
+      }
+    })
+  }
+
+  const openStepFourModal = (field, title, options) => {
+    setStepFourModal({
+      open: true,
+      field,
+      title,
+      options,
+    })
+  }
+
+  const closeStepFourModal = () => {
+    setStepFourModal({
+      open: false,
+      field: '',
+      title: '',
+      options: [],
+    })
+  }
+
+  const openStepSevenModal = (section, title) => {
+    setStepSevenModal({
+      open: true,
+      section,
+      title,
+    })
+  }
+
+  const closeStepSevenModal = () => {
+    setStepSevenModal({
+      open: false,
+      section: '',
+      title: '',
+    })
+  }
+
+  const openStepEightModal = (field, title, options) => {
+    setStepEightModal({
+      open: true,
+      field,
+      title,
+      options,
+    })
+  }
+
+  const closeStepEightModal = () => {
+    setStepEightModal({
+      open: false,
+      field: '',
+      title: '',
+      options: [],
+    })
+  }
+
+  const openStepNineModal = (field, title, options) => {
+    setStepNineModal({
+      open: true,
+      field,
+      title,
+      options,
+    })
+  }
+
+  const closeStepNineModal = () => {
+    setStepNineModal({
+      open: false,
+      field: '',
+      title: '',
+      options: [],
+    })
+  }
+
+  const openStepTenModal = (field, title, options) => {
+    setStepTenModal({
+      open: true,
+      field,
+      title,
+      options,
+    })
+  }
+
+  const closeStepTenModal = () => {
+    setStepTenModal({
+      open: false,
+      field: '',
+      title: '',
+      options: [],
+    })
+  }
+
+  const toggleStepSevenProcedimiento = (option) => {
+    setStepSevenData((previous) => {
+      const currentValues = Array.isArray(previous.procedimientosPrevios)
+        ? previous.procedimientosPrevios
+        : []
+      const exists = currentValues.includes(option)
+
+      if (exists) {
+        const nextValues = currentValues.filter((value) => value !== option)
+
+        return {
+          ...previous,
+          procedimientosPrevios: nextValues,
+          procedimientosPreviosOtro: nextValues.includes(STEP_SEVEN_OTHER_CONFIG.option)
+            ? previous.procedimientosPreviosOtro
+            : '',
+        }
+      }
+
+      return {
+        ...previous,
+        procedimientosPrevios: [...currentValues, option],
+      }
+    })
+  }
+
+  const toggleStepEightOption = (field, option) => {
+    setStepEightData((previous) => {
+      const currentValues = Array.isArray(previous[field]) ? previous[field] : []
+      const exists = currentValues.includes(option)
+      const otherConfig = STEP_EIGHT_OTHER_CONFIG[field]
+
+      if (exists) {
+        const nextValues = currentValues.filter((value) => value !== option)
+        const nextState = {
+          ...previous,
+          [field]: nextValues,
+        }
+
+        if (otherConfig && !nextValues.includes(otherConfig.option)) {
+          nextState[otherConfig.textField] = ''
+        }
+
+        return {
+          ...nextState,
+        }
+      }
+
+      return {
+        ...previous,
+        [field]: [...currentValues, option],
+      }
+    })
+  }
+
+  const toggleStepNineOption = (field, option) => {
+    setStepNineData((previous) => {
+      const currentValues = Array.isArray(previous[field]) ? previous[field] : []
+      const exists = currentValues.includes(option)
+
+      if (exists) {
+        return {
+          ...previous,
+          [field]: currentValues.filter((value) => value !== option),
+        }
+      }
+
+      return {
+        ...previous,
+        [field]: [...currentValues, option],
+      }
+    })
+  }
+
+  const toggleStepTenOption = (field, option) => {
+    setStepTenData((previous) => {
+      const currentValues = Array.isArray(previous[field]) ? previous[field] : []
+      const exists = currentValues.includes(option)
+
+      if (exists) {
+        return {
+          ...previous,
+          [field]: currentValues.filter((value) => value !== option),
+        }
+      }
+
+      return {
+        ...previous,
+        [field]: [...currentValues, option],
+      }
+    })
+  }
+
+  const isStepSevenOtherSelected = () =>
+    stepSevenData.procedimientosPrevios.includes(STEP_SEVEN_OTHER_CONFIG.option)
+
+  const formatStepSevenProcedimientoSelectedItem = (item) => {
+    if (item !== STEP_SEVEN_OTHER_CONFIG.option) {
+      return item
+    }
+
+    const detail = String(stepSevenData[STEP_SEVEN_OTHER_CONFIG.textField] ?? '').trim()
+    if (!detail) {
+      return item
+    }
+
+    return `${item}: ${detail}`
+  }
+
+  const getStepEightOtherConfig = (field) => STEP_EIGHT_OTHER_CONFIG[field] || null
+
+  const isStepEightOtherSelected = (field) => {
+    const config = getStepEightOtherConfig(field)
+    if (!config) {
+      return false
+    }
+
+    return getStepEightList(field).includes(config.option)
+  }
+
+  const formatStepEightSelectedItem = (field, item) => {
+    const config = getStepEightOtherConfig(field)
+    if (!config || item !== config.option) {
+      return item
+    }
+
+    const detail = String(stepEightData[config.textField] ?? '').trim()
+    if (!detail) {
+      return item
+    }
+
+    return `${item}: ${detail}`
+  }
+
+  const getStepFourOtherConfig = (field) => STEP_FOUR_OTHER_CONFIG[field] || null
+
+  const isStepFourOtherSelected = (field) => {
+    const config = getStepFourOtherConfig(field)
+    if (!config) {
+      return false
+    }
+
+    return getStepFourList(field).includes(config.option)
+  }
+
+  const formatStepFourSelectedItem = (field, item) => {
+    const config = getStepFourOtherConfig(field)
+    if (!config || item !== config.option) {
+      return item
+    }
+
+    const detail = String(stepFourData[config.textField] ?? '').trim()
+    if (!detail) {
+      return item
+    }
+
+    return `${item}: ${detail}`
   }
 
   const applyClientToStepOne = (client) => {
@@ -359,6 +1202,166 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
+  const saveStepThree = async () => {
+    setIsSaving(true)
+    const result = await saveStepThreeValuation({
+      valuationId: valuationDocId,
+      stepThreeData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
+  const saveStepFour = async () => {
+    setIsSaving(true)
+    const result = await saveStepFourValuation({
+      valuationId: valuationDocId,
+      stepFourData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
+  const saveStepFive = async () => {
+    setIsSaving(true)
+    const result = await saveStepFiveValuation({
+      valuationId: valuationDocId,
+      stepFiveData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
+  const saveStepSix = async () => {
+    setIsSaving(true)
+    const result = await saveStepSixValuation({
+      valuationId: valuationDocId,
+      stepSixData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
+  const saveStepSeven = async () => {
+    setIsSaving(true)
+    const result = await saveStepSevenValuation({
+      valuationId: valuationDocId,
+      stepSevenData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
+  const saveStepEight = async () => {
+    setIsSaving(true)
+    const result = await saveStepEightValuation({
+      valuationId: valuationDocId,
+      stepEightData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
+  const saveStepNine = async () => {
+    setIsSaving(true)
+    const result = await saveStepNineValuation({
+      valuationId: valuationDocId,
+      stepNineData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
+  const saveStepTen = async () => {
+    setIsSaving(true)
+    const result = await saveStepTenValuation({
+      valuationId: valuationDocId,
+      stepTenData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
   const handleSaveAndExit = async (event) => {
     event.preventDefault()
     const nextValuationId = await saveStepOne()
@@ -401,7 +1404,191 @@ function NuevaValoracionView() {
       return
     }
 
-    setSuccessMessage('Paso 2 guardado. Paso 3 disponible en la siguiente iteracion.')
+    setActiveStep(3)
+    setSuccessMessage('Paso 2 guardado. Puedes continuar con el paso 3.')
+  }
+
+  const handleSaveStepThreeAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepThree()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveStepThreeAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepThree()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    setActiveStep(4)
+    setSuccessMessage('Paso 3 guardado. Puedes continuar con el paso 4.')
+  }
+
+  const handleSaveStepFourAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepFour()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveStepFourAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepFour()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    setActiveStep(5)
+    setSuccessMessage('Paso 4 guardado. Puedes continuar con el paso 5.')
+  }
+
+  const handleSaveStepFiveAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepFive()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveStepFiveAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepFive()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    setActiveStep(6)
+    setSuccessMessage('Paso 5 guardado. Puedes continuar con el paso 6.')
+  }
+
+  const handleSaveStepSixAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepSix()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveStepSixAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepSix()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    setActiveStep(7)
+    setSuccessMessage('Paso 6 guardado. Puedes continuar con el paso 7.')
+  }
+
+  const handleSaveStepSevenAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepSeven()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveStepSevenAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepSeven()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    setActiveStep(8)
+    setSuccessMessage('Paso 7 guardado. Puedes continuar con el paso 8.')
+  }
+
+  const handleSaveStepEightAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepEight()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveStepEightAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepEight()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    setActiveStep(9)
+    setSuccessMessage('Paso 8 guardado. Puedes continuar con el paso 9.')
+  }
+
+  const handleSaveStepNineAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepNine()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveStepNineAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepNine()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    setActiveStep(10)
+    setSuccessMessage('Paso 9 guardado. Puedes continuar con el paso 10.')
+  }
+
+  const handleSaveStepTenAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepTen()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveStepTenAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepTen()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    setSuccessMessage('Paso 10 guardado. Paso 11 disponible en la siguiente iteracion.')
   }
 
   return (
@@ -416,7 +1603,23 @@ function NuevaValoracionView() {
           <p className="subtitle">
             {activeStep === 1
               ? 'Paso 1 de 14: Datos generales del cliente.'
-              : 'Paso 2 de 14: Motivo de consulta.'}
+              : activeStep === 2
+                ? 'Paso 2 de 14: Motivo de consulta.'
+                : activeStep === 3
+                  ? 'Paso 3 de 14: Expectativas y prioridades del cliente.'
+                  : activeStep === 4
+                    ? 'Paso 4 de 14: Historial clinico.'
+                    : activeStep === 5
+                      ? 'Paso 5 de 14: Habitos y estilo de vida.'
+                      : activeStep === 6
+                        ? 'Paso 6 de 14: Exposicion solar.'
+                        : activeStep === 7
+                          ? 'Paso 7 de 14: Historial estetico.'
+                          : activeStep === 8
+                            ? 'Paso 8 de 14: Rutina actual.'
+                            : activeStep === 9
+                              ? 'Paso 9 de 14: Evaluacion facial.'
+                              : 'Paso 10 de 14: Evaluacion facial 2.'}
           </p>
         </div>
       </div>
@@ -425,22 +1628,24 @@ function NuevaValoracionView() {
 
       {!isLoading && activeStep === 1 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveAndExit}>
-          <div className="client-mode-toggle">
-            <button
-              type="button"
-              className={`client-mode-button ${clientFlowType === 'recurrente' ? 'active' : ''}`}
-              onClick={() => selectClientFlowType('recurrente')}
-            >
-              Cliente recurrente
-            </button>
-            <button
-              type="button"
-              className={`client-mode-button ${clientFlowType === 'nuevo' ? 'active' : ''}`}
-              onClick={() => selectClientFlowType('nuevo')}
-            >
-              Cliente nuevo
-            </button>
-          </div>
+          {showClientFlowToggle ? (
+            <div className="client-mode-toggle">
+              <button
+                type="button"
+                className={`client-mode-button ${clientFlowType === 'recurrente' ? 'active' : ''}`}
+                onClick={() => selectClientFlowType('recurrente')}
+              >
+                Cliente recurrente
+              </button>
+              <button
+                type="button"
+                className={`client-mode-button ${clientFlowType === 'nuevo' ? 'active' : ''}`}
+                onClick={() => selectClientFlowType('nuevo')}
+              >
+                Cliente nuevo
+              </button>
+            </div>
+          ) : null}
 
           {clientFlowType === 'recurrente' ? (
             <div className="client-search-box">
@@ -603,7 +1808,7 @@ function NuevaValoracionView() {
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
-              {isSaving ? 'Guardando...' : 'Guardar paso 1 y salir'}
+              {isSaving ? 'Guardando...' : 'Salir'}
             </button>
             <button
               type="button"
@@ -611,7 +1816,7 @@ function NuevaValoracionView() {
               disabled={isSaving}
               onClick={handleSaveAndContinue}
             >
-              Guardar y continuar al paso 2
+              Continuar
             </button>
           </div>
         </form>
@@ -626,34 +1831,50 @@ function NuevaValoracionView() {
 
             <div className="consultation-block">
               <h3 className="consultation-block-title">Facial</h3>
-              <div className="motivos-grid">
-                {STEP_TWO_OPTIONS.facial.map((motivo) => (
-                  <label className="motivo-option" key={`facial-${motivo}`}>
-                    <input
-                      type="checkbox"
-                      checked={stepTwoData.motivosFaciales.includes(motivo)}
-                      onChange={() => toggleStepTwoMotive('motivosFaciales', motivo)}
-                    />
-                    <span>{motivo}</span>
-                  </label>
-                ))}
-              </div>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepTwoModal('motivosFaciales', 'Selecciona motivos faciales', STEP_TWO_OPTIONS.facial)}
+              >
+                Seleccionar motivos faciales
+              </button>
+
+              {getStepTwoList('motivosFaciales').length > 0 ? (
+                <div className="selection-tags">
+                  {getStepTwoList('motivosFaciales').map((motivo) => (
+                    <span key={`tag-facial-${motivo}`} className="selection-tag">
+                      {motivo}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
             </div>
 
             <div className="consultation-block">
               <h3 className="consultation-block-title">Corporal</h3>
-              <div className="motivos-grid">
-                {STEP_TWO_OPTIONS.corporal.map((motivo) => (
-                  <label className="motivo-option" key={`corporal-${motivo}`}>
-                    <input
-                      type="checkbox"
-                      checked={stepTwoData.motivosCorporales.includes(motivo)}
-                      onChange={() => toggleStepTwoMotive('motivosCorporales', motivo)}
-                    />
-                    <span>{motivo}</span>
-                  </label>
-                ))}
-              </div>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepTwoModal('motivosCorporales', 'Selecciona motivos corporales', STEP_TWO_OPTIONS.corporal)}
+              >
+                Seleccionar motivos corporales
+              </button>
+
+              {getStepTwoList('motivosCorporales').length > 0 ? (
+                <div className="selection-tags">
+                  {getStepTwoList('motivosCorporales').map((motivo) => (
+                    <span key={`tag-corporal-${motivo}`} className="selection-tag">
+                      {motivo}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
             </div>
           </div>
 
@@ -662,7 +1883,7 @@ function NuevaValoracionView() {
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
-              {isSaving ? 'Guardando...' : 'Guardar paso 2 y salir'}
+              {isSaving ? 'Guardando...' : 'Salir'}
             </button>
 
             <button
@@ -671,7 +1892,7 @@ function NuevaValoracionView() {
               disabled={isSaving}
               onClick={handleSaveStepTwoAndContinue}
             >
-              Guardar y continuar al paso 3
+              Continuar
             </button>
 
             <button
@@ -684,6 +1905,1509 @@ function NuevaValoracionView() {
             </button>
           </div>
         </form>
+      ) : null}
+
+      {!isLoading && activeStep === 3 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveStepThreeAndExit}>
+          <div className="valuation-section-title">Expectativas y prioridades del cliente</div>
+
+          <div className="valuation-grid">
+            <label className="valuation-field-large">
+              Que es lo que mas te gustaria mejorar?
+              <textarea
+                required
+                rows="3"
+                value={stepThreeData.mejoraPrincipal}
+                onChange={(event) => setStepThreeFieldValue('mejoraPrincipal', event.target.value)}
+              />
+            </label>
+
+            <label className="valuation-field-large">
+              Que resultado esperas obtener?
+              <textarea
+                required
+                rows="3"
+                value={stepThreeData.resultadoEsperado}
+                onChange={(event) => setStepThreeFieldValue('resultadoEsperado', event.target.value)}
+              />
+            </label>
+
+            <label>
+              En cuanto tiempo esperas verlo?
+              <input
+                required
+                value={stepThreeData.tiempoEsperado}
+                onChange={(event) => setStepThreeFieldValue('tiempoEsperado', event.target.value)}
+                placeholder="Ejemplo: 2 meses"
+              />
+            </label>
+
+            <label className="valuation-field-large">
+              Que zona te incomoda mas visualmente?
+              <textarea
+                required
+                rows="3"
+                value={stepThreeData.zonaIncomoda}
+                onChange={(event) => setStepThreeFieldValue('zonaIncomoda', event.target.value)}
+              />
+            </label>
+
+            <label className="valuation-field-large">
+              Hay algo mas importante que deba saber sobre tu piel o cuerpo?
+              <textarea
+                rows="3"
+                value={stepThreeData.notasAdicionalesPielCuerpo}
+                onChange={(event) => setStepThreeFieldValue('notasAdicionalesPielCuerpo', event.target.value)}
+              />
+            </label>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveStepThreeAndContinue}
+            >
+              Continuar
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(2)}
+            >
+              Volver al paso 2
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {!isLoading && activeStep === 4 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveStepFourAndExit}>
+          <div className="valuation-section-title">Historial clinico</div>
+
+          <p className="subtitle">
+            Ningun campo es obligatorio en este paso. Selecciona solo lo que aplique.
+          </p>
+
+          <div className="valuation-grid">
+            <div className="valuation-field-large selection-card">
+              <p className="selection-title">Enfermedades</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepFourModal('enfermedades', 'Selecciona enfermedades', STEP_FOUR_OPTIONS.enfermedades)}
+              >
+                Seleccionar enfermedades
+              </button>
+
+              {getStepFourList('enfermedades').length > 0 ? (
+                <div className="selection-tags">
+                  {getStepFourList('enfermedades').map((item) => (
+                    <span key={`enfermedad-${item}`} className="selection-tag">
+                      {formatStepFourSelectedItem('enfermedades', item)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+
+            <label>
+              Estas embarazada?
+              <select
+                value={stepFourData.embarazoActual}
+                onChange={(event) => setStepFourFieldValue('embarazoActual', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label>
+              Estas lactando?
+              <select
+                value={stepFourData.lactanciaActual}
+                onChange={(event) => setStepFourFieldValue('lactanciaActual', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label>
+              Planeas embarazo proximamente?
+              <select
+                value={stepFourData.embarazoProximo}
+                onChange={(event) => setStepFourFieldValue('embarazoProximo', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <div className="valuation-field-large selection-card">
+              <p className="selection-title">Medicamentos</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepFourModal(
+                    'medicamentosActuales',
+                    'Selecciona medicamentos que tomas actualmente',
+                    STEP_FOUR_OPTIONS.medicamentos,
+                  )}
+              >
+                Seleccionar medicamentos
+              </button>
+
+              {getStepFourList('medicamentosActuales').length > 0 ? (
+                <div className="selection-tags">
+                  {getStepFourList('medicamentosActuales').map((item) => (
+                    <span key={`medicamento-${item}`} className="selection-tag">
+                      {formatStepFourSelectedItem('medicamentosActuales', item)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+
+            <div className="valuation-field-large selection-card">
+              <p className="selection-title">Alergias y contraindicaciones</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepFourModal('alergias', 'Selecciona alergias', STEP_FOUR_OPTIONS.alergias)}
+              >
+                Seleccionar alergias
+              </button>
+
+              {getStepFourList('alergias').length > 0 ? (
+                <div className="selection-tags">
+                  {getStepFourList('alergias').map((item) => (
+                    <span key={`alergia-${item}`} className="selection-tag">
+                      {formatStepFourSelectedItem('alergias', item)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveStepFourAndContinue}
+            >
+              Continuar
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(3)}
+            >
+              Volver al paso 3
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {!isLoading && activeStep === 5 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveStepFiveAndExit}>
+          <div className="valuation-section-title">Habitos y estilo de vida</div>
+
+          <p className="subtitle">
+            Ningun campo es obligatorio en este paso. Responde solo lo que aplique.
+          </p>
+
+          <div className="valuation-grid">
+            <label>
+              Cuanta agua tomas al dia?
+              <input
+                value={stepFiveData.aguaDiaria}
+                onChange={(event) => setStepFiveFieldValue('aguaDiaria', event.target.value)}
+                placeholder="Ejemplo: 2 litros"
+              />
+            </label>
+
+            <label>
+              Como calificas tu alimentacion?
+              <select
+                value={stepFiveData.calidadAlimentacion}
+                onChange={(event) => setStepFiveFieldValue('calidadAlimentacion', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="muy buena">Muy buena</option>
+                <option value="buena">Buena</option>
+                <option value="regular">Regular</option>
+                <option value="mala">Mala</option>
+                <option value="muy mala">Muy mala</option>
+              </select>
+            </label>
+
+            <label>
+              Consumes mucho azucar o lacteos?
+              <select
+                value={stepFiveData.consumeAzucarLacteos}
+                onChange={(event) => setStepFiveFieldValue('consumeAzucarLacteos', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label>
+              Fumas?
+              <select
+                value={stepFiveData.fuma}
+                onChange={(event) => setStepFiveFieldValue('fuma', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label>
+              Consumes alcohol?
+              <select
+                value={stepFiveData.consumeAlcohol}
+                onChange={(event) => setStepFiveFieldValue('consumeAlcohol', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label>
+              Realizas ejercicio?
+              <select
+                value={stepFiveData.realizaEjercicio}
+                onChange={(event) => setStepFiveFieldValue('realizaEjercicio', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label>
+              Cuantas veces por semana?
+              <input
+                value={stepFiveData.ejercicioFrecuenciaSemanal}
+                onChange={(event) => setStepFiveFieldValue('ejercicioFrecuenciaSemanal', event.target.value)}
+                placeholder="Ejemplo: 3 veces"
+              />
+            </label>
+
+            <label>
+              Cuantas horas duermes?
+              <input
+                value={stepFiveData.horasSueno}
+                onChange={(event) => setStepFiveFieldValue('horasSueno', event.target.value)}
+                placeholder="Ejemplo: 7 horas"
+              />
+            </label>
+
+            <label>
+              Tu nivel de estres es alto?
+              <select
+                value={stepFiveData.estresAlto}
+                onChange={(event) => setStepFiveFieldValue('estresAlto', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label>
+              Te desvelas frecuentemente?
+              <select
+                value={stepFiveData.desvelosFrecuentes}
+                onChange={(event) => setStepFiveFieldValue('desvelosFrecuentes', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveStepFiveAndContinue}
+            >
+              Continuar
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(4)}
+            >
+              Volver al paso 4
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {!isLoading && activeStep === 6 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveStepSixAndExit}>
+          <div className="valuation-section-title">Exposicion solar</div>
+
+          <p className="subtitle">
+            Ningun campo es obligatorio en este paso. Responde solo lo que aplique.
+          </p>
+
+          <div className="valuation-grid">
+            <label>
+              Usas protector solar diariamente?
+              <select
+                value={stepSixData.usaProtectorDiario}
+                onChange={(event) => setStepSixFieldValue('usaProtectorDiario', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label>
+              Que SPF utilizas?
+              <input
+                value={stepSixData.spfUtilizado}
+                onChange={(event) => setStepSixFieldValue('spfUtilizado', event.target.value)}
+                placeholder="Ejemplo: SPF 50"
+              />
+            </label>
+
+            <label>
+              Cada cuanto reaplicas?
+              <input
+                value={stepSixData.frecuenciaReaplicacion}
+                onChange={(event) => setStepSixFieldValue('frecuenciaReaplicacion', event.target.value)}
+                placeholder="Ejemplo: cada 3 horas"
+              />
+            </label>
+
+            <label>
+              Trabajas o pasas mucho tiempo al sol?
+              <select
+                value={stepSixData.tiempoProlongadoSol}
+                onChange={(event) => setStepSixFieldValue('tiempoProlongadoSol', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+
+            <label>
+              Has tenido quemaduras solares recientes?
+              <select
+                value={stepSixData.quemadurasSolaresRecientes}
+                onChange={(event) => setStepSixFieldValue('quemadurasSolaresRecientes', event.target.value)}
+              >
+                <option value="">Sin respuesta</option>
+                <option value="si">Si</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveStepSixAndContinue}
+            >
+              Continuar
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(5)}
+            >
+              Volver al paso 5
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {!isLoading && activeStep === 7 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveStepSevenAndExit}>
+          <div className="valuation-section-title">Historial estetico</div>
+
+          <p className="subtitle">
+            Ningun campo es obligatorio en este paso. Usa los modales para procedimientos, faciales y
+            aparatologia. Preguntas importantes se responde aqui directo.
+          </p>
+
+          <div className="valuation-grid">
+            <div className="valuation-field-large selection-card">
+              <p className="selection-title">Procedimientos previos</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepSevenModal('procedimientos', 'Selecciona procedimientos previos')}
+              >
+                Seleccionar procedimientos
+              </button>
+
+              {stepSevenData.procedimientosPrevios.length > 0 ? (
+                <div className="selection-tags">
+                  {stepSevenData.procedimientosPrevios.map((item) => (
+                    <span key={`procedimiento-${item}`} className="selection-tag">
+                      {formatStepSevenProcedimientoSelectedItem(item)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+
+            <div className="selection-card">
+              <p className="selection-title">Faciales previos</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() => openStepSevenModal('faciales', 'Faciales previos')}
+              >
+                Configurar faciales previos
+              </button>
+
+              <p className="selection-empty">
+                {stepSevenData.facialesPrevios
+                  ? `Respuesta: ${stepSevenData.facialesPrevios === 'si' ? 'Si' : 'No'}`
+                  : 'Sin respuesta'}
+              </p>
+              {stepSevenData.facialesPrevios === 'si' && stepSevenData.facialesPreviosCuales ? (
+                <p className="selection-empty">Cuales: {stepSevenData.facialesPreviosCuales}</p>
+              ) : null}
+            </div>
+
+            <div className="selection-card">
+              <p className="selection-title">Aparatologia corporal</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() => openStepSevenModal('aparatologia', 'Aparatologia corporal')}
+              >
+                Configurar aparatologia corporal
+              </button>
+
+              <p className="selection-empty">
+                {stepSevenData.aparatologiaCorporal
+                  ? `Respuesta: ${stepSevenData.aparatologiaCorporal === 'si' ? 'Si' : 'No'}`
+                  : 'Sin respuesta'}
+              </p>
+              {stepSevenData.aparatologiaCorporal === 'si' && stepSevenData.aparatologiaCorporalCuales ? (
+                <p className="selection-empty">Cuales: {stepSevenData.aparatologiaCorporalCuales}</p>
+              ) : null}
+            </div>
+
+            <div className="selection-card">
+              <p className="selection-title">Preguntas importantes</p>
+              <div className="valuation-grid">
+                <label>
+                  Cuando fue tu ultimo procedimiento?
+                  <input
+                    type="date"
+                    value={stepSevenData.fechaUltimoProcedimiento}
+                    onChange={(event) =>
+                      setStepSevenFieldValue('fechaUltimoProcedimiento', event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Algun tratamiento te irrito?
+                  <select
+                    value={stepSevenData.tratamientoIrrito}
+                    onChange={(event) => setStepSevenFieldValue('tratamientoIrrito', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                {stepSevenData.tratamientoIrrito === 'si' ? (
+                  <label className="valuation-field-large">
+                    Cual tratamiento te irrito?
+                    <textarea
+                      rows="3"
+                      value={stepSevenData.tratamientoIrritoDetalle}
+                      onChange={(event) =>
+                        setStepSevenFieldValue('tratamientoIrritoDetalle', event.target.value)}
+                    />
+                  </label>
+                ) : null}
+
+                <label>
+                  Has tenido quemaduras o malas experiencias?
+                  <select
+                    value={stepSevenData.quemadurasOMalasExperiencias}
+                    onChange={(event) =>
+                      setStepSevenFieldValue('quemadurasOMalasExperiencias', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Tu piel reacciona facilmente?
+                  <select
+                    value={stepSevenData.pielReaccionaFacilmente}
+                    onChange={(event) =>
+                      setStepSevenFieldValue('pielReaccionaFacilmente', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Toleras bien el dolor?
+                  <select
+                    value={stepSevenData.toleraBienDolor}
+                    onChange={(event) => setStepSevenFieldValue('toleraBienDolor', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveStepSevenAndContinue}
+            >
+              Continuar
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(6)}
+            >
+              Volver al paso 6
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {!isLoading && activeStep === 8 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveStepEightAndExit}>
+          <div className="valuation-section-title">Rutina actual</div>
+
+          <p className="subtitle">
+            Ningun campo es obligatorio en este paso. Solo mañana y noche se capturan con modal.
+          </p>
+
+          <div className="valuation-grid">
+            <div className="selection-card">
+              <p className="selection-title">Mañana</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepEightModal('mananaProductos', 'Rutina de mañana', STEP_EIGHT_OPTIONS.manana)}
+              >
+                Seleccionar rutina de mañana
+              </button>
+
+              {stepEightData.mananaProductos.length > 0 ? (
+                <div className="selection-tags">
+                  {stepEightData.mananaProductos.map((item) => (
+                    <span key={`step8-manana-${item}`} className="selection-tag">
+                      {formatStepEightSelectedItem('mananaProductos', item)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+
+            <div className="selection-card">
+              <p className="selection-title">Noche</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepEightModal('nocheProductos', 'Rutina de noche', STEP_EIGHT_OPTIONS.noche)}
+              >
+                Seleccionar rutina de noche
+              </button>
+
+              {stepEightData.nocheProductos.length > 0 ? (
+                <div className="selection-tags">
+                  {stepEightData.nocheProductos.map((item) => (
+                    <span key={`step8-noche-${item}`} className="selection-tag">
+                      {formatStepEightSelectedItem('nocheProductos', item)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Activos importantes</p>
+
+              <div className="valuation-grid">
+                <label>
+                  Usas retinol?
+                  <select
+                    value={stepEightData.usaRetinol}
+                    onChange={(event) => setStepEightFieldValue('usaRetinol', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Usas acidos?
+                  <select
+                    value={stepEightData.usaAcidos}
+                    onChange={(event) => setStepEightFieldValue('usaAcidos', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label className="valuation-field-large">
+                  Que productos te han irritado?
+                  <textarea
+                    rows="3"
+                    value={stepEightData.productosIrritaron}
+                    onChange={(event) => setStepEightFieldValue('productosIrritaron', event.target.value)}
+                  />
+                </label>
+
+                <label>
+                  Has tenido brotes por algun producto?
+                  <select
+                    value={stepEightData.brotesPorProducto}
+                    onChange={(event) => setStepEightFieldValue('brotesPorProducto', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Compromiso del cliente</p>
+
+              <div className="valuation-grid">
+                <label>
+                  Eres constante con tu rutina?
+                  <select
+                    value={stepEightData.constanteRutina}
+                    onChange={(event) => setStepEightFieldValue('constanteRutina', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Podrias seguir cuidados en casa?
+                  <select
+                    value={stepEightData.seguiriaCuidadosCasa}
+                    onChange={(event) => setStepEightFieldValue('seguiriaCuidadosCasa', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label className="valuation-field-large">
+                  Que tanto tiempo le dedicas a tu piel?
+                  <textarea
+                    rows="3"
+                    value={stepEightData.tiempoDedicadoPiel}
+                    onChange={(event) => setStepEightFieldValue('tiempoDedicadoPiel', event.target.value)}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveStepEightAndContinue}
+            >
+              Continuar
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(7)}
+            >
+              Volver al paso 7
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {!isLoading && activeStep === 9 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveStepNineAndExit}>
+          <div className="valuation-section-title">Evaluacion facial</div>
+
+          <p className="subtitle">
+            Ningun campo es obligatorio en este paso. Todos los bloques se responden en modal.
+          </p>
+
+          <div className="valuation-grid">
+            <div className="selection-card">
+              <p className="selection-title">Tipo de piel</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepNineModal('tipoPiel', 'Tipo de piel', STEP_NINE_OPTIONS.tipoPiel)}
+              >
+                Seleccionar tipo de piel
+              </button>
+
+              {stepNineData.tipoPiel.length > 0 ? (
+                <div className="selection-tags">
+                  {stepNineData.tipoPiel.map((item) => (
+                    <span key={`step9-tipo-${item}`} className="selection-tag">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+
+            <div className="selection-card">
+              <p className="selection-title">Estado actual</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepNineModal('estadoActual', 'Estado actual', STEP_NINE_OPTIONS.estadoActual)}
+              >
+                Seleccionar estado actual
+              </button>
+
+              {stepNineData.estadoActual.length > 0 ? (
+                <div className="selection-tags">
+                  {stepNineData.estadoActual.map((item) => (
+                    <span key={`step9-estado-${item}`} className="selection-tag">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Condiciones presentes</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepNineModal(
+                    'condicionesPresentes',
+                    'Condiciones presentes',
+                    STEP_NINE_OPTIONS.condicionesPresentes,
+                  )}
+              >
+                Seleccionar condiciones presentes
+              </button>
+
+              {stepNineData.condicionesPresentes.length > 0 ? (
+                <div className="selection-tags">
+                  {stepNineData.condicionesPresentes.map((item) => (
+                    <span key={`step9-condicion-${item}`} className="selection-tag">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveStepNineAndContinue}
+            >
+              Continuar
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(8)}
+            >
+              Volver al paso 8
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {!isLoading && activeStep === 10 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveStepTenAndExit}>
+          <div className="valuation-section-title">Evaluacion facial 2</div>
+
+          <p className="subtitle">
+            Manchas se responde en modal. Hormonal, acne, sensibilidad, escalas y sensibilidad cutanea
+            se responden directo aqui.
+          </p>
+
+          <div className="valuation-grid">
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Hormonal</p>
+
+              <div className="valuation-grid">
+                <label>
+                  Tu acne empeora en tu periodo?
+                  <select
+                    value={stepTenData.acneEmpeoraPeriodo}
+                    onChange={(event) => setStepTenFieldValue('acneEmpeoraPeriodo', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Has tenido cambios hormonales recientes?
+                  <select
+                    value={stepTenData.cambiosHormonalesRecientes}
+                    onChange={(event) =>
+                      setStepTenFieldValue('cambiosHormonalesRecientes', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Usas anticonceptivos?
+                  <select
+                    value={stepTenData.usaAnticonceptivos}
+                    onChange={(event) => setStepTenFieldValue('usaAnticonceptivos', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Acne</p>
+
+              <div className="valuation-grid">
+                <label>
+                  Desde cuando tienes brotes?
+                  <input
+                    value={stepTenData.desdeCuandoBrotes}
+                    onChange={(event) => setStepTenFieldValue('desdeCuandoBrotes', event.target.value)}
+                    placeholder="Ejemplo: hace 2 anos"
+                  />
+                </label>
+
+                <label>
+                  Manipulas los granitos?
+                  <select
+                    value={stepTenData.manipulaGranitos}
+                    onChange={(event) => setStepTenFieldValue('manipulaGranitos', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  El acne es doloroso?
+                  <select
+                    value={stepTenData.acneDoloroso}
+                    onChange={(event) => setStepTenFieldValue('acneDoloroso', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Manchas</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepTenModal('manchasOrigenes', 'Origen de manchas', STEP_TEN_OPTIONS.manchasOrigenes)}
+              >
+                Seleccionar origen de manchas
+              </button>
+
+              {stepTenData.manchasOrigenes.length > 0 ? (
+                <div className="selection-tags">
+                  {stepTenData.manchasOrigenes.map((item) => (
+                    <span key={`step10-mancha-${item}`} className="selection-tag">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Sensibilidad</p>
+
+              <div className="valuation-grid">
+                <label>
+                  Tu piel se enrojece facilmente?
+                  <select
+                    value={stepTenData.pielEnrojeceFacilmente}
+                    onChange={(event) => setStepTenFieldValue('pielEnrojeceFacilmente', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Tu piel arde o irrita con facilidad?
+                  <select
+                    value={stepTenData.pielArdeIrritaFacil}
+                    onChange={(event) => setStepTenFieldValue('pielArdeIrritaFacil', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Escalas (propuesta)</p>
+
+              <div className="valuation-grid">
+                <label>
+                  Fitzpatrick
+                  <select
+                    value={stepTenData.escalaFitzpatrick}
+                    onChange={(event) => setStepTenFieldValue('escalaFitzpatrick', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    {STEP_TEN_OPTIONS.escalaFitzpatrick.map((option) => (
+                      <option key={`fitzpatrick-${option}`} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  Glogau
+                  <select
+                    value={stepTenData.escalaGlogau}
+                    onChange={(event) => setStepTenFieldValue('escalaGlogau', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    {STEP_TEN_OPTIONS.escalaGlogau.map((option) => (
+                      <option key={`glogau-${option}`} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Sensibilidad cutanea</p>
+              <label className="valuation-field-large">
+                Pregunta abierta
+                <textarea
+                  rows="3"
+                  value={stepTenData.sensibilidadCutaneaDetalle}
+                  onChange={(event) =>
+                    setStepTenFieldValue('sensibilidadCutaneaDetalle', event.target.value)}
+                  placeholder="Describe lo que observas o comenta la clienta"
+                />
+              </label>
+            </div>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveStepTenAndContinue}
+            >
+              Continuar
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(9)}
+            >
+              Volver al paso 9
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {stepSevenModal.open ? (
+        <div className="selection-modal-backdrop" onClick={closeStepSevenModal}>
+          <div
+            className="selection-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={stepSevenModal.title}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head">
+              <h3 className="consultation-block-title">{stepSevenModal.title}</h3>
+              <button type="button" className="main-button secondary" onClick={closeStepSevenModal}>
+                Cerrar
+              </button>
+            </div>
+
+            {stepSevenModal.section === 'procedimientos' ? (
+              <>
+                <div className="selection-options-grid">
+                  {STEP_SEVEN_OPTIONS.procedimientosPrevios.map((option) => (
+                    <label className="motivo-option" key={`step7-procedimiento-${option}`}>
+                      <input
+                        type="checkbox"
+                        checked={stepSevenData.procedimientosPrevios.includes(option)}
+                        onChange={() => toggleStepSevenProcedimiento(option)}
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </div>
+
+                {isStepSevenOtherSelected() ? (
+                  <label className="selection-modal-field">
+                    {STEP_SEVEN_OTHER_CONFIG.label}
+                    <input
+                      type="text"
+                      value={stepSevenData[STEP_SEVEN_OTHER_CONFIG.textField]}
+                      onChange={(event) =>
+                        setStepSevenFieldValue(STEP_SEVEN_OTHER_CONFIG.textField, event.target.value)}
+                      placeholder={STEP_SEVEN_OTHER_CONFIG.placeholder}
+                    />
+                  </label>
+                ) : null}
+              </>
+            ) : null}
+
+            {stepSevenModal.section === 'faciales' ? (
+              <div className="valuation-grid">
+                <label>
+                  Has tenido faciales previos?
+                  <select
+                    value={stepSevenData.facialesPrevios}
+                    onChange={(event) => setStepSevenFieldValue('facialesPrevios', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                {stepSevenData.facialesPrevios === 'si' ? (
+                  <label className="valuation-field-large">
+                    Cuales?
+                    <textarea
+                      rows="3"
+                      value={stepSevenData.facialesPreviosCuales}
+                      onChange={(event) =>
+                        setStepSevenFieldValue('facialesPreviosCuales', event.target.value)}
+                      placeholder="Describe los faciales previos"
+                    />
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+
+            {stepSevenModal.section === 'aparatologia' ? (
+              <div className="valuation-grid">
+                <label>
+                  Has usado aparatologia corporal?
+                  <select
+                    value={stepSevenData.aparatologiaCorporal}
+                    onChange={(event) => setStepSevenFieldValue('aparatologiaCorporal', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                {stepSevenData.aparatologiaCorporal === 'si' ? (
+                  <label className="valuation-field-large">
+                    Cuales?
+                    <textarea
+                      rows="3"
+                      value={stepSevenData.aparatologiaCorporalCuales}
+                      onChange={(event) =>
+                        setStepSevenFieldValue('aparatologiaCorporalCuales', event.target.value)}
+                      placeholder="Describe la aparatologia corporal"
+                    />
+                  </label>
+                ) : null}
+              </div>
+            ) : null}
+
+            <button type="button" className="main-button" onClick={closeStepSevenModal}>
+              Listo
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {stepEightModal.open ? (
+        <div className="selection-modal-backdrop" onClick={closeStepEightModal}>
+          <div
+            className="selection-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={stepEightModal.title}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head">
+              <h3 className="consultation-block-title">{stepEightModal.title}</h3>
+              <button type="button" className="main-button secondary" onClick={closeStepEightModal}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="selection-options-grid">
+              {stepEightModal.options.map((option) => (
+                <label className="motivo-option" key={`${stepEightModal.field}-${option}`}>
+                  <input
+                    type="checkbox"
+                    checked={getStepEightList(stepEightModal.field).includes(option)}
+                    onChange={() => toggleStepEightOption(stepEightModal.field, option)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+
+            {isStepEightOtherSelected(stepEightModal.field) ? (
+              <label className="selection-modal-field">
+                {getStepEightOtherConfig(stepEightModal.field)?.label}
+                <input
+                  type="text"
+                  value={stepEightData[getStepEightOtherConfig(stepEightModal.field)?.textField || ''] || ''}
+                  onChange={(event) =>
+                    setStepEightFieldValue(
+                      getStepEightOtherConfig(stepEightModal.field)?.textField || '',
+                      event.target.value,
+                    )}
+                  placeholder={getStepEightOtherConfig(stepEightModal.field)?.placeholder}
+                />
+              </label>
+            ) : null}
+
+            <button type="button" className="main-button" onClick={closeStepEightModal}>
+              Listo
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {stepNineModal.open ? (
+        <div className="selection-modal-backdrop" onClick={closeStepNineModal}>
+          <div
+            className="selection-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={stepNineModal.title}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head">
+              <h3 className="consultation-block-title">{stepNineModal.title}</h3>
+              <button type="button" className="main-button secondary" onClick={closeStepNineModal}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="selection-options-grid">
+              {stepNineModal.options.map((option) => (
+                <label className="motivo-option" key={`${stepNineModal.field}-${option}`}>
+                  <input
+                    type="checkbox"
+                    checked={getStepNineList(stepNineModal.field).includes(option)}
+                    onChange={() => toggleStepNineOption(stepNineModal.field, option)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+
+            <button type="button" className="main-button" onClick={closeStepNineModal}>
+              Listo
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {stepTenModal.open ? (
+        <div className="selection-modal-backdrop" onClick={closeStepTenModal}>
+          <div
+            className="selection-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={stepTenModal.title}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head">
+              <h3 className="consultation-block-title">{stepTenModal.title}</h3>
+              <button type="button" className="main-button secondary" onClick={closeStepTenModal}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="selection-options-grid">
+              {stepTenModal.options.map((option) => (
+                <label className="motivo-option" key={`${stepTenModal.field}-${option}`}>
+                  <input
+                    type="checkbox"
+                    checked={getStepTenList(stepTenModal.field).includes(option)}
+                    onChange={() => toggleStepTenOption(stepTenModal.field, option)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+
+            <button type="button" className="main-button" onClick={closeStepTenModal}>
+              Listo
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {stepTwoModal.open ? (
+        <div className="selection-modal-backdrop" onClick={closeStepTwoModal}>
+          <div
+            className="selection-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={stepTwoModal.title}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head">
+              <h3 className="consultation-block-title">{stepTwoModal.title}</h3>
+              <button type="button" className="main-button secondary" onClick={closeStepTwoModal}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="selection-options-grid">
+              {stepTwoModal.options.map((option) => (
+                <label className="motivo-option" key={`${stepTwoModal.field}-${option}`}>
+                  <input
+                    type="checkbox"
+                    checked={getStepTwoList(stepTwoModal.field).includes(option)}
+                    onChange={() => toggleStepTwoMotive(stepTwoModal.field, option)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+
+            <button type="button" className="main-button" onClick={closeStepTwoModal}>
+              Listo
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {stepFourModal.open ? (
+        <div className="selection-modal-backdrop" onClick={closeStepFourModal}>
+          <div
+            className="selection-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={stepFourModal.title}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head">
+              <h3 className="consultation-block-title">{stepFourModal.title}</h3>
+              <button type="button" className="main-button secondary" onClick={closeStepFourModal}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="selection-options-grid">
+              {stepFourModal.options.map((option) => (
+                <label className="motivo-option" key={`${stepFourModal.field}-${option}`}>
+                  <input
+                    type="checkbox"
+                    checked={getStepFourList(stepFourModal.field).includes(option)}
+                    onChange={() => toggleStepFourOption(stepFourModal.field, option)}
+                  />
+                  <span>{option}</span>
+                </label>
+              ))}
+            </div>
+
+            {isStepFourOtherSelected(stepFourModal.field) ? (
+              <label className="selection-modal-field">
+                {getStepFourOtherConfig(stepFourModal.field)?.label}
+                <input
+                  type="text"
+                  value={stepFourData[getStepFourOtherConfig(stepFourModal.field)?.textField || ''] || ''}
+                  onChange={(event) =>
+                    setStepFourFieldValue(
+                      getStepFourOtherConfig(stepFourModal.field)?.textField || '',
+                      event.target.value,
+                    )}
+                  placeholder={getStepFourOtherConfig(stepFourModal.field)?.placeholder}
+                />
+              </label>
+            ) : null}
+
+            <button type="button" className="main-button" onClick={closeStepFourModal}>
+              Listo
+            </button>
+          </div>
+        </div>
       ) : null}
     </section>
   )

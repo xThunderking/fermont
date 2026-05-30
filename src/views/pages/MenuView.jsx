@@ -10,36 +10,36 @@ function MenuView() {
       <div className="module-grid">
         <button
           type="button"
-          className="module-card users-module-card"
+          className="module-card module-card-nueva-valoracion"
+          aria-label="Nueva Valoracion"
+          title="Nueva Valoracion"
           onClick={() => navigate('/app/nueva-valoracion')}
-        >
-          <h2>Nueva Valoracion</h2>
-        </button>
+        />
 
         <button
           type="button"
-          className="module-card users-module-card"
+          className="module-card module-card-valoraciones-pendientes"
+          aria-label="Valoraciones Pendientes"
+          title="Valoraciones Pendientes"
           onClick={() => navigate('/app/valoraciones-pendientes')}
-        >
-          <h2>Valoraciones Pendientes</h2>
-        </button>
+        />
 
         <button
           type="button"
-          className="module-card users-module-card"
+          className="module-card module-card-clientes"
+          aria-label="Clientes"
+          title="Clientes"
           onClick={() => navigate('/app/clientes')}
-        >
-          <h2>Clientes</h2>
-        </button>
+        />
 
         {isAdmin ? (
           <button
             type="button"
-            className="module-card users-module-card"
+            className="module-card module-card-usuarios"
+            aria-label="Usuarios"
+            title="Usuarios"
             onClick={() => navigate('/app/usuarios')}
-          >
-            <h2>Usuarios</h2>
-          </button>
+          />
         ) : null}
       </div>
     </section>
