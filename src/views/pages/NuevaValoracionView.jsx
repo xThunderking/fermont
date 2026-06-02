@@ -11,6 +11,7 @@ import {
   STEP_TWO_OPTIONS,
   getValuationForEdition,
   saveStepEightValuation,
+  saveStepElevenValuation,
   saveStepNineValuation,
   saveStepOneValuation,
   saveStepFourValuation,
@@ -21,6 +22,12 @@ import {
   saveStepThreeValuation,
   saveStepTwoValuation,
 } from '../../models/valuationModel.js'
+import glogauTipo1 from '../../img/glogau/tipo1.jpg'
+import glogauTipo2 from '../../img/glogau/tipo2.jpg'
+import glogauTipo3 from '../../img/glogau/tipo3.jpg'
+import glogauTipo4 from '../../img/glogau/tipo4.jpg'
+
+const TOTAL_STEPS = 11
 
 const getTodayDate = () => new Date().toISOString().split('T')[0]
 
@@ -135,6 +142,19 @@ const createStepTenInitialData = () => ({
   sensibilidadCutaneaDetalle: '',
 })
 
+const createStepElevenInitialData = () => ({
+  circulacionPiernasCansadas: '',
+  circulacionVarices: '',
+  circulacionRetencionLiquidos: '',
+  circulacionDolorTacto: '',
+  pesoCambiosRecientes: '',
+  pesoFluctuaciones: '',
+  actividadEjercicio: '',
+  actividadFrecuenciaSemanal: '',
+  objetivoZonaMejorar: '',
+  objetivoIncomodidadVisual: '',
+})
+
 const STEP_FOUR_OTHER_CONFIG = {
   enfermedades: {
     option: 'Otro',
@@ -177,6 +197,68 @@ const STEP_EIGHT_OTHER_CONFIG = {
     placeholder: 'Escribe el producto',
   },
 }
+
+const FITZPATRICK_COLOR_OPTIONS = [
+  {
+    value: 'I',
+    label: 'Muy claro',
+    tone: 'Marfil palido',
+    color: '#fce8d8',
+  },
+  {
+    value: 'II',
+    label: 'Claro',
+    tone: 'Beige claro',
+    color: '#f4d4b6',
+  },
+  {
+    value: 'III',
+    label: 'Claro a medio',
+    tone: 'Beige medio',
+    color: '#deb48a',
+  },
+  {
+    value: 'IV',
+    label: 'Medio oliva',
+    tone: 'Oliva claro',
+    color: '#c18e62',
+  },
+  {
+    value: 'V',
+    label: 'Moreno',
+    tone: 'Marron claro a medio',
+    color: '#9d6843',
+  },
+  {
+    value: 'VI',
+    label: 'Muy oscuro',
+    tone: 'Marron oscuro',
+    color: '#6a4129',
+  },
+]
+
+const GLOGAU_IMAGE_OPTIONS = [
+  {
+    value: 'I',
+    label: 'Tipo I',
+    image: glogauTipo1,
+  },
+  {
+    value: 'II',
+    label: 'Tipo II',
+    image: glogauTipo2,
+  },
+  {
+    value: 'III',
+    label: 'Tipo III',
+    image: glogauTipo3,
+  },
+  {
+    value: 'IV',
+    label: 'Tipo IV',
+    image: glogauTipo4,
+  },
+]
 
 const normalizeExistingStepTwoData = (rawStepTwo) => {
   const fallback = createStepTwoInitialData()
@@ -463,6 +545,32 @@ const normalizeExistingStepTenData = (rawStepTen) => {
   }
 }
 
+const normalizeExistingStepElevenData = (rawStepEleven) => {
+  const fallback = createStepElevenInitialData()
+
+  if (!rawStepEleven) {
+    return fallback
+  }
+
+  const normalizeBinaryValue = (value) => {
+    const normalized = String(value ?? '').trim().toLowerCase()
+    return normalized === 'si' || normalized === 'no' ? normalized : ''
+  }
+
+  return {
+    circulacionPiernasCansadas: normalizeBinaryValue(rawStepEleven.circulacionPiernasCansadas),
+    circulacionVarices: normalizeBinaryValue(rawStepEleven.circulacionVarices),
+    circulacionRetencionLiquidos: normalizeBinaryValue(rawStepEleven.circulacionRetencionLiquidos),
+    circulacionDolorTacto: normalizeBinaryValue(rawStepEleven.circulacionDolorTacto),
+    pesoCambiosRecientes: normalizeBinaryValue(rawStepEleven.pesoCambiosRecientes),
+    pesoFluctuaciones: normalizeBinaryValue(rawStepEleven.pesoFluctuaciones),
+    actividadEjercicio: normalizeBinaryValue(rawStepEleven.actividadEjercicio),
+    actividadFrecuenciaSemanal: String(rawStepEleven.actividadFrecuenciaSemanal ?? ''),
+    objetivoZonaMejorar: String(rawStepEleven.objetivoZonaMejorar ?? ''),
+    objetivoIncomodidadVisual: String(rawStepEleven.objetivoIncomodidadVisual ?? ''),
+  }
+}
+
 const clearClientCoreData = (data) => ({
   ...data,
   apellidoPaterno: '',
@@ -483,6 +591,7 @@ function NuevaValoracionView() {
 
   const [valuationDocId, setValuationDocId] = useState(valuationId || '')
   const [activeStep, setActiveStep] = useState(1)
+  const [highestSavedStep, setHighestSavedStep] = useState(1)
   const [clientFlowType, setClientFlowType] = useState('nuevo')
   const [selectedClientId, setSelectedClientId] = useState('')
   const [stepOneData, setStepOneData] = useState(createStepOneInitialData)
@@ -495,6 +604,7 @@ function NuevaValoracionView() {
   const [stepEightData, setStepEightData] = useState(createStepEightInitialData)
   const [stepNineData, setStepNineData] = useState(createStepNineInitialData)
   const [stepTenData, setStepTenData] = useState(createStepTenInitialData)
+  const [stepElevenData, setStepElevenData] = useState(createStepElevenInitialData)
   const [stepTwoModal, setStepTwoModal] = useState({
     open: false,
     field: '',
@@ -529,6 +639,7 @@ function NuevaValoracionView() {
     field: '',
     title: '',
     options: [],
+    mode: 'multiple',
   })
   const [availableClients, setAvailableClients] = useState([])
   const [clientSearch, setClientSearch] = useState('')
@@ -536,7 +647,7 @@ function NuevaValoracionView() {
   const [isLoading, setIsLoading] = useState(Boolean(valuationId))
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
-  const [successMessage, setSuccessMessage] = useState('')
+  const [, setSuccessMessage] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -580,6 +691,7 @@ function NuevaValoracionView() {
       if (!valuationId) {
         setValuationDocId('')
         setActiveStep(1)
+        setHighestSavedStep(1)
         setClientFlowType('nuevo')
         setSelectedClientId('')
         setStepOneData(createStepOneInitialData())
@@ -592,12 +704,13 @@ function NuevaValoracionView() {
         setStepEightData(createStepEightInitialData())
         setStepNineData(createStepNineInitialData())
         setStepTenData(createStepTenInitialData())
+        setStepElevenData(createStepElevenInitialData())
         setStepTwoModal({ open: false, field: '', title: '', options: [] })
         setStepFourModal({ open: false, field: '', title: '', options: [] })
         setStepSevenModal({ open: false, section: '', title: '' })
         setStepEightModal({ open: false, field: '', title: '', options: [] })
         setStepNineModal({ open: false, field: '', title: '', options: [] })
-        setStepTenModal({ open: false, field: '', title: '', options: [] })
+        setStepTenModal({ open: false, field: '', title: '', options: [], mode: 'multiple' })
         setIsLoading(false)
         return
       }
@@ -622,23 +735,32 @@ function NuevaValoracionView() {
 
       setError('')
       setValuationDocId(result.valuation.id)
-      if (result.valuation.currentStep >= 10) {
+      const loadedCurrentStep = Number(result.valuation.currentStep ?? 1)
+      const normalizedLoadedCurrentStep = Number.isFinite(loadedCurrentStep)
+        ? Math.max(1, Math.min(TOTAL_STEPS, Math.trunc(loadedCurrentStep)))
+        : 1
+
+      setHighestSavedStep(normalizedLoadedCurrentStep)
+
+      if (normalizedLoadedCurrentStep >= 11) {
+        setActiveStep(11)
+      } else if (normalizedLoadedCurrentStep >= 10) {
         setActiveStep(10)
-      } else if (result.valuation.currentStep >= 9) {
+      } else if (normalizedLoadedCurrentStep >= 9) {
         setActiveStep(9)
-      } else if (result.valuation.currentStep >= 8) {
+      } else if (normalizedLoadedCurrentStep >= 8) {
         setActiveStep(8)
-      } else if (result.valuation.currentStep >= 7) {
+      } else if (normalizedLoadedCurrentStep >= 7) {
         setActiveStep(7)
-      } else if (result.valuation.currentStep >= 6) {
+      } else if (normalizedLoadedCurrentStep >= 6) {
         setActiveStep(6)
-      } else if (result.valuation.currentStep >= 5) {
+      } else if (normalizedLoadedCurrentStep >= 5) {
         setActiveStep(5)
-      } else if (result.valuation.currentStep >= 4) {
+      } else if (normalizedLoadedCurrentStep >= 4) {
         setActiveStep(4)
-      } else if (result.valuation.currentStep >= 3) {
+      } else if (normalizedLoadedCurrentStep >= 3) {
         setActiveStep(3)
-      } else if (result.valuation.currentStep >= 2) {
+      } else if (normalizedLoadedCurrentStep >= 2) {
         setActiveStep(2)
       } else {
         setActiveStep(1)
@@ -655,6 +777,7 @@ function NuevaValoracionView() {
       setStepEightData(normalizeExistingStepEightData(result.valuation.step8))
       setStepNineData(normalizeExistingStepNineData(result.valuation.step9))
       setStepTenData(normalizeExistingStepTenData(result.valuation.step10))
+      setStepElevenData(normalizeExistingStepElevenData(result.valuation.step11))
       setIsLoading(false)
     }
 
@@ -664,6 +787,17 @@ function NuevaValoracionView() {
       isMounted = false
     }
   }, [valuationId])
+
+  useEffect(() => {
+    const appBody = document.querySelector('.app-body')
+
+    if (appBody) {
+      appBody.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }, [activeStep])
 
   const filteredClients = useMemo(() => {
     const queryText = clientSearch.trim().toLowerCase()
@@ -684,6 +818,11 @@ function NuevaValoracionView() {
 
     return 'Nueva Valoracion'
   }, [valuationDocId])
+
+  const normalizedActiveStep = Number.isFinite(Number(activeStep))
+    ? Math.max(1, Math.min(TOTAL_STEPS, Math.trunc(Number(activeStep))))
+    : 1
+  const progressPercent = Math.round((normalizedActiveStep / TOTAL_STEPS) * 100)
 
   const showClientFlowToggle = !valuationDocId
 
@@ -780,6 +919,13 @@ function NuevaValoracionView() {
 
   const setStepTenFieldValue = (field, value) => {
     setStepTenData((previous) => ({
+      ...previous,
+      [field]: value,
+    }))
+  }
+
+  const setStepElevenFieldValue = (field, value) => {
+    setStepElevenData((previous) => ({
       ...previous,
       [field]: value,
     }))
@@ -904,12 +1050,13 @@ function NuevaValoracionView() {
     })
   }
 
-  const openStepTenModal = (field, title, options) => {
+  const openStepTenModal = (field, title, options, mode = 'multiple') => {
     setStepTenModal({
       open: true,
       field,
       title,
       options,
+      mode,
     })
   }
 
@@ -919,6 +1066,7 @@ function NuevaValoracionView() {
       field: '',
       title: '',
       options: [],
+      mode: 'multiple',
     })
   }
 
@@ -1056,6 +1204,30 @@ function NuevaValoracionView() {
     return `${item}: ${detail}`
   }
 
+  const getFitzpatrickOptionByValue = (value) =>
+    FITZPATRICK_COLOR_OPTIONS.find((option) => option.value === value) || null
+
+  const formatFitzpatrickSelectedItem = (value) => {
+    const option = getFitzpatrickOptionByValue(value)
+    if (!option) {
+      return value
+    }
+
+    return `${option.value} - ${option.label}`
+  }
+
+  const getGlogauOptionByValue = (value) =>
+    GLOGAU_IMAGE_OPTIONS.find((option) => option.value === value) || null
+
+  const formatGlogauSelectedItem = (value) => {
+    const option = getGlogauOptionByValue(value)
+    if (!option) {
+      return value
+    }
+
+    return `${option.value} - ${option.label}`
+  }
+
   const getStepFourOtherConfig = (field) => STEP_FOUR_OTHER_CONFIG[field] || null
 
   const isStepFourOtherSelected = (field) => {
@@ -1079,6 +1251,16 @@ function NuevaValoracionView() {
     }
 
     return `${item}: ${detail}`
+  }
+
+  const syncHighestSavedStep = (candidateStep) => {
+    const numericStep = Number(candidateStep)
+    const normalizedStep = Number.isFinite(numericStep)
+      ? Math.max(1, Math.min(TOTAL_STEPS, Math.trunc(numericStep)))
+      : 1
+
+    setHighestSavedStep((previous) => Math.max(previous, normalizedStep))
+    return normalizedStep
   }
 
   const applyClientToStepOne = (client) => {
@@ -1149,6 +1331,7 @@ function NuevaValoracionView() {
     const valuationResult = await saveStepOneValuation({
       valuationId: valuationDocId,
       userId: currentUser.id,
+      knownCurrentStep: highestSavedStep,
       stepOneData: {
         ...stepOneData,
         tipoCliente: clientFlowType,
@@ -1171,6 +1354,7 @@ function NuevaValoracionView() {
     }))
     setError('')
     setSuccessMessage(valuationResult.message)
+    syncHighestSavedStep(valuationResult.valuation?.currentStep ?? 1)
 
     const nextValuationId = valuationResult.valuation?.id || valuationDocId
     setValuationDocId(nextValuationId)
@@ -1186,6 +1370,7 @@ function NuevaValoracionView() {
     setIsSaving(true)
     const result = await saveStepTwoValuation({
       valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
       stepTwoData,
     })
     setIsSaving(false)
@@ -1198,6 +1383,7 @@ function NuevaValoracionView() {
 
     setError('')
     setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 2)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
   }
@@ -1206,6 +1392,7 @@ function NuevaValoracionView() {
     setIsSaving(true)
     const result = await saveStepThreeValuation({
       valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
       stepThreeData,
     })
     setIsSaving(false)
@@ -1218,6 +1405,7 @@ function NuevaValoracionView() {
 
     setError('')
     setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 3)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
   }
@@ -1226,6 +1414,7 @@ function NuevaValoracionView() {
     setIsSaving(true)
     const result = await saveStepFourValuation({
       valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
       stepFourData,
     })
     setIsSaving(false)
@@ -1238,6 +1427,7 @@ function NuevaValoracionView() {
 
     setError('')
     setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 4)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
   }
@@ -1246,6 +1436,7 @@ function NuevaValoracionView() {
     setIsSaving(true)
     const result = await saveStepFiveValuation({
       valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
       stepFiveData,
     })
     setIsSaving(false)
@@ -1258,6 +1449,7 @@ function NuevaValoracionView() {
 
     setError('')
     setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 5)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
   }
@@ -1266,6 +1458,7 @@ function NuevaValoracionView() {
     setIsSaving(true)
     const result = await saveStepSixValuation({
       valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
       stepSixData,
     })
     setIsSaving(false)
@@ -1278,6 +1471,7 @@ function NuevaValoracionView() {
 
     setError('')
     setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 6)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
   }
@@ -1286,6 +1480,7 @@ function NuevaValoracionView() {
     setIsSaving(true)
     const result = await saveStepSevenValuation({
       valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
       stepSevenData,
     })
     setIsSaving(false)
@@ -1298,6 +1493,7 @@ function NuevaValoracionView() {
 
     setError('')
     setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 7)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
   }
@@ -1306,6 +1502,7 @@ function NuevaValoracionView() {
     setIsSaving(true)
     const result = await saveStepEightValuation({
       valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
       stepEightData,
     })
     setIsSaving(false)
@@ -1318,6 +1515,7 @@ function NuevaValoracionView() {
 
     setError('')
     setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 8)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
   }
@@ -1326,6 +1524,7 @@ function NuevaValoracionView() {
     setIsSaving(true)
     const result = await saveStepNineValuation({
       valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
       stepNineData,
     })
     setIsSaving(false)
@@ -1338,6 +1537,7 @@ function NuevaValoracionView() {
 
     setError('')
     setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 9)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
   }
@@ -1346,6 +1546,7 @@ function NuevaValoracionView() {
     setIsSaving(true)
     const result = await saveStepTenValuation({
       valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
       stepTenData,
     })
     setIsSaving(false)
@@ -1358,6 +1559,29 @@ function NuevaValoracionView() {
 
     setError('')
     setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 10)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
+  const saveStepEleven = async () => {
+    setIsSaving(true)
+    const result = await saveStepElevenValuation({
+      valuationId: valuationDocId,
+      knownCurrentStep: highestSavedStep,
+      stepElevenData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    syncHighestSavedStep(result.valuation?.currentStep ?? 11)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
   }
@@ -1382,7 +1606,7 @@ function NuevaValoracionView() {
     }
 
     setActiveStep(2)
-    setSuccessMessage('Paso 1 guardado. Puedes continuar con el paso 2.')
+    setSuccessMessage('')
   }
 
   const handleSaveStepTwoAndExit = async (event) => {
@@ -1405,7 +1629,7 @@ function NuevaValoracionView() {
     }
 
     setActiveStep(3)
-    setSuccessMessage('Paso 2 guardado. Puedes continuar con el paso 3.')
+    setSuccessMessage('')
   }
 
   const handleSaveStepThreeAndExit = async (event) => {
@@ -1428,7 +1652,7 @@ function NuevaValoracionView() {
     }
 
     setActiveStep(4)
-    setSuccessMessage('Paso 3 guardado. Puedes continuar con el paso 4.')
+    setSuccessMessage('')
   }
 
   const handleSaveStepFourAndExit = async (event) => {
@@ -1451,7 +1675,7 @@ function NuevaValoracionView() {
     }
 
     setActiveStep(5)
-    setSuccessMessage('Paso 4 guardado. Puedes continuar con el paso 5.')
+    setSuccessMessage('')
   }
 
   const handleSaveStepFiveAndExit = async (event) => {
@@ -1474,7 +1698,7 @@ function NuevaValoracionView() {
     }
 
     setActiveStep(6)
-    setSuccessMessage('Paso 5 guardado. Puedes continuar con el paso 6.')
+    setSuccessMessage('')
   }
 
   const handleSaveStepSixAndExit = async (event) => {
@@ -1497,7 +1721,7 @@ function NuevaValoracionView() {
     }
 
     setActiveStep(7)
-    setSuccessMessage('Paso 6 guardado. Puedes continuar con el paso 7.')
+    setSuccessMessage('')
   }
 
   const handleSaveStepSevenAndExit = async (event) => {
@@ -1520,7 +1744,7 @@ function NuevaValoracionView() {
     }
 
     setActiveStep(8)
-    setSuccessMessage('Paso 7 guardado. Puedes continuar con el paso 8.')
+    setSuccessMessage('')
   }
 
   const handleSaveStepEightAndExit = async (event) => {
@@ -1543,7 +1767,7 @@ function NuevaValoracionView() {
     }
 
     setActiveStep(9)
-    setSuccessMessage('Paso 8 guardado. Puedes continuar con el paso 9.')
+    setSuccessMessage('')
   }
 
   const handleSaveStepNineAndExit = async (event) => {
@@ -1566,7 +1790,7 @@ function NuevaValoracionView() {
     }
 
     setActiveStep(10)
-    setSuccessMessage('Paso 9 guardado. Puedes continuar con el paso 10.')
+    setSuccessMessage('')
   }
 
   const handleSaveStepTenAndExit = async (event) => {
@@ -1588,7 +1812,30 @@ function NuevaValoracionView() {
       return
     }
 
-    setSuccessMessage('Paso 10 guardado. Paso 11 disponible en la siguiente iteracion.')
+    setActiveStep(11)
+    setSuccessMessage('')
+  }
+
+  const handleSaveStepElevenAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepEleven()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveStepElevenAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveStepEleven()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
   }
 
   return (
@@ -1600,27 +1847,18 @@ function NuevaValoracionView() {
 
         <div>
           <h1>{titleText}</h1>
-          <p className="subtitle">
-            {activeStep === 1
-              ? 'Paso 1 de 14: Datos generales del cliente.'
-              : activeStep === 2
-                ? 'Paso 2 de 14: Motivo de consulta.'
-                : activeStep === 3
-                  ? 'Paso 3 de 14: Expectativas y prioridades del cliente.'
-                  : activeStep === 4
-                    ? 'Paso 4 de 14: Historial clinico.'
-                    : activeStep === 5
-                      ? 'Paso 5 de 14: Habitos y estilo de vida.'
-                      : activeStep === 6
-                        ? 'Paso 6 de 14: Exposicion solar.'
-                        : activeStep === 7
-                          ? 'Paso 7 de 14: Historial estetico.'
-                          : activeStep === 8
-                            ? 'Paso 8 de 14: Rutina actual.'
-                            : activeStep === 9
-                              ? 'Paso 9 de 14: Evaluacion facial.'
-                              : 'Paso 10 de 14: Evaluacion facial 2.'}
-          </p>
+          <div className="valuation-progress-head">
+            <div
+              className="valuation-progress-track"
+              role="progressbar"
+              aria-label={`Progreso de valoracion: paso ${normalizedActiveStep} de ${TOTAL_STEPS}`}
+              aria-valuemin={1}
+              aria-valuemax={TOTAL_STEPS}
+              aria-valuenow={normalizedActiveStep}
+            >
+              <span className="valuation-progress-fill" style={{ width: `${progressPercent}%` }} />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1804,7 +2042,20 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
+
+          <div className="post-step-tools">
+            <button type="button" className="main-button secondary post-step-tool-button">
+              SEMAFORO CUTANEO
+            </button>
+
+            <button type="button" className="main-button secondary post-step-tool-button">
+              MAPA INTERACTIVO
+            </button>
+
+            <button type="button" className="main-button secondary post-step-tool-button">
+              FOTOGRAFIAS
+            </button>
+          </div>
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -1827,8 +2078,6 @@ function NuevaValoracionView() {
           <div className="valuation-section-title">Motivo de consulta</div>
 
           <div className="motivos-wrapper">
-            <p className="subtitle">Selecciona uno o varios motivos faciales y/o corporales.</p>
-
             <div className="consultation-block">
               <h3 className="consultation-block-title">Facial</h3>
               <button
@@ -1879,7 +2128,6 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -1963,7 +2211,6 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -1994,10 +2241,6 @@ function NuevaValoracionView() {
       {!isLoading && activeStep === 4 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepFourAndExit}>
           <div className="valuation-section-title">Historial clinico</div>
-
-          <p className="subtitle">
-            Ningun campo es obligatorio en este paso. Selecciona solo lo que aplique.
-          </p>
 
           <div className="valuation-grid">
             <div className="valuation-field-large selection-card">
@@ -2114,7 +2357,6 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -2145,10 +2387,6 @@ function NuevaValoracionView() {
       {!isLoading && activeStep === 5 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepFiveAndExit}>
           <div className="valuation-section-title">Habitos y estilo de vida</div>
-
-          <p className="subtitle">
-            Ningun campo es obligatorio en este paso. Responde solo lo que aplique.
-          </p>
 
           <div className="valuation-grid">
             <label>
@@ -2267,7 +2505,6 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -2298,10 +2535,6 @@ function NuevaValoracionView() {
       {!isLoading && activeStep === 6 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepSixAndExit}>
           <div className="valuation-section-title">Exposicion solar</div>
-
-          <p className="subtitle">
-            Ningun campo es obligatorio en este paso. Responde solo lo que aplique.
-          </p>
 
           <div className="valuation-grid">
             <label>
@@ -2360,7 +2593,6 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -2391,11 +2623,6 @@ function NuevaValoracionView() {
       {!isLoading && activeStep === 7 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepSevenAndExit}>
           <div className="valuation-section-title">Historial estetico</div>
-
-          <p className="subtitle">
-            Ningun campo es obligatorio en este paso. Usa los modales para procedimientos, faciales y
-            aparatologia. Preguntas importantes se responde aqui directo.
-          </p>
 
           <div className="valuation-grid">
             <div className="valuation-field-large selection-card">
@@ -2541,7 +2768,6 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -2572,10 +2798,6 @@ function NuevaValoracionView() {
       {!isLoading && activeStep === 8 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepEightAndExit}>
           <div className="valuation-section-title">Rutina actual</div>
-
-          <p className="subtitle">
-            Ningun campo es obligatorio en este paso. Solo mañana y noche se capturan con modal.
-          </p>
 
           <div className="valuation-grid">
             <div className="selection-card">
@@ -2718,7 +2940,6 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -2749,10 +2970,6 @@ function NuevaValoracionView() {
       {!isLoading && activeStep === 9 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepNineAndExit}>
           <div className="valuation-section-title">Evaluacion facial</div>
-
-          <p className="subtitle">
-            Ningun campo es obligatorio en este paso. Todos los bloques se responden en modal.
-          </p>
 
           <div className="valuation-grid">
             <div className="selection-card">
@@ -2833,7 +3050,6 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -2864,11 +3080,6 @@ function NuevaValoracionView() {
       {!isLoading && activeStep === 10 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepTenAndExit}>
           <div className="valuation-section-title">Evaluacion facial 2</div>
-
-          <p className="subtitle">
-            Manchas se responde en modal. Hormonal, acne, sensibilidad, escalas y sensibilidad cutanea
-            se responden directo aqui.
-          </p>
 
           <div className="valuation-grid">
             <div className="selection-card valuation-field-large">
@@ -3011,35 +3222,71 @@ function NuevaValoracionView() {
               <p className="selection-title">Escalas (propuesta)</p>
 
               <div className="valuation-grid">
-                <label>
-                  Fitzpatrick
-                  <select
-                    value={stepTenData.escalaFitzpatrick}
-                    onChange={(event) => setStepTenFieldValue('escalaFitzpatrick', event.target.value)}
+                <div className="valuation-field-large">
+                  <p className="selection-title">Fitzpatrick</p>
+                  <button
+                    type="button"
+                    className="main-button secondary selection-trigger"
+                    onClick={() =>
+                      openStepTenModal(
+                        'escalaFitzpatrick',
+                        'Escala Fitzpatrick',
+                        STEP_TEN_OPTIONS.escalaFitzpatrick,
+                        'single',
+                      )}
                   >
-                    <option value="">Sin respuesta</option>
-                    {STEP_TEN_OPTIONS.escalaFitzpatrick.map((option) => (
-                      <option key={`fitzpatrick-${option}`} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    Seleccionar nivel Fitzpatrick
+                  </button>
 
-                <label>
-                  Glogau
-                  <select
-                    value={stepTenData.escalaGlogau}
-                    onChange={(event) => setStepTenFieldValue('escalaGlogau', event.target.value)}
+                  {stepTenData.escalaFitzpatrick ? (
+                    <div className="selection-tags">
+                      <span className="selection-tag fitzpatrick-selection-tag">
+                        <span
+                          className="fitzpatrick-color-dot"
+                          style={{
+                            backgroundColor:
+                              getFitzpatrickOptionByValue(stepTenData.escalaFitzpatrick)?.color || '#ffffff',
+                          }}
+                        />
+                        {formatFitzpatrickSelectedItem(stepTenData.escalaFitzpatrick)}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="selection-empty">Sin seleccion</p>
+                  )}
+                </div>
+
+                <div className="valuation-field-large">
+                  <p className="selection-title">Glogau</p>
+                  <button
+                    type="button"
+                    className="main-button secondary selection-trigger"
+                    onClick={() =>
+                      openStepTenModal(
+                        'escalaGlogau',
+                        'Escala Glogau',
+                        STEP_TEN_OPTIONS.escalaGlogau,
+                        'single-glogau',
+                      )}
                   >
-                    <option value="">Sin respuesta</option>
-                    {STEP_TEN_OPTIONS.escalaGlogau.map((option) => (
-                      <option key={`glogau-${option}`} value={option}>
-                        {option}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    Seleccionar nivel Glogau
+                  </button>
+
+                  {stepTenData.escalaGlogau ? (
+                    <div className="selection-tags">
+                      <span className="selection-tag glogau-selection-tag">
+                        <img
+                          className="glogau-selection-thumb"
+                          src={getGlogauOptionByValue(stepTenData.escalaGlogau)?.image || ''}
+                          alt={`Referencia ${formatGlogauSelectedItem(stepTenData.escalaGlogau)}`}
+                        />
+                        {formatGlogauSelectedItem(stepTenData.escalaGlogau)}
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="selection-empty">Sin seleccion</p>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -3059,7 +3306,6 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
-          {successMessage ? <p className="success-text">{successMessage}</p> : null}
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -3082,6 +3328,180 @@ function NuevaValoracionView() {
               onClick={() => setActiveStep(9)}
             >
               Volver al paso 9
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {!isLoading && activeStep === 11 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveStepElevenAndExit}>
+          <div className="valuation-section-title">Preguntas corporales</div>
+
+          <div className="valuation-grid">
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Circulacion</p>
+
+              <div className="valuation-grid">
+                <label>
+                  Tienes piernas cansadas?
+                  <select
+                    value={stepElevenData.circulacionPiernasCansadas}
+                    onChange={(event) =>
+                      setStepElevenFieldValue('circulacionPiernasCansadas', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Tienes varices?
+                  <select
+                    value={stepElevenData.circulacionVarices}
+                    onChange={(event) => setStepElevenFieldValue('circulacionVarices', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Tienes retencion de liquidos?
+                  <select
+                    value={stepElevenData.circulacionRetencionLiquidos}
+                    onChange={(event) =>
+                      setStepElevenFieldValue('circulacionRetencionLiquidos', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Tienes dolor al tacto?
+                  <select
+                    value={stepElevenData.circulacionDolorTacto}
+                    onChange={(event) =>
+                      setStepElevenFieldValue('circulacionDolorTacto', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Peso y habitos</p>
+
+              <div className="valuation-grid">
+                <label>
+                  Has subido o bajado de peso recientemente?
+                  <select
+                    value={stepElevenData.pesoCambiosRecientes}
+                    onChange={(event) => setStepElevenFieldValue('pesoCambiosRecientes', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Tu peso fluctua mucho?
+                  <select
+                    value={stepElevenData.pesoFluctuaciones}
+                    onChange={(event) => setStepElevenFieldValue('pesoFluctuaciones', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Actividad fisica</p>
+
+              <div className="valuation-grid">
+                <label>
+                  Haces ejercicio?
+                  <select
+                    value={stepElevenData.actividadEjercicio}
+                    onChange={(event) => setStepElevenFieldValue('actividadEjercicio', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+
+                <label>
+                  Cuantas veces por semana?
+                  <input
+                    value={stepElevenData.actividadFrecuenciaSemanal}
+                    onChange={(event) =>
+                      setStepElevenFieldValue('actividadFrecuenciaSemanal', event.target.value)}
+                    placeholder="Ejemplo: 3 veces"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Objetivos</p>
+
+              <div className="valuation-grid">
+                <label className="valuation-field-large">
+                  Que zona deseas mejorar mas?
+                  <textarea
+                    rows="3"
+                    value={stepElevenData.objetivoZonaMejorar}
+                    onChange={(event) => setStepElevenFieldValue('objetivoZonaMejorar', event.target.value)}
+                  />
+                </label>
+
+                <label className="valuation-field-large">
+                  Que es lo que mas te incomoda visualmente?
+                  <textarea
+                    rows="3"
+                    value={stepElevenData.objetivoIncomodidadVisual}
+                    onChange={(event) =>
+                      setStepElevenFieldValue('objetivoIncomodidadVisual', event.target.value)}
+                  />
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveStepElevenAndContinue}
+            >
+              FINALIZAR
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(10)}
+            >
+              Volver al paso 10
             </button>
           </div>
         </form>
@@ -3302,18 +3722,98 @@ function NuevaValoracionView() {
               </button>
             </div>
 
-            <div className="selection-options-grid">
-              {stepTenModal.options.map((option) => (
-                <label className="motivo-option" key={`${stepTenModal.field}-${option}`}>
-                  <input
-                    type="checkbox"
-                    checked={getStepTenList(stepTenModal.field).includes(option)}
-                    onChange={() => toggleStepTenOption(stepTenModal.field, option)}
-                  />
-                  <span>{option}</span>
-                </label>
-              ))}
-            </div>
+            {stepTenModal.mode === 'single' && stepTenModal.field === 'escalaFitzpatrick' ? (
+              <>
+                <div className="fitzpatrick-options-grid">
+                  {stepTenModal.options.map((option) => {
+                    const fitzpatrickOption = getFitzpatrickOptionByValue(option)
+                    const isSelected = stepTenData.escalaFitzpatrick === option
+
+                    return (
+                      <button
+                        key={`${stepTenModal.field}-${option}`}
+                        type="button"
+                        className={`fitzpatrick-option-card${
+                          isSelected ? ' fitzpatrick-option-card-selected' : ''
+                        }`}
+                        onClick={() => setStepTenFieldValue('escalaFitzpatrick', option)}
+                      >
+                        <span
+                          className="fitzpatrick-color-dot"
+                          style={{ backgroundColor: fitzpatrickOption?.color || '#ffffff' }}
+                        />
+                        <span className="fitzpatrick-option-content">
+                          <strong>{fitzpatrickOption?.value || option}</strong>
+                          <span>{fitzpatrickOption?.label || option}</span>
+                          <small>{fitzpatrickOption?.tone || ''}</small>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {stepTenData.escalaFitzpatrick ? (
+                  <button
+                    type="button"
+                    className="main-button secondary"
+                    onClick={() => setStepTenFieldValue('escalaFitzpatrick', '')}
+                  >
+                    Quitar seleccion
+                  </button>
+                ) : null}
+              </>
+            ) : stepTenModal.mode === 'single-glogau' && stepTenModal.field === 'escalaGlogau' ? (
+              <>
+                <div className="glogau-options-grid">
+                  {stepTenModal.options.map((option) => {
+                    const glogauOption = getGlogauOptionByValue(option)
+                    const isSelected = stepTenData.escalaGlogau === option
+
+                    return (
+                      <button
+                        key={`${stepTenModal.field}-${option}`}
+                        type="button"
+                        className={`glogau-option-card${isSelected ? ' glogau-option-card-selected' : ''}`}
+                        onClick={() => setStepTenFieldValue('escalaGlogau', option)}
+                      >
+                        <img
+                          className="glogau-option-image"
+                          src={glogauOption?.image || ''}
+                          alt={`Escala Glogau ${glogauOption?.label || option}`}
+                        />
+                        <span className="glogau-option-content">
+                          <strong>{glogauOption?.value || option}</strong>
+                          <span>{glogauOption?.label || `Tipo ${option}`}</span>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                {stepTenData.escalaGlogau ? (
+                  <button
+                    type="button"
+                    className="main-button secondary"
+                    onClick={() => setStepTenFieldValue('escalaGlogau', '')}
+                  >
+                    Quitar seleccion
+                  </button>
+                ) : null}
+              </>
+            ) : (
+              <div className="selection-options-grid">
+                {stepTenModal.options.map((option) => (
+                  <label className="motivo-option" key={`${stepTenModal.field}-${option}`}>
+                    <input
+                      type="checkbox"
+                      checked={getStepTenList(stepTenModal.field).includes(option)}
+                      onChange={() => toggleStepTenOption(stepTenModal.field, option)}
+                    />
+                    <span>{option}</span>
+                  </label>
+                ))}
+              </div>
+            )}
 
             <button type="button" className="main-button" onClick={closeStepTenModal}>
               Listo

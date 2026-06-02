@@ -2,7 +2,8 @@ import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, updat
 import { db } from '../services/firebase'
 
 const VALUATIONS_COLLECTION = 'valoraciones'
-const TOTAL_STEPS = 14
+const TOTAL_STEPS = 11
+const FIRESTORE_COMPAT_TOTAL_STEPS = 14
 
 export const STEP_TWO_OPTIONS = {
   facial: [
@@ -376,6 +377,70 @@ const normalizeStepTenData = (data) => {
   }
 }
 
+const normalizeStepElevenData = (data) => ({
+  circulacionPiernasCansadas: normalizeBinaryAnswer(
+    normalizeText(data?.circulacionPiernasCansadas).toLowerCase(),
+  ),
+  circulacionVarices: normalizeBinaryAnswer(normalizeText(data?.circulacionVarices).toLowerCase()),
+  circulacionRetencionLiquidos: normalizeBinaryAnswer(
+    normalizeText(data?.circulacionRetencionLiquidos).toLowerCase(),
+  ),
+  circulacionDolorTacto: normalizeBinaryAnswer(
+    normalizeText(data?.circulacionDolorTacto).toLowerCase(),
+  ),
+  pesoCambiosRecientes: normalizeBinaryAnswer(normalizeText(data?.pesoCambiosRecientes).toLowerCase()),
+  pesoFluctuaciones: normalizeBinaryAnswer(normalizeText(data?.pesoFluctuaciones).toLowerCase()),
+  actividadEjercicio: normalizeBinaryAnswer(normalizeText(data?.actividadEjercicio).toLowerCase()),
+  actividadFrecuenciaSemanal: normalizeText(data?.actividadFrecuenciaSemanal),
+  objetivoZonaMejorar: normalizeText(data?.objetivoZonaMejorar),
+  objetivoIncomodidadVisual: normalizeText(data?.objetivoIncomodidadVisual),
+})
+
+const normalizeInteractiveMapPoint = (point) => {
+  const x = Number(point?.x)
+  const y = Number(point?.y)
+
+  if (!Number.isFinite(x) || !Number.isFinite(y)) {
+    return null
+  }
+
+  return {
+    x: Math.max(0, Math.min(1, x)),
+    y: Math.max(0, Math.min(1, y)),
+  }
+}
+
+const normalizeInteractiveMapStrokes = (strokes) => {
+  if (!Array.isArray(strokes)) {
+    return []
+  }
+
+  return strokes
+    .slice(0, 400)
+    .map((stroke) => {
+      const color = normalizeText(stroke?.color) || '#d14836'
+      const sizeNumber = Number(stroke?.size)
+      const size = Number.isFinite(sizeNumber) ? Math.max(2, Math.min(32, sizeNumber)) : 8
+      const points = Array.isArray(stroke?.points)
+        ? stroke.points
+          .slice(0, 2500)
+          .map(normalizeInteractiveMapPoint)
+          .filter(Boolean)
+        : []
+
+      if (points.length === 0) {
+        return null
+      }
+
+      return {
+        color,
+        size,
+        points,
+      }
+    })
+    .filter(Boolean)
+}
+
 const buildClienteNombre = (stepOneData) =>
   [stepOneData.nombre, stepOneData.apellidoPaterno, stepOneData.apellidoMaterno]
     .filter(Boolean)
@@ -390,7 +455,7 @@ const mapValuationSnapshot = (snapshot) => {
     createdBy: String(data.createdBy ?? ''),
     status: data.status === 'completed' ? 'completed' : 'pending',
     currentStep: Number(data.currentStep ?? 1),
-    totalSteps: Number(data.totalSteps ?? TOTAL_STEPS),
+    totalSteps: TOTAL_STEPS,
     clienteId: String(data.clienteId ?? ''),
     clienteNombre: String(data.clienteNombre ?? ''),
     step1: data.step1 ?? null,
@@ -403,6 +468,8 @@ const mapValuationSnapshot = (snapshot) => {
     step8: data.step8 ?? null,
     step9: data.step9 ?? null,
     step10: data.step10 ?? null,
+    step11: data.step11 ?? null,
+    mapaInteractivo: data.mapaInteractivo ?? null,
     createdAtMs: data.createdAt?.toMillis?.() ?? 0,
     updatedAtMs: data.updatedAt?.toMillis?.() ?? 0,
   }
@@ -418,7 +485,62 @@ const readValuationById = async (valuationId) => {
   return mapValuationSnapshot(snapshot)
 }
 
-export const saveStepOneValuation = async ({ valuationId, userId, stepOneData }) => {
+const normalizeCurrentStepValue = (value) => {
+  const numericValue = Number(value)
+
+  if (!Number.isFinite(numericValue)) {
+    return 1
+  }
+
+  return Math.max(1, Math.min(TOTAL_STEPS, Math.trunc(numericValue)))
+}
+
+const buildValuationReference = (valuationId, currentStep) => ({
+  id: valuationId,
+  currentStep,
+  totalSteps: TOTAL_STEPS,
+})
+
+const saveExistingValuationStep = async ({
+  valuationId,
+  targetStep,
+  knownCurrentStep,
+  payload,
+  successMessage,
+  notFoundMessage,
+  genericErrorMessage,
+}) => {
+  const resolvedCurrentStep = Math.max(targetStep, normalizeCurrentStepValue(knownCurrentStep))
+
+  try {
+    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
+      currentStep: resolvedCurrentStep,
+      status: 'pending',
+      ...payload,
+      updatedAt: serverTimestamp(),
+    })
+
+    return {
+      ok: true,
+      message: successMessage,
+      valuation: buildValuationReference(valuationId, resolvedCurrentStep),
+    }
+  } catch (error) {
+    if (error?.code === 'not-found') {
+      return {
+        ok: false,
+        message: notFoundMessage,
+      }
+    }
+
+    return {
+      ok: false,
+      message: genericErrorMessage,
+    }
+  }
+}
+
+export const saveStepOneValuation = async ({ valuationId, userId, stepOneData, knownCurrentStep }) => {
   const normalizedStepOneData = normalizeStepOneData(stepOneData)
   const clienteNombre = buildClienteNombre(normalizedStepOneData)
 
@@ -428,11 +550,12 @@ export const saveStepOneValuation = async ({ valuationId, userId, stepOneData })
 
   try {
     if (!valuationId) {
+      const resolvedCurrentStep = 1
       const created = await addDoc(collection(db, VALUATIONS_COLLECTION), {
         createdBy: userId,
         status: 'pending',
-        currentStep: 1,
-        totalSteps: TOTAL_STEPS,
+        currentStep: resolvedCurrentStep,
+        totalSteps: FIRESTORE_COMPAT_TOTAL_STEPS,
         clienteId: normalizedStepOneData.clienteId,
         clienteNombre,
         step1: normalizedStepOneData,
@@ -440,40 +563,26 @@ export const saveStepOneValuation = async ({ valuationId, userId, stepOneData })
         updatedAt: serverTimestamp(),
       })
 
-      const saved = await readValuationById(created.id)
-
       return {
         ok: true,
         message: 'Paso 1 guardado. Valoracion pendiente creada.',
-        valuation: saved,
+        valuation: buildValuationReference(created.id, resolvedCurrentStep),
       }
     }
 
-    const existing = await readValuationById(valuationId)
-
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 1.',
-      }
-    }
-
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(1, existing.currentStep || 1),
-      status: 'pending',
-      clienteId: normalizedStepOneData.clienteId,
-      clienteNombre,
-      step1: normalizedStepOneData,
-      updatedAt: serverTimestamp(),
+    return await saveExistingValuationStep({
+      valuationId,
+      targetStep: 1,
+      knownCurrentStep,
+      payload: {
+        clienteId: normalizedStepOneData.clienteId,
+        clienteNombre,
+        step1: normalizedStepOneData,
+      },
+      successMessage: 'Paso 1 actualizado correctamente.',
+      notFoundMessage: 'No se encontro la valoracion para actualizar el paso 1.',
+      genericErrorMessage: 'No se pudo guardar el paso 1. Intenta de nuevo.',
     })
-
-    const saved = await readValuationById(valuationId)
-
-    return {
-      ok: true,
-      message: 'Paso 1 actualizado correctamente.',
-      valuation: saved,
-    }
   } catch {
     return {
       ok: false,
@@ -482,7 +591,7 @@ export const saveStepOneValuation = async ({ valuationId, userId, stepOneData })
   }
 }
 
-export const saveStepTwoValuation = async ({ valuationId, stepTwoData }) => {
+export const saveStepTwoValuation = async ({ valuationId, stepTwoData, knownCurrentStep }) => {
   if (!valuationId) {
     return {
       ok: false,
@@ -502,39 +611,18 @@ export const saveStepTwoValuation = async ({ valuationId, stepTwoData }) => {
     }
   }
 
-  try {
-    const existing = await readValuationById(valuationId)
-
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 2.',
-      }
-    }
-
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(2, existing.currentStep || 1),
-      status: 'pending',
-      step2: normalizedStepTwoData,
-      updatedAt: serverTimestamp(),
-    })
-
-    const saved = await readValuationById(valuationId)
-
-    return {
-      ok: true,
-      message: 'Paso 2 guardado correctamente.',
-      valuation: saved,
-    }
-  } catch {
-    return {
-      ok: false,
-      message: 'No se pudo guardar el paso 2. Intenta de nuevo.',
-    }
-  }
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 2,
+    knownCurrentStep,
+    payload: { step2: normalizedStepTwoData },
+    successMessage: 'Paso 2 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 2.',
+    genericErrorMessage: 'No se pudo guardar el paso 2. Intenta de nuevo.',
+  })
 }
 
-export const saveStepThreeValuation = async ({ valuationId, stepThreeData }) => {
+export const saveStepThreeValuation = async ({ valuationId, stepThreeData, knownCurrentStep }) => {
   if (!valuationId) {
     return {
       ok: false,
@@ -556,39 +644,18 @@ export const saveStepThreeValuation = async ({ valuationId, stepThreeData }) => 
     }
   }
 
-  try {
-    const existing = await readValuationById(valuationId)
-
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 3.',
-      }
-    }
-
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(3, existing.currentStep || 1),
-      status: 'pending',
-      step3: normalizedStepThreeData,
-      updatedAt: serverTimestamp(),
-    })
-
-    const saved = await readValuationById(valuationId)
-
-    return {
-      ok: true,
-      message: 'Paso 3 guardado correctamente.',
-      valuation: saved,
-    }
-  } catch {
-    return {
-      ok: false,
-      message: 'No se pudo guardar el paso 3. Intenta de nuevo.',
-    }
-  }
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 3,
+    knownCurrentStep,
+    payload: { step3: normalizedStepThreeData },
+    successMessage: 'Paso 3 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 3.',
+    genericErrorMessage: 'No se pudo guardar el paso 3. Intenta de nuevo.',
+  })
 }
 
-export const saveStepFourValuation = async ({ valuationId, stepFourData }) => {
+export const saveStepFourValuation = async ({ valuationId, stepFourData, knownCurrentStep }) => {
   if (!valuationId) {
     return {
       ok: false,
@@ -598,39 +665,18 @@ export const saveStepFourValuation = async ({ valuationId, stepFourData }) => {
 
   const normalizedStepFourData = normalizeStepFourData(stepFourData)
 
-  try {
-    const existing = await readValuationById(valuationId)
-
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 4.',
-      }
-    }
-
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(4, existing.currentStep || 1),
-      status: 'pending',
-      step4: normalizedStepFourData,
-      updatedAt: serverTimestamp(),
-    })
-
-    const saved = await readValuationById(valuationId)
-
-    return {
-      ok: true,
-      message: 'Paso 4 guardado correctamente.',
-      valuation: saved,
-    }
-  } catch {
-    return {
-      ok: false,
-      message: 'No se pudo guardar el paso 4. Intenta de nuevo.',
-    }
-  }
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 4,
+    knownCurrentStep,
+    payload: { step4: normalizedStepFourData },
+    successMessage: 'Paso 4 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 4.',
+    genericErrorMessage: 'No se pudo guardar el paso 4. Intenta de nuevo.',
+  })
 }
 
-export const saveStepFiveValuation = async ({ valuationId, stepFiveData }) => {
+export const saveStepFiveValuation = async ({ valuationId, stepFiveData, knownCurrentStep }) => {
   if (!valuationId) {
     return {
       ok: false,
@@ -640,39 +686,18 @@ export const saveStepFiveValuation = async ({ valuationId, stepFiveData }) => {
 
   const normalizedStepFiveData = normalizeStepFiveData(stepFiveData)
 
-  try {
-    const existing = await readValuationById(valuationId)
-
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 5.',
-      }
-    }
-
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(5, existing.currentStep || 1),
-      status: 'pending',
-      step5: normalizedStepFiveData,
-      updatedAt: serverTimestamp(),
-    })
-
-    const saved = await readValuationById(valuationId)
-
-    return {
-      ok: true,
-      message: 'Paso 5 guardado correctamente.',
-      valuation: saved,
-    }
-  } catch {
-    return {
-      ok: false,
-      message: 'No se pudo guardar el paso 5. Intenta de nuevo.',
-    }
-  }
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 5,
+    knownCurrentStep,
+    payload: { step5: normalizedStepFiveData },
+    successMessage: 'Paso 5 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 5.',
+    genericErrorMessage: 'No se pudo guardar el paso 5. Intenta de nuevo.',
+  })
 }
 
-export const saveStepSixValuation = async ({ valuationId, stepSixData }) => {
+export const saveStepSixValuation = async ({ valuationId, stepSixData, knownCurrentStep }) => {
   if (!valuationId) {
     return {
       ok: false,
@@ -682,39 +707,18 @@ export const saveStepSixValuation = async ({ valuationId, stepSixData }) => {
 
   const normalizedStepSixData = normalizeStepSixData(stepSixData)
 
-  try {
-    const existing = await readValuationById(valuationId)
-
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 6.',
-      }
-    }
-
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(6, existing.currentStep || 1),
-      status: 'pending',
-      step6: normalizedStepSixData,
-      updatedAt: serverTimestamp(),
-    })
-
-    const saved = await readValuationById(valuationId)
-
-    return {
-      ok: true,
-      message: 'Paso 6 guardado correctamente.',
-      valuation: saved,
-    }
-  } catch {
-    return {
-      ok: false,
-      message: 'No se pudo guardar el paso 6. Intenta de nuevo.',
-    }
-  }
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 6,
+    knownCurrentStep,
+    payload: { step6: normalizedStepSixData },
+    successMessage: 'Paso 6 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 6.',
+    genericErrorMessage: 'No se pudo guardar el paso 6. Intenta de nuevo.',
+  })
 }
 
-export const saveStepSevenValuation = async ({ valuationId, stepSevenData }) => {
+export const saveStepSevenValuation = async ({ valuationId, stepSevenData, knownCurrentStep }) => {
   if (!valuationId) {
     return {
       ok: false,
@@ -724,39 +728,18 @@ export const saveStepSevenValuation = async ({ valuationId, stepSevenData }) => 
 
   const normalizedStepSevenData = normalizeStepSevenData(stepSevenData)
 
-  try {
-    const existing = await readValuationById(valuationId)
-
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 7.',
-      }
-    }
-
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(7, existing.currentStep || 1),
-      status: 'pending',
-      step7: normalizedStepSevenData,
-      updatedAt: serverTimestamp(),
-    })
-
-    const saved = await readValuationById(valuationId)
-
-    return {
-      ok: true,
-      message: 'Paso 7 guardado correctamente.',
-      valuation: saved,
-    }
-  } catch {
-    return {
-      ok: false,
-      message: 'No se pudo guardar el paso 7. Intenta de nuevo.',
-    }
-  }
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 7,
+    knownCurrentStep,
+    payload: { step7: normalizedStepSevenData },
+    successMessage: 'Paso 7 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 7.',
+    genericErrorMessage: 'No se pudo guardar el paso 7. Intenta de nuevo.',
+  })
 }
 
-export const saveStepEightValuation = async ({ valuationId, stepEightData }) => {
+export const saveStepEightValuation = async ({ valuationId, stepEightData, knownCurrentStep }) => {
   if (!valuationId) {
     return {
       ok: false,
@@ -766,39 +749,18 @@ export const saveStepEightValuation = async ({ valuationId, stepEightData }) => 
 
   const normalizedStepEightData = normalizeStepEightData(stepEightData)
 
-  try {
-    const existing = await readValuationById(valuationId)
-
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 8.',
-      }
-    }
-
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(8, existing.currentStep || 1),
-      status: 'pending',
-      step8: normalizedStepEightData,
-      updatedAt: serverTimestamp(),
-    })
-
-    const saved = await readValuationById(valuationId)
-
-    return {
-      ok: true,
-      message: 'Paso 8 guardado correctamente.',
-      valuation: saved,
-    }
-  } catch {
-    return {
-      ok: false,
-      message: 'No se pudo guardar el paso 8. Intenta de nuevo.',
-    }
-  }
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 8,
+    knownCurrentStep,
+    payload: { step8: normalizedStepEightData },
+    successMessage: 'Paso 8 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 8.',
+    genericErrorMessage: 'No se pudo guardar el paso 8. Intenta de nuevo.',
+  })
 }
 
-export const saveStepNineValuation = async ({ valuationId, stepNineData }) => {
+export const saveStepNineValuation = async ({ valuationId, stepNineData, knownCurrentStep }) => {
   if (!valuationId) {
     return {
       ok: false,
@@ -808,39 +770,18 @@ export const saveStepNineValuation = async ({ valuationId, stepNineData }) => {
 
   const normalizedStepNineData = normalizeStepNineData(stepNineData)
 
-  try {
-    const existing = await readValuationById(valuationId)
-
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 9.',
-      }
-    }
-
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(9, existing.currentStep || 1),
-      status: 'pending',
-      step9: normalizedStepNineData,
-      updatedAt: serverTimestamp(),
-    })
-
-    const saved = await readValuationById(valuationId)
-
-    return {
-      ok: true,
-      message: 'Paso 9 guardado correctamente.',
-      valuation: saved,
-    }
-  } catch {
-    return {
-      ok: false,
-      message: 'No se pudo guardar el paso 9. Intenta de nuevo.',
-    }
-  }
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 9,
+    knownCurrentStep,
+    payload: { step9: normalizedStepNineData },
+    successMessage: 'Paso 9 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 9.',
+    genericErrorMessage: 'No se pudo guardar el paso 9. Intenta de nuevo.',
+  })
 }
 
-export const saveStepTenValuation = async ({ valuationId, stepTenData }) => {
+export const saveStepTenValuation = async ({ valuationId, stepTenData, knownCurrentStep }) => {
   if (!valuationId) {
     return {
       ok: false,
@@ -850,34 +791,79 @@ export const saveStepTenValuation = async ({ valuationId, stepTenData }) => {
 
   const normalizedStepTenData = normalizeStepTenData(stepTenData)
 
-  try {
-    const existing = await readValuationById(valuationId)
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 10,
+    knownCurrentStep,
+    payload: { step10: normalizedStepTenData },
+    successMessage: 'Paso 10 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 10.',
+    genericErrorMessage: 'No se pudo guardar el paso 10. Intenta de nuevo.',
+  })
+}
 
-    if (!existing) {
-      return {
-        ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 10.',
-      }
+export const saveStepElevenValuation = async ({ valuationId, stepElevenData, knownCurrentStep }) => {
+  if (!valuationId) {
+    return {
+      ok: false,
+      message: 'Primero debes guardar los pasos anteriores para continuar.',
     }
+  }
 
+  const normalizedStepElevenData = normalizeStepElevenData(stepElevenData)
+
+  return await saveExistingValuationStep({
+    valuationId,
+    targetStep: 11,
+    knownCurrentStep,
+    payload: { step11: normalizedStepElevenData },
+    successMessage: 'Paso 11 guardado correctamente.',
+    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 11.',
+    genericErrorMessage: 'No se pudo guardar el paso 11. Intenta de nuevo.',
+  })
+}
+
+export const saveInteractiveMapData = async ({ valuationId, mapType, strokes }) => {
+  if (!valuationId) {
+    return {
+      ok: false,
+      message: 'Primero debes guardar la valoracion para usar el mapa interactivo.',
+    }
+  }
+
+  if (mapType !== 'facial' && mapType !== 'corporal') {
+    return {
+      ok: false,
+      message: 'Selecciona un tipo de mapa valido antes de guardar.',
+    }
+  }
+
+  const normalizedStrokes = normalizeInteractiveMapStrokes(strokes)
+
+  try {
     await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      currentStep: Math.max(10, existing.currentStep || 1),
-      status: 'pending',
-      step10: normalizedStepTenData,
+      [`mapaInteractivo.${mapType}`]: {
+        strokes: normalizedStrokes,
+        updatedAtMs: Date.now(),
+      },
       updatedAt: serverTimestamp(),
     })
 
-    const saved = await readValuationById(valuationId)
-
     return {
       ok: true,
-      message: 'Paso 10 guardado correctamente.',
-      valuation: saved,
+      message: 'Mapa interactivo guardado correctamente.',
     }
-  } catch {
+  } catch (error) {
+    if (error?.code === 'not-found') {
+      return {
+        ok: false,
+        message: 'No se encontro la valoracion para guardar el mapa interactivo.',
+      }
+    }
+
     return {
       ok: false,
-      message: 'No se pudo guardar el paso 10. Intenta de nuevo.',
+      message: 'No se pudo guardar el mapa interactivo. Intenta de nuevo.',
     }
   }
 }
