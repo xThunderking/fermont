@@ -15,6 +15,21 @@
   --footer-height: 0px;
 }
 
+.mapa-interactivo-open .app-layout-fixed {
+  --topbar-height: 0px;
+  --footer-height: 0px;
+}
+
+.mapa-interactivo-open .topbar,
+.mapa-interactivo-open .app-footer {
+  display: none;
+}
+
+.mapa-interactivo-open .app-body {
+  top: 0;
+  bottom: 0;
+}
+
 .topbar {
   position: fixed;
   top: 0;
@@ -763,6 +778,16 @@ textarea {
   color: #fff9f2;
 }
 
+.mapa-marker-toggle {
+  width: 100%;
+}
+
+.mapa-marker-toggle-active {
+  border-color: transparent;
+  background: linear-gradient(140deg, #7e6148 0%, #98795f 50%, #b69777 100%);
+  color: #fff9f2;
+}
+
 .mapa-editor-toolbar {
   border: 1px solid #d6c0a7;
   border-radius: 12px;
@@ -836,6 +861,14 @@ textarea {
   border-radius: 10px;
   touch-action: none;
   cursor: crosshair;
+}
+
+.mapa-draw-canvas-disabled {
+  cursor: grab;
+}
+
+.mapa-draw-canvas-disabled:active {
+  cursor: grabbing;
 }
 
 .fitzpatrick-options-grid {
@@ -1089,6 +1122,43 @@ textarea {
   .mapa-zoom-controls {
     justify-content: space-between;
   }
+
+  .mapa-modal-backdrop {
+    padding: 0;
+    place-items: stretch;
+  }
+
+  .mapa-modal {
+    width: 100%;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    padding: 0.72rem;
+    gap: 0.6rem;
+  }
+
+  .mapa-modal .selection-modal-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8f1e8;
+    padding-bottom: 0.2rem;
+  }
+
+  .mapa-color-chip {
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .mapa-canvas-scroll {
+    max-height: calc(100dvh - 340px);
+    padding: 0.42rem;
+  }
+
+  .mapa-zoom-controls .main-button {
+    min-width: 44px;
+  }
 }
 
 @media (min-width: 700px) {
@@ -1121,7 +1191,7 @@ textarea {
   }
 
   .mapa-editor-toolbar {
-    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(150px, auto) minmax(0, 1.3fr) minmax(0, 1fr) auto;
     align-items: end;
   }
 }

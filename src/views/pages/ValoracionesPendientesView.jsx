@@ -48,6 +48,18 @@ const MAPA_MIN_ZOOM = 1
 const MAPA_MAX_ZOOM = 2.8
 
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value))
+const getTouchDistance = (touches) => {
+  if (!touches || touches.length < 2) {
+    return 0
+  }
+
+  const firstTouch = touches[0]
+  const secondTouch = touches[1]
+  const distanceX = firstTouch.clientX - secondTouch.clientX
+  const distanceY = firstTouch.clientY - secondTouch.clientY
+
+  return Math.hypot(distanceX, distanceY)
+}
 
 const normalizeInteractiveMapPoint = (point) => {
   const x = Number(point?.x)
@@ -118,6 +130,7 @@ function ValoracionesPendientesView() {
     valuationId: '',
     selected: '',
     zoom: MAPA_MIN_ZOOM,
+    markerEnabled: true,
     brushColor: MAPA_DEFAULT_COLOR,
     brushSize: MAPA_DEFAULT_BRUSH_SIZE,
     strokesByType: {
@@ -138,6 +151,11 @@ function ValoracionesPendientesView() {
   const mapaDrawingRef = useRef({
     isDrawing: false,
     currentStroke: null,
+  })
+  const mapaInteractionRef = useRef({
+    isPinching: false,
+    pinchStartDistance: 0,
+    pinchStartZoom: MAPA_MIN_ZOOM,
   })
 
   useEffect(() => {
@@ -230,11 +248,17 @@ function ValoracionesPendientesView() {
     )
 
     resetMapaDrawingState()
+    mapaInteractionRef.current = {
+      isPinching: false,
+      pinchStartDistance: 0,
+      pinchStartZoom: MAPA_MIN_ZOOM,
+    }
     setMapaModal({
       open: true,
       valuationId: valuation.id,
       selected: 'facial',
       zoom: MAPA_MIN_ZOOM,
+      markerEnabled: true,
       brushColor: MAPA_DEFAULT_COLOR,
       brushSize: MAPA_DEFAULT_BRUSH_SIZE,
       strokesByType: initialStrokesByType,
@@ -245,11 +269,17 @@ function ValoracionesPendientesView() {
 
   const closeMapaModal = () => {
     resetMapaDrawingState()
+    mapaInteractionRef.current = {
+      isPinching: false,
+      pinchStartDistance: 0,
+      pinchStartZoom: MAPA_MIN_ZOOM,
+    }
     setMapaModal({
       open: false,
       valuationId: '',
       selected: '',
       zoom: MAPA_MIN_ZOOM,
+      markerEnabled: true,
       brushColor: MAPA_DEFAULT_COLOR,
       brushSize: MAPA_DEFAULT_BRUSH_SIZE,
       strokesByType: {
@@ -261,8 +291,27 @@ function ValoracionesPendientesView() {
     })
   }
 
+  useEffect(() => {
+    const layoutHiddenClass = 'mapa-interactivo-open'
+
+    if (mapaModal.open) {
+      document.body.classList.add(layoutHiddenClass)
+    } else {
+      document.body.classList.remove(layoutHiddenClass)
+    }
+
+    return () => {
+      document.body.classList.remove(layoutHiddenClass)
+    }
+  }, [mapaModal.open])
+
   const selectMapaOption = (value) => {
     resetMapaDrawingState()
+    mapaInteractionRef.current = {
+      isPinching: false,
+      pinchStartDistance: 0,
+      pinchStartZoom: mapaModal.zoom,
+    }
     setMapaModal((previous) => ({
       ...previous,
       selected: value,
@@ -431,7 +480,15 @@ function ValoracionesPendientesView() {
   }
 
   const startMapaDrawing = (event) => {
-    if (!mapaModal.open || !mapaModal.selected || mapaModal.isSaving) {
+    if (!mapaModal.open || !mapaModal.selected || mapaModal.isSaving || !mapaModal.markerEnabled) {
+      return
+    }
+
+    if (mapaInteractionRef.current.isPinching) {
+      return
+    }
+
+    if (event.pointerType === 'touch' && !event.isPrimary) {
       return
     }
 
@@ -466,7 +523,7 @@ function ValoracionesPendientesView() {
   const moveMapaDrawing = (event) => {
     const drawingState = mapaDrawingRef.current
 
-    if (!drawingState.isDrawing || !drawingState.currentStroke) {
+    if (!drawingState.isDrawing || !drawingState.currentStroke || mapaInteractionRef.current.isPinching) {
       return
     }
 
@@ -486,7 +543,7 @@ function ValoracionesPendientesView() {
   const endMapaDrawing = (event) => {
     const drawingState = mapaDrawingRef.current
 
-    if (!drawingState.currentStroke || !drawingState.isDrawing) {
+    if (!drawingState.currentStroke || !drawingState.isDrawing || mapaInteractionRef.current.isPinching) {
       return
     }
 
@@ -518,6 +575,71 @@ function ValoracionesPendientesView() {
     }
 
     resetMapaDrawingState()
+  }
+
+  const startMapaPinch = (touches) => {
+    const initialDistance = getTouchDistance(touches)
+
+    if (!initialDistance) {
+      return
+    }
+
+    resetMapaDrawingState()
+    mapaInteractionRef.current = {
+      isPinching: true,
+      pinchStartDistance: initialDistance,
+      pinchStartZoom: mapaModal.zoom,
+    }
+  }
+
+  const moveMapaPinch = (touches) => {
+    const interactionState = mapaInteractionRef.current
+
+    if (!interactionState.isPinching || touches.length < 2) {
+      return
+    }
+
+    const currentDistance = getTouchDistance(touches)
+
+    if (!currentDistance || !interactionState.pinchStartDistance) {
+      return
+    }
+
+    const zoomRatio = currentDistance / interactionState.pinchStartDistance
+    setMapaZoom(interactionState.pinchStartZoom * zoomRatio)
+  }
+
+  const endMapaPinch = (touches) => {
+    if (touches.length >= 2) {
+      return
+    }
+
+    mapaInteractionRef.current = {
+      isPinching: false,
+      pinchStartDistance: 0,
+      pinchStartZoom: mapaModal.zoom,
+    }
+  }
+
+  const onMapaTouchStart = (event) => {
+    if (event.touches.length === 2) {
+      startMapaPinch(event.touches)
+    }
+  }
+
+  const onMapaTouchMove = (event) => {
+    if (!mapaModal.open || event.touches.length < 2) {
+      return
+    }
+
+    if (mapaInteractionRef.current.isPinching) {
+      event.preventDefault()
+      moveMapaPinch(event.touches)
+    }
+  }
+
+  const onMapaTouchEnd = (event) => {
+    endMapaPinch(event.touches)
   }
 
   const undoLastMapaStroke = () => {
@@ -793,7 +915,7 @@ function ValoracionesPendientesView() {
       ) : null}
 
       {mapaModal.open ? (
-        <div className="selection-modal-backdrop" onClick={closeMapaModal}>
+        <div className="selection-modal-backdrop mapa-modal-backdrop" onClick={closeMapaModal}>
           <div
             className="selection-modal mapa-modal"
             role="dialog"
@@ -828,6 +950,25 @@ function ValoracionesPendientesView() {
             {mapaModal.selected ? (
               <>
                 <div className="mapa-editor-toolbar">
+                  <button
+                    type="button"
+                    className={`main-button secondary mapa-marker-toggle ${mapaModal.markerEnabled ? 'mapa-marker-toggle-active' : ''}`}
+                    onClick={() => {
+                      resetMapaDrawingState()
+                      mapaInteractionRef.current = {
+                        isPinching: false,
+                        pinchStartDistance: 0,
+                        pinchStartZoom: mapaModal.zoom,
+                      }
+                      setMapaModal((previous) => ({
+                        ...previous,
+                        markerEnabled: !previous.markerEnabled,
+                      }))
+                    }}
+                  >
+                    {mapaModal.markerEnabled ? 'Marcador activo' : 'Marcador apagado'}
+                  </button>
+
                   <div className="mapa-color-palette">
                     {MAPA_COLOR_OPTIONS.map((color) => (
                       <button
@@ -876,7 +1017,13 @@ function ValoracionesPendientesView() {
                   </div>
                 </div>
 
-                <div className="mapa-canvas-scroll">
+                <div
+                  className="mapa-canvas-scroll"
+                  onTouchStart={onMapaTouchStart}
+                  onTouchMove={onMapaTouchMove}
+                  onTouchEnd={onMapaTouchEnd}
+                  onTouchCancel={onMapaTouchEnd}
+                >
                   <div className="mapa-canvas-stage" style={{ width: `${mapaModal.zoom * 100}%` }}>
                     <img
                       ref={mapaImageRef}
@@ -887,7 +1034,8 @@ function ValoracionesPendientesView() {
                     />
                     <canvas
                       ref={mapaCanvasRef}
-                      className="mapa-draw-canvas"
+                      className={`mapa-draw-canvas ${mapaModal.markerEnabled ? '' : 'mapa-draw-canvas-disabled'}`}
+                      style={{ touchAction: mapaModal.markerEnabled ? 'none' : 'pan-x pan-y' }}
                       onPointerDown={startMapaDrawing}
                       onPointerMove={moveMapaDrawing}
                       onPointerUp={endMapaDrawing}
@@ -897,7 +1045,11 @@ function ValoracionesPendientesView() {
                   </div>
                 </div>
 
-                <p className="subtitle">Dibuja con el dedo o mouse sobre la imagen para marcar zonas.</p>
+                <p className="subtitle">
+                  {mapaModal.markerEnabled
+                    ? 'Dibuja con el dedo o mouse. Usa 2 dedos para acercar o alejar.'
+                    : 'Marcador apagado. Usa 2 dedos para zoom y desliza para encuadrar.'}
+                </p>
 
                 {mapaModal.error ? <p className="error-text">{mapaModal.error}</p> : null}
 
