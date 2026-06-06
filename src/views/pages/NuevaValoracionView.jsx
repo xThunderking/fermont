@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
-import { listClients, saveClientFromStepOne } from '../../models/clientModel.js'
+import {
+  listClients,
+  saveClientClinicalHistoryFromValuation,
+  saveClientFromStepOne,
+} from '../../models/clientModel.js'
 import {
   STEP_EIGHT_OPTIONS,
   STEP_FOUR_OPTIONS,
@@ -13,6 +17,7 @@ import {
   saveStepEightValuation,
   saveStepElevenValuation,
   saveStepNineValuation,
+  saveCutaneoStatusData,
   saveRecurrentStepFourValuation,
   saveStepOneValuation,
   saveStepFourValuation,
@@ -27,6 +32,27 @@ import glogauTipo1 from '../../img/glogau/tipo1.jpg'
 import glogauTipo2 from '../../img/glogau/tipo2.jpg'
 import glogauTipo3 from '../../img/glogau/tipo3.jpg'
 import glogauTipo4 from '../../img/glogau/tipo4.jpg'
+
+const CUTANEO_OPTIONS = [
+  {
+    value: 'verde',
+    label: 'Verde',
+    description: 'Piel estable y apta para procedimientos.',
+    color: '#2d8b57',
+  },
+  {
+    value: 'amarillo',
+    label: 'Amarillo',
+    description: 'Piel sensible o sensibilizada.',
+    color: '#d39a27',
+  },
+  {
+    value: 'rojo',
+    label: 'Rojo',
+    description: 'Piel contraindicada para procedimientos agresivos.',
+    color: '#b04135',
+  },
+]
 
 const TOTAL_STEPS = 11
 const RECURRENT_TOTAL_STEPS = 4
@@ -652,6 +678,11 @@ function NuevaValoracionView() {
     options: [],
     mode: 'multiple',
   })
+  const [cutaneoModal, setCutaneoModal] = useState({
+    open: false,
+    selected: '',
+    isSaving: false,
+  })
   const [availableClients, setAvailableClients] = useState([])
   const [clientSearch, setClientSearch] = useState('')
   const [isLoadingClients, setIsLoadingClients] = useState(false)
@@ -804,6 +835,10 @@ function NuevaValoracionView() {
       setStepNineData(normalizeExistingStepNineData(result.valuation.step9))
       setStepTenData(normalizeExistingStepTenData(result.valuation.step10))
       setStepElevenData(normalizeExistingStepElevenData(result.valuation.step11))
+      setCutaneoModal((previous) => ({
+        ...previous,
+        selected: String(result.valuation.semaforoCutaneo ?? ''),
+      }))
       setRecurrentStepFourData({
         ...createRecurrentStepFourInitialData(),
         ...(result.valuation.recurrentStep4 ?? {}),
@@ -1962,11 +1997,90 @@ function NuevaValoracionView() {
       return null
     }
 
-    setError('')
-    setSuccessMessage(result.message)
+    let historyWarning = ''
+    if (clientFlowType === 'nuevo' && selectedClientId) {
+      const refreshedValuationResult = await getValuationForEdition({
+        valuationId: result.valuation?.id || valuationDocId,
+      })
+
+      const historyResult = await saveClientClinicalHistoryFromValuation({
+        clientId: selectedClientId,
+        valuationId: result.valuation?.id || valuationDocId,
+        clientSnapshot: stepOneData,
+        valuationSnapshot: refreshedValuationResult.ok
+          ? refreshedValuationResult.valuation
+          : {
+              step1: stepOneData,
+              step3: stepThreeData,
+              step4: stepFourData,
+              step5: stepFiveData,
+              step6: stepSixData,
+              step7: stepSevenData,
+              step8: stepEightData,
+              step9: stepNineData,
+              step10: stepTenData,
+              step11: stepElevenData,
+              semaforoCutaneo: cutaneoModal.selected,
+              mapaInteractivo: null,
+              fotografiasClinicas: null,
+              clienteNombre: `${stepOneData.nombre} ${stepOneData.apellidoPaterno} ${stepOneData.apellidoMaterno}`.replace(/\s+/g, ' ').trim(),
+            },
+      })
+
+      if (!historyResult.ok) {
+        historyWarning = historyResult.message
+      }
+    }
+
+    setError(historyWarning)
+    setSuccessMessage(historyWarning ? `${result.message} ${historyWarning}` : result.message)
     syncHighestSavedStep(result.valuation?.currentStep ?? 11)
     setValuationDocId(result.valuation?.id || valuationDocId)
     return result.valuation?.id || valuationDocId
+  }
+
+  const openCutaneoModal = () => {
+    setCutaneoModal((previous) => ({
+      ...previous,
+      open: true,
+    }))
+  }
+
+  const closeCutaneoModal = () => {
+    setCutaneoModal((previous) => ({
+      ...previous,
+      open: false,
+    }))
+  }
+
+  const saveCutaneoStatus = async () => {
+    if (!valuationDocId) {
+      setError('Primero guarda la valoracion para registrar el semaforo cutaneo.')
+      return false
+    }
+
+    setCutaneoModal((previous) => ({
+      ...previous,
+      isSaving: true,
+    }))
+
+    const result = await saveCutaneoStatusData({
+      valuationId: valuationDocId,
+      cutaneoStatus: cutaneoModal.selected,
+    })
+
+    setCutaneoModal((previous) => ({
+      ...previous,
+      isSaving: false,
+    }))
+
+    if (!result.ok) {
+      setError(result.message)
+      return false
+    }
+
+    setError('')
+    return true
   }
 
   const saveRecurrentStepFour = async ({ validate = true } = {}) => {
@@ -2570,6 +2684,18 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
+
+          <div className="selection-card valuation-field-large">
+            <p className="selection-title">Semaforo cutaneo</p>
+            <p className="selection-empty">
+              {cutaneoModal.selected
+                ? CUTANEO_OPTIONS.find((option) => option.value === cutaneoModal.selected)?.label || 'Sin seleccion'
+                : 'Sin seleccion'}
+            </p>
+            <button type="button" className="main-button secondary selection-trigger" onClick={openCutaneoModal}>
+              Seleccionar semaforo cutaneo
+            </button>
+          </div>
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -3316,6 +3442,19 @@ function NuevaValoracionView() {
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
+
+          <div className="selection-card valuation-field-large">
+            <p className="selection-title">Semaforo cutaneo</p>
+            <p className="selection-empty">
+              {cutaneoModal.selected
+                ? CUTANEO_OPTIONS.find((option) => option.value === cutaneoModal.selected)?.label || 'Sin seleccion'
+                : 'Sin seleccion'}
+            </p>
+            <button type="button" className="main-button secondary selection-trigger" onClick={openCutaneoModal}>
+              Seleccionar semaforo cutaneo
+            </button>
+          </div>
+
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
               {isSaving ? 'Guardando...' : 'Salir'}
@@ -4384,6 +4523,66 @@ function NuevaValoracionView() {
             <button type="button" className="main-button" onClick={closeStepTenModal}>
               Listo
             </button>
+          </div>
+        </div>
+      ) : null}
+
+      {cutaneoModal.open ? (
+        <div className="selection-modal-backdrop" onClick={closeCutaneoModal}>
+          <div
+            className="selection-modal semaforo-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Semaforo cutaneo"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head">
+              <h3 className="consultation-block-title">Semaforo cutaneo</h3>
+              <button type="button" className="main-button secondary" onClick={closeCutaneoModal}>
+                Cerrar
+              </button>
+            </div>
+
+            <div className="semaforo-options-grid">
+              {CUTANEO_OPTIONS.map((option) => {
+                const isSelected = cutaneoModal.selected === option.value
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`semaforo-option-card ${isSelected ? 'semaforo-option-card-selected' : ''}`}
+                    onClick={() =>
+                      setCutaneoModal((previous) => ({
+                        ...previous,
+                        selected: option.value,
+                      }))}
+                  >
+                    <span className="semaforo-option-marker" style={{ backgroundColor: option.color }} />
+                    <span className="semaforo-option-content">
+                      <strong>{option.label}</strong>
+                      <span>{option.description}</span>
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <div className="valuation-actions">
+              <button
+                type="button"
+                className="main-button"
+                disabled={cutaneoModal.isSaving}
+                onClick={async () => {
+                  const saved = await saveCutaneoStatus()
+                  if (saved) {
+                    closeCutaneoModal()
+                  }
+                }}
+              >
+                {cutaneoModal.isSaving ? 'Guardando...' : 'Guardar semaforo'}
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

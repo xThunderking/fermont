@@ -1,4 +1,15 @@
-import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from 'firebase/firestore'
+import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+  deleteDoc,
+} from 'firebase/firestore'
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { db, firebaseConfig, storage } from '../services/firebase'
 
@@ -588,6 +599,7 @@ const mapValuationSnapshot = (snapshot) => {
     step10: data.step10 ?? null,
     step11: data.step11 ?? null,
     recurrentStep4: data.recurrentStep4 ?? null,
+    semaforoCutaneo: String(data.semaforoCutaneo ?? ''),
     mapaInteractivo: data.mapaInteractivo ?? null,
     fotografiasClinicas: normalizeClinicalPhotosByType(data.fotografiasClinicas),
     createdAtMs: data.createdAt?.toMillis?.() ?? 0,
@@ -1193,4 +1205,76 @@ export const getValuationProgressLabel = (valuation) => {
   }
 
   return `Paso ${valuation?.currentStep ?? 1} de ${valuation?.totalSteps ?? 11}`
+}
+
+export const deleteValuationById = async (valuationId) => {
+  if (!valuationId) {
+    return {
+      ok: false,
+      message: 'No se encontro la valoracion para eliminar.',
+    }
+  }
+
+  try {
+    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
+      status: 'deleted',
+      deletedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+
+    return {
+      ok: true,
+      message: 'Valoracion eliminada correctamente.',
+    }
+  } catch (error) {
+    if (error?.code === 'not-found') {
+      return {
+        ok: false,
+        message: 'No se encontro la valoracion para eliminar.',
+      }
+    }
+
+    return {
+      ok: false,
+      message: error?.code
+        ? `No se pudo eliminar la valoracion (${error.code}).`
+        : 'No se pudo eliminar la valoracion. Intenta de nuevo.',
+    }
+  }
+}
+
+export const saveCutaneoStatusData = async ({ valuationId, cutaneoStatus }) => {
+  if (!valuationId) {
+    return {
+      ok: false,
+      message: 'No se encontro la valoracion para guardar el semaforo cutaneo.',
+    }
+  }
+
+  const normalizedStatus = ['verde', 'amarillo', 'rojo'].includes(cutaneoStatus) ? cutaneoStatus : ''
+
+  try {
+    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
+      semaforoCutaneo: normalizedStatus,
+      updatedAt: serverTimestamp(),
+    })
+
+    return {
+      ok: true,
+      cutaneoStatus: normalizedStatus,
+      message: 'Semaforo cutaneo guardado correctamente.',
+    }
+  } catch (error) {
+    if (error?.code === 'not-found') {
+      return {
+        ok: false,
+        message: 'No se encontro la valoracion para guardar el semaforo cutaneo.',
+      }
+    }
+
+    return {
+      ok: false,
+      message: 'No se pudo guardar el semaforo cutaneo. Intenta de nuevo.',
+    }
+  }
 }

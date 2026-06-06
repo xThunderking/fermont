@@ -1,13 +1,14 @@
 .app-page {
-  min-height: 100vh;
+  min-height: 100dvh;
   background: #f1e5d5;
+  display: flex;
+  flex-direction: column;
 }
 
 .app-layout-fixed {
   --topbar-height: 122px;
   --footer-height: 78px;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100dvh;
 }
 
 .app-layout-immersive {
@@ -85,19 +86,14 @@
 }
 
 .app-body {
-  position: fixed;
-  top: var(--topbar-height);
-  right: 0;
-  bottom: var(--footer-height);
-  left: 0;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 1rem 0.8rem;
+  padding: calc(var(--topbar-height) + 0.75rem) 0.8rem calc(var(--footer-height) + 0.75rem);
 }
 
 .app-layout-immersive .app-body {
-  top: 0;
-  bottom: 0;
   padding: 0.75rem;
 }
 
@@ -120,6 +116,7 @@
   padding: 0.9rem;
   background: rgba(241, 229, 213, 0.95);
   box-shadow: 0 10px 24px rgba(100, 76, 56, 0.12);
+  scroll-margin-top: 0.75rem;
 }
 
 h1 {
@@ -1430,6 +1427,10 @@ textarea {
   .app-layout-fixed {
     --topbar-height: 114px;
     --footer-height: 74px;
+  }
+
+  .app-body {
+    padding: calc(var(--topbar-height) + 0.55rem) 0.55rem calc(var(--footer-height) + 0.55rem);
   }
 
   .topbar {

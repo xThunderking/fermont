@@ -3,35 +3,16 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 import {
   CLINICAL_PHOTO_PARTS,
+  deleteValuationById,
   getValuationProgressLabel,
   listPendingValuations,
   saveClinicalPhotosData,
   saveInteractiveMapData,
   uploadClinicalPhoto,
 } from '../../models/valuationModel.js'
+import { listClientClinicalHistory } from '../../models/clientModel.js'
 import mapaCorporalImage from '../../img/mapainteractivo/mapacorporal.jpeg'
 import mapaFacialImage from '../../img/mapainteractivo/mapafacial.jpeg'
-
-const CUTANEO_OPTIONS = [
-  {
-    value: 'verde',
-    label: 'Verde',
-    description: 'Piel estable y apta para procedimientos.',
-    color: '#2d8b57',
-  },
-  {
-    value: 'amarillo',
-    label: 'Amarillo',
-    description: 'Piel sensible o sensibilizada.',
-    color: '#d39a27',
-  },
-  {
-    value: 'rojo',
-    label: 'Rojo',
-    description: 'Piel contraindicada para procedimientos agresivos.',
-    color: '#b04135',
-  },
-]
 
 const MAPA_INTERACTIVO_OPTIONS = {
   facial: {
@@ -255,18 +236,17 @@ const resolveMapStrokesByType = (valuation, savedBySession) => {
 
 function ValoracionesPendientesView() {
   const navigate = useNavigate()
-  const { currentUser } = useAuthController()
+  const { currentUser, isAdmin } = useAuthController()
   const [pendingValuations, setPendingValuations] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const [cutaneoSelections, setCutaneoSelections] = useState({})
-  const [cutaneoModal, setCutaneoModal] = useState({
-    open: false,
-    valuationId: '',
-    selected: '',
-  })
   const [mapaSavedByValuation, setMapaSavedByValuation] = useState({})
   const [clinicalPhotosSavedByValuation, setClinicalPhotosSavedByValuation] = useState({})
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
+  const [historyModalClient, setHistoryModalClient] = useState(null)
+  const [historyModalEntries, setHistoryModalEntries] = useState([])
+  const [historyModalLoading, setHistoryModalLoading] = useState(false)
+  const [deleteValuationId, setDeleteValuationId] = useState('')
   const [mapaModal, setMapaModal] = useState({
     open: false,
     valuationId: '',
@@ -348,42 +328,6 @@ function ValoracionesPendientesView() {
   }, [currentUser?.id])
 
   const emptyMessage = useMemo(() => 'No hay valoraciones pendientes por el momento.', [])
-
-  const openCutaneoModal = (valuationId) => {
-    setCutaneoModal({
-      open: true,
-      valuationId,
-      selected: cutaneoSelections[valuationId] ?? '',
-    })
-  }
-
-  const closeCutaneoModal = () => {
-    setCutaneoModal({
-      open: false,
-      valuationId: '',
-      selected: '',
-    })
-  }
-
-  const selectCutaneoOption = (value) => {
-    setCutaneoModal((previous) => ({
-      ...previous,
-      selected: value,
-    }))
-  }
-
-  const confirmCutaneoSelection = () => {
-    if (!cutaneoModal.valuationId || !cutaneoModal.selected) {
-      return
-    }
-
-    setCutaneoSelections((previous) => ({
-      ...previous,
-      [cutaneoModal.valuationId]: cutaneoModal.selected,
-    }))
-
-    closeCutaneoModal()
-  }
 
   const resetMapaDrawingState = () => {
     mapaDrawingRef.current = {
@@ -1023,6 +967,63 @@ function ValoracionesPendientesView() {
     closeMapaModal()
   }
 
+  const handleDeleteValuation = async (valuationId) => {
+    if (!isAdmin) {
+      return
+    }
+
+    setDeleteValuationId(valuationId)
+  }
+
+  const confirmDeleteValuation = async () => {
+    if (!deleteValuationId) {
+      return
+    }
+
+    const result = await deleteValuationById(deleteValuationId)
+
+    if (!result.ok) {
+      setError(result.message)
+      setDeleteValuationId('')
+      return
+    }
+
+    setError('')
+    setPendingValuations((previous) => previous.filter((valuation) => valuation.id !== deleteValuationId))
+    setDeleteValuationId('')
+  }
+
+  const openClientHistoryModal = async (valuation) => {
+    if (!valuation?.clienteId) {
+      setError('Esta valoracion no tiene cliente asociado.')
+      return
+    }
+
+    setHistoryModalClient(valuation)
+    setHistoryModalOpen(true)
+    setHistoryModalLoading(true)
+    setHistoryModalEntries([])
+
+    const result = await listClientClinicalHistory(valuation.clienteId)
+
+    if (!result.ok) {
+      setError(result.message)
+      setHistoryModalLoading(false)
+      return
+    }
+
+    setError('')
+    setHistoryModalEntries(result.history)
+    setHistoryModalLoading(false)
+  }
+
+  const closeClientHistoryModal = () => {
+    setHistoryModalOpen(false)
+    setHistoryModalClient(null)
+    setHistoryModalEntries([])
+    setHistoryModalLoading(false)
+  }
+
   return (
     <section className="module-screen">
       <div className="module-screen-head">
@@ -1047,13 +1048,6 @@ function ValoracionesPendientesView() {
       {!isLoading && pendingValuations.length > 0 ? (
         <ul className="users-list valuations-list">
           {pendingValuations.map((valuation) => {
-            const selectedOption = CUTANEO_OPTIONS.find(
-              (option) => option.value === cutaneoSelections[valuation.id],
-            )
-            const cutaneoButtonText = selectedOption
-              ? `SEMAFORO ${selectedOption.label.toUpperCase()}`
-              : 'SEMAFORO CUTANEO'
-
             const mapStrokesByType = resolveMapStrokesByType(
               valuation,
               mapaSavedByValuation[valuation.id],
@@ -1100,28 +1094,33 @@ function ValoracionesPendientesView() {
                     </span>
                   </button>
 
+                  {isAdmin ? (
+                    <button
+                      type="button"
+                      className="main-button danger pending-action-button"
+                      onClick={() => handleDeleteValuation(valuation.id)}
+                    >
+                      ELIMINAR
+                    </button>
+                  ) : null}
+
                   <button
                     type="button"
                     className="main-button secondary pending-action-button"
-                    onClick={() => openCutaneoModal(valuation.id)}
+                    onClick={() => openClientHistoryModal(valuation)}
                   >
                     <span className="pending-action-content">
                       <svg className="pending-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <rect
-                          x="7"
-                          y="3"
-                          width="10"
-                          height="18"
-                          rx="3"
+                        <path
+                          d="M12 3a5 5 0 0 1 5 5c0 2.4-1.6 4.5-3.8 5.1v1.4h1.5c.8 0 1.5.7 1.5 1.5v2H7.8v-2c0-.8.7-1.5 1.5-1.5h1.5v-1.4C8.6 12.5 7 10.4 7 8a5 5 0 0 1 5-5z"
                           fill="none"
                           stroke="currentColor"
                           strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                         />
-                        <circle cx="12" cy="7" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                        <circle cx="12" cy="12" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
-                        <circle cx="12" cy="17" r="1.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
                       </svg>
-                      <span>{cutaneoButtonText}</span>
+                      <span>HISTORIA CLINICA</span>
                     </span>
                   </button>
 
@@ -1177,58 +1176,63 @@ function ValoracionesPendientesView() {
         </ul>
       ) : null}
 
-      {cutaneoModal.open ? (
-        <div className="selection-modal-backdrop" onClick={closeCutaneoModal}>
-          <div
-            className="selection-modal semaforo-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Semaforo cutaneo"
-            onClick={(event) => event.stopPropagation()}
-          >
+      {historyModalOpen ? (
+        <div className="selection-modal-backdrop" onClick={closeClientHistoryModal}>
+          <div className="selection-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
             <div className="selection-modal-head">
-              <h3 className="consultation-block-title">Semaforo cutaneo</h3>
-              <button type="button" className="main-button secondary" onClick={closeCutaneoModal}>
+              <h3 className="consultation-block-title">Historia clinica</h3>
+              <button type="button" className="main-button secondary" onClick={closeClientHistoryModal}>
                 Cerrar
               </button>
             </div>
 
-            <div className="semaforo-options-grid">
-              {CUTANEO_OPTIONS.map((option) => {
-                const isSelected = cutaneoModal.selected === option.value
+            {!historyModalLoading && historyModalClient ? (
+              <div className="client-detail-grid">
+                <p><strong>Cliente:</strong> {historyModalClient.clienteNombre || '-'}</p>
+                <p><strong>Cliente ID:</strong> {historyModalClient.clienteId || '-'}</p>
+              </div>
+            ) : null}
 
-                return (
-                  <button
-                    type="button"
-                    key={option.value}
-                    className={`semaforo-option-card ${isSelected ? 'semaforo-option-card-selected' : ''}`}
-                    onClick={() => selectCutaneoOption(option.value)}
-                  >
-                    <span
-                      className="semaforo-option-marker"
-                      style={{ backgroundColor: option.color }}
-                      aria-hidden="true"
-                    />
-                    <span className="semaforo-option-content">
-                      <strong>{option.label}</strong>
-                      <span>{option.description}</span>
-                    </span>
-                  </button>
-                )
-              })}
+            {historyModalLoading ? <p className="subtitle">Cargando historia clinica...</p> : null}
+
+            {!historyModalLoading && historyModalEntries.length === 0 ? (
+              <p className="subtitle">Aun no hay historia clinica para este cliente.</p>
+            ) : null}
+
+            {!historyModalLoading && historyModalEntries.length > 0 ? (
+              <ul className="users-list valuations-list">
+                {historyModalEntries.map((entry) => (
+                  <li className="user-row valuation-row" key={entry.id}>
+                    <div>
+                      <strong>Valoracion {entry.valuationId}</strong>
+                      <small className="small-tag">
+                        {entry.createdAtMs ? new Date(entry.createdAtMs).toLocaleDateString('es-MX') : 'Sin fecha'}
+                      </small>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {deleteValuationId ? (
+        <div className="selection-modal-backdrop" onClick={() => setDeleteValuationId('')}>
+          <div className="selection-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            <div className="selection-modal-head">
+              <h3 className="consultation-block-title">Eliminar valoracion</h3>
+              <button type="button" className="main-button secondary" onClick={() => setDeleteValuationId('')}>
+                Cerrar
+              </button>
             </div>
-
+            <p className="subtitle">Seguro que deseas eliminar esta valoracion pendiente? Esta accion no se puede deshacer.</p>
             <div className="valuation-actions">
-              <button type="button" className="main-button secondary" onClick={closeCutaneoModal}>
+              <button type="button" className="main-button secondary" onClick={() => setDeleteValuationId('')}>
                 Cancelar
               </button>
-              <button
-                type="button"
-                className="main-button"
-                disabled={!cutaneoModal.selected}
-                onClick={confirmCutaneoSelection}
-              >
-                Guardar seleccion
+              <button type="button" className="main-button danger" onClick={confirmDeleteValuation}>
+                Eliminar
               </button>
             </div>
           </div>
