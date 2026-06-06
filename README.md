@@ -7,6 +7,7 @@ Aplicacion web para la gestion y control operativo de una cosmetologia.
 - React + Vite
 - Firebase Authentication (email/password)
 - Firebase Firestore
+- Firebase Storage (fotografias clinicas)
 - Firebase Hosting
 
 ## Modulos incluidos
@@ -27,10 +28,11 @@ npm install
 1. Crea un proyecto en Firebase Console.
 2. Activa Firebase Authentication y habilita los proveedores Email/Password y Google.
 3. Activa Firestore Database.
-4. En Configuracion del proyecto, copia la config web.
-5. Duplica `.env.example` como `.env` y completa tus valores.
-6. Reemplaza el valor `default` en `.firebaserc` por tu `projectId`.
-7. Crea tu admin inicial:
+4. Activa Firebase Storage y crea el bucket por defecto del proyecto.
+5. En Configuracion del proyecto, copia la config web.
+6. Duplica `.env.example` como `.env` y completa tus valores.
+7. Reemplaza el valor `default` en `.firebaserc` por tu `projectId`.
+8. Crea tu admin inicial:
 	 - En Authentication crea un usuario (email/password).
 	 - En Firestore crea el documento `users/{uid}` con este contenido base:
 
@@ -46,13 +48,35 @@ npm install
 }
 ```
 
-8. Para limitar acceso a correos especificos (por ejemplo solo 3), configura en `.env`:
+9. Para limitar acceso a correos especificos (por ejemplo solo 3), configura en `.env`:
 
 ```bash
 VITE_ALLOWED_EMAILS=admin@tu-dominio.com,usuario1@tu-dominio.com,usuario2@tu-dominio.com
 ```
 
 Solo esos correos podran iniciar sesion en la app.
+
+10. Para desarrollo local (http://localhost:5173), configura CORS del bucket para permitir subidas desde el navegador.
+
+Este repositorio ya incluye un archivo `cors.json` en la raiz con origenes de desarrollo y produccion.
+
+Aplicar CORS (Google Cloud SDK o Cloud Shell):
+
+```bash
+gcloud storage buckets update gs://TU_BUCKET --cors-file=cors.json
+```
+
+Para este proyecto, el bucket actual es:
+
+```bash
+gs://fermont-bbade.firebasestorage.app
+```
+
+Comando directo para este bucket:
+
+```bash
+gcloud storage buckets update gs://fermont-bbade.firebasestorage.app --cors-file=cors.json
+```
 
 ## 3) Ejecutar en desarrollo
 
@@ -94,3 +118,16 @@ Recuerda desplegarlas cuando hagas cambios:
 ```bash
 npx firebase-tools deploy --only firestore:rules
 ```
+
+Para Storage (fotografias clinicas), este proyecto tambien incluye `storage.rules`:
+
+```bash
+npx firebase-tools deploy --only storage
+```
+
+Validacion rapida de carga de fotos:
+
+1. Inicia sesion en la app con un usuario autenticado.
+2. En Valoraciones Pendientes, abre una valoracion existente.
+3. En el modal de Fotografias, sube una imagen en Antes o Despues.
+4. Verifica que aparezca en Firebase Storage en la ruta `valoraciones/{valuationId}/fotografias-clinicas/...`.

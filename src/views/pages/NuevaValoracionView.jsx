@@ -13,6 +13,7 @@ import {
   saveStepEightValuation,
   saveStepElevenValuation,
   saveStepNineValuation,
+  saveRecurrentStepFourValuation,
   saveStepOneValuation,
   saveStepFourValuation,
   saveStepFiveValuation,
@@ -28,6 +29,7 @@ import glogauTipo3 from '../../img/glogau/tipo3.jpg'
 import glogauTipo4 from '../../img/glogau/tipo4.jpg'
 
 const TOTAL_STEPS = 11
+const RECURRENT_TOTAL_STEPS = 4
 
 const getTodayDate = () => new Date().toISOString().split('T')[0]
 
@@ -153,6 +155,14 @@ const createStepElevenInitialData = () => ({
   actividadFrecuenciaSemanal: '',
   objetivoZonaMejorar: '',
   objetivoIncomodidadVisual: '',
+})
+
+const createRecurrentStepFourInitialData = () => ({
+  cambiosSalud: '',
+  medicamentoNuevo: '',
+  reaccionUltimaSesion: '',
+  siguioRutina: '',
+  mejoraOCambioPiel: '',
 })
 
 const STEP_FOUR_OTHER_CONFIG = {
@@ -605,6 +615,7 @@ function NuevaValoracionView() {
   const [stepNineData, setStepNineData] = useState(createStepNineInitialData)
   const [stepTenData, setStepTenData] = useState(createStepTenInitialData)
   const [stepElevenData, setStepElevenData] = useState(createStepElevenInitialData)
+  const [recurrentStepFourData, setRecurrentStepFourData] = useState(createRecurrentStepFourInitialData)
   const [stepTwoModal, setStepTwoModal] = useState({
     open: false,
     field: '',
@@ -692,7 +703,7 @@ function NuevaValoracionView() {
         setValuationDocId('')
         setActiveStep(1)
         setHighestSavedStep(1)
-        setClientFlowType('nuevo')
+        setClientFlowType('')
         setSelectedClientId('')
         setStepOneData(createStepOneInitialData())
         setStepTwoData(createStepTwoInitialData())
@@ -705,6 +716,7 @@ function NuevaValoracionView() {
         setStepNineData(createStepNineInitialData())
         setStepTenData(createStepTenInitialData())
         setStepElevenData(createStepElevenInitialData())
+        setRecurrentStepFourData(createRecurrentStepFourInitialData())
         setStepTwoModal({ open: false, field: '', title: '', options: [] })
         setStepFourModal({ open: false, field: '', title: '', options: [] })
         setStepSevenModal({ open: false, section: '', title: '' })
@@ -732,6 +744,7 @@ function NuevaValoracionView() {
         ...createStepOneInitialData(),
         ...(result.valuation.step1 ?? {}),
       }
+      const loadedFlowType = loadedStepOne.tipoCliente === 'recurrente' ? 'recurrente' : 'nuevo'
 
       setError('')
       setValuationDocId(result.valuation.id)
@@ -742,7 +755,19 @@ function NuevaValoracionView() {
 
       setHighestSavedStep(normalizedLoadedCurrentStep)
 
-      if (normalizedLoadedCurrentStep >= 11) {
+      if (loadedFlowType === 'recurrente') {
+        const hasSavedRecurrentStepFour = Boolean(result.valuation.recurrentStep4)
+
+        if (hasSavedRecurrentStepFour) {
+          setActiveStep(4)
+        } else if (normalizedLoadedCurrentStep >= 7) {
+          setActiveStep(3)
+        } else if (normalizedLoadedCurrentStep >= 2) {
+          setActiveStep(2)
+        } else {
+          setActiveStep(1)
+        }
+      } else if (normalizedLoadedCurrentStep >= 11) {
         setActiveStep(11)
       } else if (normalizedLoadedCurrentStep >= 10) {
         setActiveStep(10)
@@ -765,7 +790,8 @@ function NuevaValoracionView() {
       } else {
         setActiveStep(1)
       }
-      setClientFlowType(loadedStepOne.tipoCliente === 'recurrente' ? 'recurrente' : 'nuevo')
+
+      setClientFlowType(loadedFlowType)
       setSelectedClientId(String(loadedStepOne.clienteId ?? result.valuation.clienteId ?? ''))
       setStepOneData(loadedStepOne)
       setStepTwoData(normalizeExistingStepTwoData(result.valuation.step2))
@@ -778,6 +804,10 @@ function NuevaValoracionView() {
       setStepNineData(normalizeExistingStepNineData(result.valuation.step9))
       setStepTenData(normalizeExistingStepTenData(result.valuation.step10))
       setStepElevenData(normalizeExistingStepElevenData(result.valuation.step11))
+      setRecurrentStepFourData({
+        ...createRecurrentStepFourInitialData(),
+        ...(result.valuation.recurrentStep4 ?? {}),
+      })
       setIsLoading(false)
     }
 
@@ -803,7 +833,7 @@ function NuevaValoracionView() {
     const queryText = clientSearch.trim().toLowerCase()
 
     if (!queryText) {
-      return availableClients.slice(0, 12)
+      return []
     }
 
     return availableClients
@@ -819,12 +849,16 @@ function NuevaValoracionView() {
     return 'Nueva Valoracion'
   }, [valuationDocId])
 
+  const isFlowSelected = clientFlowType === 'nuevo' || clientFlowType === 'recurrente'
   const normalizedActiveStep = Number.isFinite(Number(activeStep))
     ? Math.max(1, Math.min(TOTAL_STEPS, Math.trunc(Number(activeStep))))
     : 1
-  const progressPercent = Math.round((normalizedActiveStep / TOTAL_STEPS) * 100)
-
-  const showClientFlowToggle = !valuationDocId
+  const normalizedProgressStep =
+    clientFlowType === 'recurrente'
+      ? (normalizedActiveStep >= 7 ? 3 : Math.max(1, Math.min(RECURRENT_TOTAL_STEPS, normalizedActiveStep)))
+      : normalizedActiveStep
+  const progressTotalSteps = clientFlowType === 'recurrente' ? RECURRENT_TOTAL_STEPS : TOTAL_STEPS
+  const progressPercent = Math.round((normalizedProgressStep / progressTotalSteps) * 100)
 
   const setFieldValue = (field, value) => {
     setStepOneData((previous) => ({
@@ -926,6 +960,13 @@ function NuevaValoracionView() {
 
   const setStepElevenFieldValue = (field, value) => {
     setStepElevenData((previous) => ({
+      ...previous,
+      [field]: value,
+    }))
+  }
+
+  const setRecurrentStepFourFieldValue = (field, value) => {
+    setRecurrentStepFourData((previous) => ({
       ...previous,
       [field]: value,
     }))
@@ -1280,13 +1321,16 @@ function NuevaValoracionView() {
 
   const selectClientFlowType = (flowType) => {
     setClientFlowType(flowType)
+    setActiveStep(1)
+    setError('')
 
     if (flowType === 'nuevo') {
       setSelectedClientId('')
-      setStepOneData((previous) => clearClientCoreData(previous))
+      setStepOneData(createStepOneInitialData())
       return
     }
 
+    setStepOneData(createStepOneInitialData())
     setClientSearch('')
   }
 
@@ -1298,7 +1342,253 @@ function NuevaValoracionView() {
     setError('')
   }
 
-  const saveStepOne = async () => {
+  const hasValue = (value) => String(value ?? '').trim().length > 0
+
+  const hasStepSevenImportantQuestions =
+    stepSevenData.procedimientosPrevios.length > 0
+    || stepSevenData.facialesPrevios === 'si'
+    || stepSevenData.aparatologiaCorporal === 'si'
+
+  const validateStep = (step) => {
+    if (clientFlowType === 'recurrente') {
+      if (step === 1) {
+        if (!selectedClientId) {
+          return 'Selecciona un cliente frecuente para continuar.'
+        }
+
+        if (!hasValue(stepOneData.fechaValoracion)) {
+          return 'Selecciona la fecha de valoracion para continuar.'
+        }
+      }
+
+      if (step === 3 || step === 7) {
+        if (isStepSevenOtherSelected() && !hasValue(stepSevenData.procedimientosPreviosOtro)) {
+          return 'Especifica el procedimiento en el campo "Otro".'
+        }
+
+        if (hasStepSevenImportantQuestions) {
+          const requiredFields = [
+            stepSevenData.fechaUltimoProcedimiento,
+            stepSevenData.tratamientoIrrito,
+            stepSevenData.quemadurasOMalasExperiencias,
+            stepSevenData.pielReaccionaFacilmente,
+            stepSevenData.toleraBienDolor,
+          ]
+
+          if (requiredFields.some((field) => !hasValue(field))) {
+            return 'Completa todos los campos obligatorios de "Preguntas importantes" para continuar.'
+          }
+
+          if (stepSevenData.tratamientoIrrito === 'si' && !hasValue(stepSevenData.tratamientoIrritoDetalle)) {
+            return 'Describe cual tratamiento te irrito.'
+          }
+        }
+      }
+
+      if (step === 4) {
+        const requiredFields = [
+          recurrentStepFourData.cambiosSalud,
+          recurrentStepFourData.medicamentoNuevo,
+          recurrentStepFourData.reaccionUltimaSesion,
+          recurrentStepFourData.siguioRutina,
+          recurrentStepFourData.mejoraOCambioPiel,
+        ]
+
+        if (requiredFields.some((field) => !hasValue(field))) {
+          return 'Completa todas las preguntas del paso 4 para clientes frecuentes.'
+        }
+      }
+
+      return ''
+    }
+
+    if (step === 1) {
+      const requiredFields = [
+        stepOneData.apellidoPaterno,
+        stepOneData.apellidoMaterno,
+        stepOneData.nombre,
+        stepOneData.edad,
+        stepOneData.fechaNacimiento,
+        stepOneData.telefono,
+        stepOneData.correoElectronico,
+        stepOneData.ocupacion,
+        stepOneData.contactoEmergencia,
+        stepOneData.objetivoPrincipal,
+        stepOneData.fechaValoracion,
+      ]
+
+      if (requiredFields.some((field) => !hasValue(field))) {
+        return 'Completa todos los campos obligatorios del paso 1.'
+      }
+    }
+
+    if (step === 3) {
+      const requiredFields = [
+        stepThreeData.mejoraPrincipal,
+        stepThreeData.resultadoEsperado,
+        stepThreeData.tiempoEsperado,
+      ]
+
+      if (requiredFields.some((field) => !hasValue(field))) {
+        return 'Completa todos los campos obligatorios del paso 3.'
+      }
+    }
+
+    if (step === 4) {
+      const requiredFields = [
+        stepFourData.embarazoActual,
+        stepFourData.lactanciaActual,
+        stepFourData.embarazoProximo,
+      ]
+
+      if (requiredFields.some((field) => !hasValue(field))) {
+        return 'Completa todos los campos obligatorios del paso 4.'
+      }
+
+      if (isStepFourOtherSelected('enfermedades') && !hasValue(stepFourData.enfermedadesOtro)) {
+        return 'Especifica la enfermedad en el campo "Otro".'
+      }
+
+      if (isStepFourOtherSelected('medicamentosActuales') && !hasValue(stepFourData.medicamentosActualesOtro)) {
+        return 'Especifica el medicamento en el campo "Otros medicamentos".'
+      }
+
+      if (isStepFourOtherSelected('alergias') && !hasValue(stepFourData.alergiasOtro)) {
+        return 'Especifica la alergia en el campo "Otras alergias".'
+      }
+    }
+
+    if (step === 5) {
+      const requiredFields = [
+        stepFiveData.aguaDiaria,
+        stepFiveData.calidadAlimentacion,
+        stepFiveData.consumeAzucarLacteos,
+        stepFiveData.fuma,
+        stepFiveData.consumeAlcohol,
+        stepFiveData.realizaEjercicio,
+        stepFiveData.horasSueno,
+        stepFiveData.estresAlto,
+        stepFiveData.desvelosFrecuentes,
+      ]
+
+      if (requiredFields.some((field) => !hasValue(field))) {
+        return 'Completa todos los campos obligatorios del paso 5.'
+      }
+    }
+
+    if (step === 6) {
+      const requiredFields = [
+        stepSixData.usaProtectorDiario,
+        stepSixData.tiempoProlongadoSol,
+        stepSixData.quemadurasSolaresRecientes,
+      ]
+
+      if (requiredFields.some((field) => !hasValue(field))) {
+        return 'Completa todos los campos obligatorios del paso 6.'
+      }
+    }
+
+    if (step === 7) {
+      if (isStepSevenOtherSelected() && !hasValue(stepSevenData.procedimientosPreviosOtro)) {
+        return 'Especifica el procedimiento en el campo "Otro".'
+      }
+
+      if (hasStepSevenImportantQuestions) {
+        const requiredFields = [
+          stepSevenData.fechaUltimoProcedimiento,
+          stepSevenData.tratamientoIrrito,
+          stepSevenData.quemadurasOMalasExperiencias,
+          stepSevenData.pielReaccionaFacilmente,
+          stepSevenData.toleraBienDolor,
+        ]
+
+        if (requiredFields.some((field) => !hasValue(field))) {
+          return 'Completa todos los campos obligatorios de "Preguntas importantes" en el paso 7.'
+        }
+
+        if (stepSevenData.tratamientoIrrito === 'si' && !hasValue(stepSevenData.tratamientoIrritoDetalle)) {
+          return 'Describe cual tratamiento te irrito.'
+        }
+      }
+    }
+
+    if (step === 8) {
+      const requiredFields = [
+        stepEightData.usaRetinol,
+        stepEightData.usaAcidos,
+        stepEightData.brotesPorProducto,
+        stepEightData.constanteRutina,
+        stepEightData.seguiriaCuidadosCasa,
+      ]
+
+      if (requiredFields.some((field) => !hasValue(field))) {
+        return 'Completa todos los campos obligatorios del paso 8.'
+      }
+
+      if (isStepEightOtherSelected('mananaProductos') && !hasValue(stepEightData.mananaOtro)) {
+        return 'Especifica el producto "Otro" de la rutina de manana.'
+      }
+
+      if (isStepEightOtherSelected('nocheProductos') && !hasValue(stepEightData.nocheOtro)) {
+        return 'Especifica el producto "Otro" de la rutina de noche.'
+      }
+    }
+
+    if (step === 9) {
+      if (getStepNineList('tipoPiel').length === 0 || getStepNineList('estadoActual').length === 0) {
+        return 'Selecciona al menos una opcion en tipo de piel y estado actual.'
+      }
+    }
+
+    if (step === 10) {
+      const requiredFields = [
+        stepTenData.acneEmpeoraPeriodo,
+        stepTenData.cambiosHormonalesRecientes,
+        stepTenData.usaAnticonceptivos,
+        stepTenData.manipulaGranitos,
+        stepTenData.acneDoloroso,
+        stepTenData.pielEnrojeceFacilmente,
+        stepTenData.pielArdeIrritaFacil,
+      ]
+
+      if (requiredFields.some((field) => !hasValue(field))) {
+        return 'Completa todos los campos obligatorios del paso 10.'
+      }
+
+      if (!hasValue(stepTenData.escalaFitzpatrick) || !hasValue(stepTenData.escalaGlogau)) {
+        return 'Selecciona las escalas Fitzpatrick y Glogau.'
+      }
+    }
+
+    if (step === 11) {
+      const requiredFields = [
+        stepElevenData.circulacionPiernasCansadas,
+        stepElevenData.circulacionVarices,
+        stepElevenData.circulacionRetencionLiquidos,
+        stepElevenData.circulacionDolorTacto,
+        stepElevenData.pesoCambiosRecientes,
+        stepElevenData.pesoFluctuaciones,
+        stepElevenData.actividadEjercicio,
+      ]
+
+      if (requiredFields.some((field) => !hasValue(field))) {
+        return 'Completa todos los campos obligatorios del paso 11.'
+      }
+    }
+
+    return ''
+  }
+
+  const saveStepOne = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(1)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
     if (!currentUser?.id) {
       setError('No hay sesion activa para guardar la valoracion.')
       return null
@@ -1388,7 +1678,16 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
-  const saveStepThree = async () => {
+  const saveStepThree = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(3)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
     setIsSaving(true)
     const result = await saveStepThreeValuation({
       valuationId: valuationDocId,
@@ -1410,7 +1709,16 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
-  const saveStepFour = async () => {
+  const saveStepFour = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(4)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
     setIsSaving(true)
     const result = await saveStepFourValuation({
       valuationId: valuationDocId,
@@ -1432,7 +1740,16 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
-  const saveStepFive = async () => {
+  const saveStepFive = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(5)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
     setIsSaving(true)
     const result = await saveStepFiveValuation({
       valuationId: valuationDocId,
@@ -1454,7 +1771,16 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
-  const saveStepSix = async () => {
+  const saveStepSix = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(6)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
     setIsSaving(true)
     const result = await saveStepSixValuation({
       valuationId: valuationDocId,
@@ -1476,12 +1802,33 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
-  const saveStepSeven = async () => {
+  const saveStepSeven = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(7)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
+    const normalizedStepSevenData = hasStepSevenImportantQuestions
+      ? stepSevenData
+      : {
+          ...stepSevenData,
+          fechaUltimoProcedimiento: '',
+          tratamientoIrrito: '',
+          tratamientoIrritoDetalle: '',
+          quemadurasOMalasExperiencias: '',
+          pielReaccionaFacilmente: '',
+          toleraBienDolor: '',
+        }
+
     setIsSaving(true)
     const result = await saveStepSevenValuation({
       valuationId: valuationDocId,
       knownCurrentStep: highestSavedStep,
-      stepSevenData,
+      stepSevenData: normalizedStepSevenData,
     })
     setIsSaving(false)
 
@@ -1498,7 +1845,16 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
-  const saveStepEight = async () => {
+  const saveStepEight = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(8)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
     setIsSaving(true)
     const result = await saveStepEightValuation({
       valuationId: valuationDocId,
@@ -1520,7 +1876,16 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
-  const saveStepNine = async () => {
+  const saveStepNine = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(9)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
     setIsSaving(true)
     const result = await saveStepNineValuation({
       valuationId: valuationDocId,
@@ -1542,7 +1907,16 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
-  const saveStepTen = async () => {
+  const saveStepTen = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(10)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
     setIsSaving(true)
     const result = await saveStepTenValuation({
       valuationId: valuationDocId,
@@ -1564,7 +1938,16 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
-  const saveStepEleven = async () => {
+  const saveStepEleven = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(11)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
     setIsSaving(true)
     const result = await saveStepElevenValuation({
       valuationId: valuationDocId,
@@ -1586,9 +1969,38 @@ function NuevaValoracionView() {
     return result.valuation?.id || valuationDocId
   }
 
+  const saveRecurrentStepFour = async ({ validate = true } = {}) => {
+    if (validate) {
+      const validationMessage = validateStep(4)
+      if (validationMessage) {
+        setError(validationMessage)
+        setSuccessMessage('')
+        return null
+      }
+    }
+
+    setIsSaving(true)
+    const result = await saveRecurrentStepFourValuation({
+      valuationId: valuationDocId,
+      recurrentStepFourData,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    setValuationDocId(result.valuation?.id || valuationDocId)
+    return result.valuation?.id || valuationDocId
+  }
+
   const handleSaveAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepOne()
+    const nextValuationId = await saveStepOne({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1628,13 +2040,13 @@ function NuevaValoracionView() {
       return
     }
 
-    setActiveStep(3)
+    setActiveStep(clientFlowType === 'recurrente' ? 3 : 3)
     setSuccessMessage('')
   }
 
   const handleSaveStepThreeAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepThree()
+    const nextValuationId = await saveStepThree({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1657,7 +2069,7 @@ function NuevaValoracionView() {
 
   const handleSaveStepFourAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepFour()
+    const nextValuationId = await saveStepFour({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1680,7 +2092,7 @@ function NuevaValoracionView() {
 
   const handleSaveStepFiveAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepFive()
+    const nextValuationId = await saveStepFive({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1703,7 +2115,7 @@ function NuevaValoracionView() {
 
   const handleSaveStepSixAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepSix()
+    const nextValuationId = await saveStepSix({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1726,7 +2138,7 @@ function NuevaValoracionView() {
 
   const handleSaveStepSevenAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepSeven()
+    const nextValuationId = await saveStepSeven({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1743,13 +2155,13 @@ function NuevaValoracionView() {
       return
     }
 
-    setActiveStep(8)
+    setActiveStep(clientFlowType === 'recurrente' ? 4 : 8)
     setSuccessMessage('')
   }
 
   const handleSaveStepEightAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepEight()
+    const nextValuationId = await saveStepEight({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1772,7 +2184,7 @@ function NuevaValoracionView() {
 
   const handleSaveStepNineAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepNine()
+    const nextValuationId = await saveStepNine({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1795,7 +2207,7 @@ function NuevaValoracionView() {
 
   const handleSaveStepTenAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepTen()
+    const nextValuationId = await saveStepTen({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1818,7 +2230,7 @@ function NuevaValoracionView() {
 
   const handleSaveStepElevenAndExit = async (event) => {
     event.preventDefault()
-    const nextValuationId = await saveStepEleven()
+    const nextValuationId = await saveStepEleven({ validate: false })
 
     if (!nextValuationId) {
       return
@@ -1830,6 +2242,28 @@ function NuevaValoracionView() {
   const handleSaveStepElevenAndContinue = async (event) => {
     event.preventDefault()
     const nextValuationId = await saveStepEleven()
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveRecurrentStepFourAndExit = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveRecurrentStepFour({ validate: false })
+
+    if (!nextValuationId) {
+      return
+    }
+
+    navigate('/app/valoraciones-pendientes')
+  }
+
+  const handleSaveRecurrentStepFourAndContinue = async (event) => {
+    event.preventDefault()
+    const nextValuationId = await saveRecurrentStepFour()
 
     if (!nextValuationId) {
       return
@@ -1851,10 +2285,10 @@ function NuevaValoracionView() {
             <div
               className="valuation-progress-track"
               role="progressbar"
-              aria-label={`Progreso de valoracion: paso ${normalizedActiveStep} de ${TOTAL_STEPS}`}
+              aria-label={`Progreso de valoracion: paso ${normalizedProgressStep} de ${progressTotalSteps}`}
               aria-valuemin={1}
-              aria-valuemax={TOTAL_STEPS}
-              aria-valuenow={normalizedActiveStep}
+              aria-valuemax={progressTotalSteps}
+              aria-valuenow={normalizedProgressStep}
             >
               <span className="valuation-progress-fill" style={{ width: `${progressPercent}%` }} />
             </div>
@@ -1864,27 +2298,27 @@ function NuevaValoracionView() {
 
       {isLoading ? <p className="subtitle">Cargando valoracion...</p> : null}
 
-      {!isLoading && activeStep === 1 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveAndExit}>
-          {showClientFlowToggle ? (
-            <div className="client-mode-toggle">
-              <button
-                type="button"
-                className={`client-mode-button ${clientFlowType === 'recurrente' ? 'active' : ''}`}
-                onClick={() => selectClientFlowType('recurrente')}
-              >
-                Cliente recurrente
-              </button>
-              <button
-                type="button"
-                className={`client-mode-button ${clientFlowType === 'nuevo' ? 'active' : ''}`}
-                onClick={() => selectClientFlowType('nuevo')}
-              >
-                Cliente nuevo
-              </button>
-            </div>
-          ) : null}
+      {!isLoading && !isFlowSelected ? (
+        <div className="client-mode-toggle">
+          <button
+            type="button"
+            className="client-mode-button"
+            onClick={() => selectClientFlowType('nuevo')}
+          >
+            CLIENTE NUEVO
+          </button>
+          <button
+            type="button"
+            className="client-mode-button"
+            onClick={() => selectClientFlowType('recurrente')}
+          >
+            CLIENTE FRECUENTE
+          </button>
+        </div>
+      ) : null}
 
+      {!isLoading && isFlowSelected && activeStep === 1 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveAndExit}>
           {clientFlowType === 'recurrente' ? (
             <div className="client-search-box">
               <label>
@@ -1918,144 +2352,152 @@ function NuevaValoracionView() {
                   )}
                 </div>
               ) : null}
+
+              {selectedClientId ? (
+                <div className="client-detail-grid">
+                  <p><strong>Nombre completo:</strong> {`${stepOneData.nombre} ${stepOneData.apellidoPaterno} ${stepOneData.apellidoMaterno}`.replace(/\s+/g, ' ').trim()}</p>
+                  <p><strong>Fecha de nacimiento:</strong> {stepOneData.fechaNacimiento || 'Sin dato'}</p>
+                </div>
+              ) : null}
+
+              <div className="valuation-grid">
+                <label>
+                  Fecha de valoracion
+                  <input
+                    required
+                    type="date"
+                    value={stepOneData.fechaValoracion}
+                    onChange={(event) => setFieldValue('fechaValoracion', event.target.value)}
+                  />
+                </label>
+              </div>
             </div>
           ) : null}
 
-          <div className="valuation-grid">
-            <label>
-              Apellido paterno
-              <input
-                required
-                value={stepOneData.apellidoPaterno}
-                onChange={(event) => setFieldValue('apellidoPaterno', event.target.value)}
-              />
-            </label>
+          {clientFlowType === 'nuevo' ? (
+            <>
+              <div className="valuation-grid">
+                <label>
+                  Apellido paterno
+                  <input
+                    required
+                    value={stepOneData.apellidoPaterno}
+                    onChange={(event) => setFieldValue('apellidoPaterno', event.target.value)}
+                  />
+                </label>
 
-            <label>
-              Apellido materno
-              <input
-                required
-                value={stepOneData.apellidoMaterno}
-                onChange={(event) => setFieldValue('apellidoMaterno', event.target.value)}
-              />
-            </label>
+                <label>
+                  Apellido materno
+                  <input
+                    required
+                    value={stepOneData.apellidoMaterno}
+                    onChange={(event) => setFieldValue('apellidoMaterno', event.target.value)}
+                  />
+                </label>
 
-            <label>
-              Nombre
-              <input
-                required
-                value={stepOneData.nombre}
-                onChange={(event) => setFieldValue('nombre', event.target.value)}
-              />
-            </label>
+                <label>
+                  Nombre
+                  <input
+                    required
+                    value={stepOneData.nombre}
+                    onChange={(event) => setFieldValue('nombre', event.target.value)}
+                  />
+                </label>
 
-            <label>
-              Edad
-              <input
-                required
-                type="number"
-                min="0"
-                value={stepOneData.edad}
-                onChange={(event) => setFieldValue('edad', event.target.value)}
-              />
-            </label>
+                <label>
+                  Edad
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    value={stepOneData.edad}
+                    onChange={(event) => setFieldValue('edad', event.target.value)}
+                  />
+                </label>
 
-            <label>
-              Fecha nacimiento
-              <input
-                required
-                type="date"
-                value={stepOneData.fechaNacimiento}
-                onChange={(event) => setFieldValue('fechaNacimiento', event.target.value)}
-              />
-            </label>
+                <label>
+                  Fecha nacimiento
+                  <input
+                    required
+                    type="date"
+                    value={stepOneData.fechaNacimiento}
+                    onChange={(event) => setFieldValue('fechaNacimiento', event.target.value)}
+                  />
+                </label>
 
-            <label>
-              Telefono
-              <input
-                required
-                type="tel"
-                value={stepOneData.telefono}
-                onChange={(event) => setFieldValue('telefono', event.target.value)}
-              />
-            </label>
+                <label>
+                  Telefono
+                  <input
+                    required
+                    type="tel"
+                    value={stepOneData.telefono}
+                    onChange={(event) => setFieldValue('telefono', event.target.value)}
+                  />
+                </label>
 
-            <label>
-              Correo electronico
-              <input
-                required
-                type="email"
-                value={stepOneData.correoElectronico}
-                onChange={(event) => setFieldValue('correoElectronico', event.target.value)}
-              />
-            </label>
+                <label>
+                  Correo electronico
+                  <input
+                    required
+                    type="email"
+                    value={stepOneData.correoElectronico}
+                    onChange={(event) => setFieldValue('correoElectronico', event.target.value)}
+                  />
+                </label>
 
-            <label>
-              Ocupacion
-              <input
-                required
-                value={stepOneData.ocupacion}
-                onChange={(event) => setFieldValue('ocupacion', event.target.value)}
-              />
-            </label>
+                <label>
+                  Ocupacion
+                  <input
+                    required
+                    value={stepOneData.ocupacion}
+                    onChange={(event) => setFieldValue('ocupacion', event.target.value)}
+                  />
+                </label>
 
-            <label className="valuation-field-large">
-              Contacto de emergencia
-              <input
-                required
-                value={stepOneData.contactoEmergencia}
-                onChange={(event) => setFieldValue('contactoEmergencia', event.target.value)}
-              />
-            </label>
-          </div>
+                <label className="valuation-field-large">
+                  Contacto de emergencia
+                  <input
+                    required
+                    value={stepOneData.contactoEmergencia}
+                    onChange={(event) => setFieldValue('contactoEmergencia', event.target.value)}
+                  />
+                </label>
+              </div>
 
-          <div className="valuation-grid">
-            <label className="valuation-field-large">
-              Objetivo principal
-              <textarea
-                required
-                rows="3"
-                value={stepOneData.objetivoPrincipal}
-                onChange={(event) => setFieldValue('objetivoPrincipal', event.target.value)}
-              />
-            </label>
+              <div className="valuation-grid">
+                <label className="valuation-field-large">
+                  Objetivo principal
+                  <textarea
+                    required
+                    rows="3"
+                    value={stepOneData.objetivoPrincipal}
+                    onChange={(event) => setFieldValue('objetivoPrincipal', event.target.value)}
+                  />
+                </label>
 
-            <label className="valuation-field-large">
-              Inconformidad principal
-              <textarea
-                required
-                rows="3"
-                value={stepOneData.inconformidadPrincipal}
-                onChange={(event) => setFieldValue('inconformidadPrincipal', event.target.value)}
-              />
-            </label>
+                <label className="valuation-field-large">
+                  Inconformidad principal
+                  <textarea
+                    rows="3"
+                    value={stepOneData.inconformidadPrincipal}
+                    onChange={(event) => setFieldValue('inconformidadPrincipal', event.target.value)}
+                  />
+                </label>
 
-            <label>
-              Fecha de valoracion
-              <input
-                required
-                type="date"
-                value={stepOneData.fechaValoracion}
-                onChange={(event) => setFieldValue('fechaValoracion', event.target.value)}
-              />
-            </label>
-          </div>
+                <label>
+                  Fecha de valoracion
+                  <input
+                    required
+                    type="date"
+                    value={stepOneData.fechaValoracion}
+                    onChange={(event) => setFieldValue('fechaValoracion', event.target.value)}
+                  />
+                </label>
+              </div>
+            </>
+          ) : null}
 
           {error ? <p className="error-text">{error}</p> : null}
-
-          <div className="post-step-tools">
-            <button type="button" className="main-button secondary post-step-tool-button">
-              SEMAFORO CUTANEO
-            </button>
-
-            <button type="button" className="main-button secondary post-step-tool-button">
-              MAPA INTERACTIVO
-            </button>
-
-            <button type="button" className="main-button secondary post-step-tool-button">
-              FOTOGRAFIAS
-            </button>
-          </div>
 
           <div className="valuation-actions">
             <button type="submit" className="main-button" disabled={isSaving}>
@@ -2073,7 +2515,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 2 ? (
+      {!isLoading && isFlowSelected && activeStep === 2 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepTwoAndExit}>
           <div className="valuation-section-title">Motivo de consulta</div>
 
@@ -2155,7 +2597,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 3 ? (
+      {!isLoading && clientFlowType === 'nuevo' && activeStep === 3 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepThreeAndExit}>
           <div className="valuation-section-title">Expectativas y prioridades del cliente</div>
 
@@ -2193,7 +2635,6 @@ function NuevaValoracionView() {
             <label className="valuation-field-large">
               Que zona te incomoda mas visualmente?
               <textarea
-                required
                 rows="3"
                 value={stepThreeData.zonaIncomoda}
                 onChange={(event) => setStepThreeFieldValue('zonaIncomoda', event.target.value)}
@@ -2238,7 +2679,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 4 ? (
+      {!isLoading && clientFlowType === 'nuevo' && activeStep === 4 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepFourAndExit}>
           <div className="valuation-section-title">Historial clinico</div>
 
@@ -2270,6 +2711,7 @@ function NuevaValoracionView() {
             <label>
               Estas embarazada?
               <select
+                required
                 value={stepFourData.embarazoActual}
                 onChange={(event) => setStepFourFieldValue('embarazoActual', event.target.value)}
               >
@@ -2282,6 +2724,7 @@ function NuevaValoracionView() {
             <label>
               Estas lactando?
               <select
+                required
                 value={stepFourData.lactanciaActual}
                 onChange={(event) => setStepFourFieldValue('lactanciaActual', event.target.value)}
               >
@@ -2294,6 +2737,7 @@ function NuevaValoracionView() {
             <label>
               Planeas embarazo proximamente?
               <select
+                required
                 value={stepFourData.embarazoProximo}
                 onChange={(event) => setStepFourFieldValue('embarazoProximo', event.target.value)}
               >
@@ -2384,7 +2828,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 5 ? (
+      {!isLoading && clientFlowType === 'nuevo' && activeStep === 5 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepFiveAndExit}>
           <div className="valuation-section-title">Habitos y estilo de vida</div>
 
@@ -2392,6 +2836,7 @@ function NuevaValoracionView() {
             <label>
               Cuanta agua tomas al dia?
               <input
+                required
                 value={stepFiveData.aguaDiaria}
                 onChange={(event) => setStepFiveFieldValue('aguaDiaria', event.target.value)}
                 placeholder="Ejemplo: 2 litros"
@@ -2401,6 +2846,7 @@ function NuevaValoracionView() {
             <label>
               Como calificas tu alimentacion?
               <select
+                required
                 value={stepFiveData.calidadAlimentacion}
                 onChange={(event) => setStepFiveFieldValue('calidadAlimentacion', event.target.value)}
               >
@@ -2416,6 +2862,7 @@ function NuevaValoracionView() {
             <label>
               Consumes mucho azucar o lacteos?
               <select
+                required
                 value={stepFiveData.consumeAzucarLacteos}
                 onChange={(event) => setStepFiveFieldValue('consumeAzucarLacteos', event.target.value)}
               >
@@ -2428,6 +2875,7 @@ function NuevaValoracionView() {
             <label>
               Fumas?
               <select
+                required
                 value={stepFiveData.fuma}
                 onChange={(event) => setStepFiveFieldValue('fuma', event.target.value)}
               >
@@ -2440,6 +2888,7 @@ function NuevaValoracionView() {
             <label>
               Consumes alcohol?
               <select
+                required
                 value={stepFiveData.consumeAlcohol}
                 onChange={(event) => setStepFiveFieldValue('consumeAlcohol', event.target.value)}
               >
@@ -2452,6 +2901,7 @@ function NuevaValoracionView() {
             <label>
               Realizas ejercicio?
               <select
+                required
                 value={stepFiveData.realizaEjercicio}
                 onChange={(event) => setStepFiveFieldValue('realizaEjercicio', event.target.value)}
               >
@@ -2473,6 +2923,7 @@ function NuevaValoracionView() {
             <label>
               Cuantas horas duermes?
               <input
+                required
                 value={stepFiveData.horasSueno}
                 onChange={(event) => setStepFiveFieldValue('horasSueno', event.target.value)}
                 placeholder="Ejemplo: 7 horas"
@@ -2482,6 +2933,7 @@ function NuevaValoracionView() {
             <label>
               Tu nivel de estres es alto?
               <select
+                required
                 value={stepFiveData.estresAlto}
                 onChange={(event) => setStepFiveFieldValue('estresAlto', event.target.value)}
               >
@@ -2494,6 +2946,7 @@ function NuevaValoracionView() {
             <label>
               Te desvelas frecuentemente?
               <select
+                required
                 value={stepFiveData.desvelosFrecuentes}
                 onChange={(event) => setStepFiveFieldValue('desvelosFrecuentes', event.target.value)}
               >
@@ -2532,7 +2985,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 6 ? (
+      {!isLoading && clientFlowType === 'nuevo' && activeStep === 6 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepSixAndExit}>
           <div className="valuation-section-title">Exposicion solar</div>
 
@@ -2540,6 +2993,7 @@ function NuevaValoracionView() {
             <label>
               Usas protector solar diariamente?
               <select
+                required
                 value={stepSixData.usaProtectorDiario}
                 onChange={(event) => setStepSixFieldValue('usaProtectorDiario', event.target.value)}
               >
@@ -2570,6 +3024,7 @@ function NuevaValoracionView() {
             <label>
               Trabajas o pasas mucho tiempo al sol?
               <select
+                required
                 value={stepSixData.tiempoProlongadoSol}
                 onChange={(event) => setStepSixFieldValue('tiempoProlongadoSol', event.target.value)}
               >
@@ -2582,6 +3037,7 @@ function NuevaValoracionView() {
             <label>
               Has tenido quemaduras solares recientes?
               <select
+                required
                 value={stepSixData.quemadurasSolaresRecientes}
                 onChange={(event) => setStepSixFieldValue('quemadurasSolaresRecientes', event.target.value)}
               >
@@ -2620,7 +3076,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 7 ? (
+      {!isLoading && ((clientFlowType === 'nuevo' && activeStep === 7) || (clientFlowType === 'recurrente' && activeStep === 3)) ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepSevenAndExit}>
           <div className="valuation-section-title">Historial estetico</div>
 
@@ -2689,12 +3145,14 @@ function NuevaValoracionView() {
               ) : null}
             </div>
 
-            <div className="selection-card">
-              <p className="selection-title">Preguntas importantes</p>
+            {hasStepSevenImportantQuestions ? (
+              <div className="selection-card">
+                <p className="selection-title required-title">Preguntas importantes</p>
               <div className="valuation-grid">
                 <label>
                   Cuando fue tu ultimo procedimiento?
                   <input
+                    required
                     type="date"
                     value={stepSevenData.fechaUltimoProcedimiento}
                     onChange={(event) =>
@@ -2705,6 +3163,7 @@ function NuevaValoracionView() {
                 <label>
                   Algun tratamiento te irrito?
                   <select
+                    required
                     value={stepSevenData.tratamientoIrrito}
                     onChange={(event) => setStepSevenFieldValue('tratamientoIrrito', event.target.value)}
                   >
@@ -2718,6 +3177,7 @@ function NuevaValoracionView() {
                   <label className="valuation-field-large">
                     Cual tratamiento te irrito?
                     <textarea
+                      required
                       rows="3"
                       value={stepSevenData.tratamientoIrritoDetalle}
                       onChange={(event) =>
@@ -2729,6 +3189,7 @@ function NuevaValoracionView() {
                 <label>
                   Has tenido quemaduras o malas experiencias?
                   <select
+                    required
                     value={stepSevenData.quemadurasOMalasExperiencias}
                     onChange={(event) =>
                       setStepSevenFieldValue('quemadurasOMalasExperiencias', event.target.value)}
@@ -2742,6 +3203,7 @@ function NuevaValoracionView() {
                 <label>
                   Tu piel reacciona facilmente?
                   <select
+                    required
                     value={stepSevenData.pielReaccionaFacilmente}
                     onChange={(event) =>
                       setStepSevenFieldValue('pielReaccionaFacilmente', event.target.value)}
@@ -2755,6 +3217,7 @@ function NuevaValoracionView() {
                 <label>
                   Toleras bien el dolor?
                   <select
+                    required
                     value={stepSevenData.toleraBienDolor}
                     onChange={(event) => setStepSevenFieldValue('toleraBienDolor', event.target.value)}
                   >
@@ -2764,7 +3227,8 @@ function NuevaValoracionView() {
                   </select>
                 </label>
               </div>
-            </div>
+              </div>
+            ) : null}
           </div>
 
           {error ? <p className="error-text">{error}</p> : null}
@@ -2787,15 +3251,98 @@ function NuevaValoracionView() {
               type="button"
               className="main-button secondary"
               disabled={isSaving}
-              onClick={() => setActiveStep(6)}
+              onClick={() => setActiveStep(clientFlowType === 'recurrente' ? 2 : 6)}
             >
-              Volver al paso 6
+              {clientFlowType === 'recurrente' ? 'Volver al paso 2' : 'Volver al paso 6'}
             </button>
           </div>
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 8 ? (
+      {!isLoading && clientFlowType === 'recurrente' && activeStep === 4 ? (
+        <form className="simple-form valuation-form" onSubmit={handleSaveRecurrentStepFourAndExit}>
+          <div className="valuation-section-title">Paso 4</div>
+
+          <div className="valuation-grid">
+            <label className="valuation-field-large">
+              Ha habido cambios en tu estado de salud?
+              <textarea
+                required
+                rows="3"
+                value={recurrentStepFourData.cambiosSalud}
+                onChange={(event) => setRecurrentStepFourFieldValue('cambiosSalud', event.target.value)}
+              />
+            </label>
+
+            <label className="valuation-field-large">
+              Estas tomando algun medicamento nuevo?
+              <textarea
+                required
+                rows="3"
+                value={recurrentStepFourData.medicamentoNuevo}
+                onChange={(event) => setRecurrentStepFourFieldValue('medicamentoNuevo', event.target.value)}
+              />
+            </label>
+
+            <label className="valuation-field-large">
+              Tuviste alguna reaccion despues de la ultima sesion?
+              <textarea
+                required
+                rows="3"
+                value={recurrentStepFourData.reaccionUltimaSesion}
+                onChange={(event) => setRecurrentStepFourFieldValue('reaccionUltimaSesion', event.target.value)}
+              />
+            </label>
+
+            <label className="valuation-field-large">
+              Seguiste la rutina recomendada?
+              <textarea
+                required
+                rows="3"
+                value={recurrentStepFourData.siguioRutina}
+                onChange={(event) => setRecurrentStepFourFieldValue('siguioRutina', event.target.value)}
+              />
+            </label>
+
+            <label className="valuation-field-large">
+              Has observado alguna mejora, cambio o preocupacion en tu piel desde la ultima visita?
+              <textarea
+                required
+                rows="3"
+                value={recurrentStepFourData.mejoraOCambioPiel}
+                onChange={(event) => setRecurrentStepFourFieldValue('mejoraOCambioPiel', event.target.value)}
+              />
+            </label>
+          </div>
+
+          {error ? <p className="error-text">{error}</p> : null}
+          <div className="valuation-actions">
+            <button type="submit" className="main-button" disabled={isSaving}>
+              {isSaving ? 'Guardando...' : 'Salir'}
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleSaveRecurrentStepFourAndContinue}
+            >
+              FINALIZAR
+            </button>
+
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={() => setActiveStep(3)}
+            >
+              Volver al paso 3
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {!isLoading && clientFlowType === 'nuevo' && activeStep === 8 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepEightAndExit}>
           <div className="valuation-section-title">Rutina actual</div>
 
@@ -2855,6 +3402,7 @@ function NuevaValoracionView() {
                 <label>
                   Usas retinol?
                   <select
+                    required
                     value={stepEightData.usaRetinol}
                     onChange={(event) => setStepEightFieldValue('usaRetinol', event.target.value)}
                   >
@@ -2867,6 +3415,7 @@ function NuevaValoracionView() {
                 <label>
                   Usas acidos?
                   <select
+                    required
                     value={stepEightData.usaAcidos}
                     onChange={(event) => setStepEightFieldValue('usaAcidos', event.target.value)}
                   >
@@ -2888,6 +3437,7 @@ function NuevaValoracionView() {
                 <label>
                   Has tenido brotes por algun producto?
                   <select
+                    required
                     value={stepEightData.brotesPorProducto}
                     onChange={(event) => setStepEightFieldValue('brotesPorProducto', event.target.value)}
                   >
@@ -2906,6 +3456,7 @@ function NuevaValoracionView() {
                 <label>
                   Eres constante con tu rutina?
                   <select
+                    required
                     value={stepEightData.constanteRutina}
                     onChange={(event) => setStepEightFieldValue('constanteRutina', event.target.value)}
                   >
@@ -2918,6 +3469,7 @@ function NuevaValoracionView() {
                 <label>
                   Podrias seguir cuidados en casa?
                   <select
+                    required
                     value={stepEightData.seguiriaCuidadosCasa}
                     onChange={(event) => setStepEightFieldValue('seguiriaCuidadosCasa', event.target.value)}
                   >
@@ -2967,13 +3519,13 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 9 ? (
+      {!isLoading && clientFlowType === 'nuevo' && activeStep === 9 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepNineAndExit}>
           <div className="valuation-section-title">Evaluacion facial</div>
 
           <div className="valuation-grid">
             <div className="selection-card">
-              <p className="selection-title">Tipo de piel</p>
+              <p className="selection-title required-title">Tipo de piel</p>
               <button
                 type="button"
                 className="main-button secondary selection-trigger"
@@ -2997,7 +3549,7 @@ function NuevaValoracionView() {
             </div>
 
             <div className="selection-card">
-              <p className="selection-title">Estado actual</p>
+              <p className="selection-title required-title">Estado actual</p>
               <button
                 type="button"
                 className="main-button secondary selection-trigger"
@@ -3077,7 +3629,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 10 ? (
+      {!isLoading && clientFlowType === 'nuevo' && activeStep === 10 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepTenAndExit}>
           <div className="valuation-section-title">Evaluacion facial 2</div>
 
@@ -3089,6 +3641,7 @@ function NuevaValoracionView() {
                 <label>
                   Tu acne empeora en tu periodo?
                   <select
+                    required
                     value={stepTenData.acneEmpeoraPeriodo}
                     onChange={(event) => setStepTenFieldValue('acneEmpeoraPeriodo', event.target.value)}
                   >
@@ -3101,6 +3654,7 @@ function NuevaValoracionView() {
                 <label>
                   Has tenido cambios hormonales recientes?
                   <select
+                    required
                     value={stepTenData.cambiosHormonalesRecientes}
                     onChange={(event) =>
                       setStepTenFieldValue('cambiosHormonalesRecientes', event.target.value)}
@@ -3114,6 +3668,7 @@ function NuevaValoracionView() {
                 <label>
                   Usas anticonceptivos?
                   <select
+                    required
                     value={stepTenData.usaAnticonceptivos}
                     onChange={(event) => setStepTenFieldValue('usaAnticonceptivos', event.target.value)}
                   >
@@ -3141,6 +3696,7 @@ function NuevaValoracionView() {
                 <label>
                   Manipulas los granitos?
                   <select
+                    required
                     value={stepTenData.manipulaGranitos}
                     onChange={(event) => setStepTenFieldValue('manipulaGranitos', event.target.value)}
                   >
@@ -3153,6 +3709,7 @@ function NuevaValoracionView() {
                 <label>
                   El acne es doloroso?
                   <select
+                    required
                     value={stepTenData.acneDoloroso}
                     onChange={(event) => setStepTenFieldValue('acneDoloroso', event.target.value)}
                   >
@@ -3195,6 +3752,7 @@ function NuevaValoracionView() {
                 <label>
                   Tu piel se enrojece facilmente?
                   <select
+                    required
                     value={stepTenData.pielEnrojeceFacilmente}
                     onChange={(event) => setStepTenFieldValue('pielEnrojeceFacilmente', event.target.value)}
                   >
@@ -3207,6 +3765,7 @@ function NuevaValoracionView() {
                 <label>
                   Tu piel arde o irrita con facilidad?
                   <select
+                    required
                     value={stepTenData.pielArdeIrritaFacil}
                     onChange={(event) => setStepTenFieldValue('pielArdeIrritaFacil', event.target.value)}
                   >
@@ -3223,7 +3782,7 @@ function NuevaValoracionView() {
 
               <div className="valuation-grid">
                 <div className="valuation-field-large">
-                  <p className="selection-title">Fitzpatrick</p>
+                  <p className="selection-title required-title">Fitzpatrick</p>
                   <button
                     type="button"
                     className="main-button secondary selection-trigger"
@@ -3257,7 +3816,7 @@ function NuevaValoracionView() {
                 </div>
 
                 <div className="valuation-field-large">
-                  <p className="selection-title">Glogau</p>
+                  <p className="selection-title required-title">Glogau</p>
                   <button
                     type="button"
                     className="main-button secondary selection-trigger"
@@ -3333,7 +3892,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && activeStep === 11 ? (
+      {!isLoading && clientFlowType === 'nuevo' && activeStep === 11 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepElevenAndExit}>
           <div className="valuation-section-title">Preguntas corporales</div>
 
@@ -3345,6 +3904,7 @@ function NuevaValoracionView() {
                 <label>
                   Tienes piernas cansadas?
                   <select
+                    required
                     value={stepElevenData.circulacionPiernasCansadas}
                     onChange={(event) =>
                       setStepElevenFieldValue('circulacionPiernasCansadas', event.target.value)}
@@ -3358,6 +3918,7 @@ function NuevaValoracionView() {
                 <label>
                   Tienes varices?
                   <select
+                    required
                     value={stepElevenData.circulacionVarices}
                     onChange={(event) => setStepElevenFieldValue('circulacionVarices', event.target.value)}
                   >
@@ -3370,6 +3931,7 @@ function NuevaValoracionView() {
                 <label>
                   Tienes retencion de liquidos?
                   <select
+                    required
                     value={stepElevenData.circulacionRetencionLiquidos}
                     onChange={(event) =>
                       setStepElevenFieldValue('circulacionRetencionLiquidos', event.target.value)}
@@ -3383,6 +3945,7 @@ function NuevaValoracionView() {
                 <label>
                   Tienes dolor al tacto?
                   <select
+                    required
                     value={stepElevenData.circulacionDolorTacto}
                     onChange={(event) =>
                       setStepElevenFieldValue('circulacionDolorTacto', event.target.value)}
@@ -3402,6 +3965,7 @@ function NuevaValoracionView() {
                 <label>
                   Has subido o bajado de peso recientemente?
                   <select
+                    required
                     value={stepElevenData.pesoCambiosRecientes}
                     onChange={(event) => setStepElevenFieldValue('pesoCambiosRecientes', event.target.value)}
                   >
@@ -3414,6 +3978,7 @@ function NuevaValoracionView() {
                 <label>
                   Tu peso fluctua mucho?
                   <select
+                    required
                     value={stepElevenData.pesoFluctuaciones}
                     onChange={(event) => setStepElevenFieldValue('pesoFluctuaciones', event.target.value)}
                   >
@@ -3432,6 +3997,7 @@ function NuevaValoracionView() {
                 <label>
                   Haces ejercicio?
                   <select
+                    required
                     value={stepElevenData.actividadEjercicio}
                     onChange={(event) => setStepElevenFieldValue('actividadEjercicio', event.target.value)}
                   >

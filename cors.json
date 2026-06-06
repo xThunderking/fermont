@@ -1,0 +1,18 @@
+[
+  {
+    "origin": [
+      "http://localhost:5173",
+      "https://fermont-bbade.web.app",
+      "https://fermont-bbade.firebaseapp.com"
+    ],
+    "method": ["GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS"],
+    "responseHeader": [
+      "Content-Type",
+      "Authorization",
+      "X-Goog-Upload-Command",
+      "X-Goog-Upload-Offset",
+      "X-Goog-Upload-Protocol"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

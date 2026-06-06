@@ -1,9 +1,17 @@
 import { addDoc, collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from 'firebase/firestore'
-import { db } from '../services/firebase'
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { db, firebaseConfig, storage } from '../services/firebase'
 
 const VALUATIONS_COLLECTION = 'valoraciones'
 const TOTAL_STEPS = 11
 const FIRESTORE_COMPAT_TOTAL_STEPS = 14
+const CLINICAL_PHOTO_TYPES = ['facial', 'corporal']
+const CLINICAL_PHOTO_MOMENTS = ['antes', 'despues']
+
+export const CLINICAL_PHOTO_PARTS = {
+  facial: ['frente', 'perfilDerecho', 'perfilIzquierdo'],
+  corporal: ['frente', 'espalda', 'laterales'],
+}
 
 export const STEP_TWO_OPTIONS = {
   facial: [
@@ -154,6 +162,108 @@ export const STEP_TEN_OPTIONS = {
 
 const normalizeText = (value) => String(value ?? '').trim()
 
+const buildEmptyClinicalPhotosByType = () => ({
+  facial: {
+    frente: { antes: null, despues: null },
+    perfilDerecho: { antes: null, despues: null },
+    perfilIzquierdo: { antes: null, despues: null },
+  },
+  corporal: {
+    frente: { antes: null, despues: null },
+    espalda: { antes: null, despues: null },
+    laterales: { antes: null, despues: null },
+  },
+})
+
+const normalizeClinicalPhotoFile = (photo) => {
+  const url = normalizeText(photo?.url)
+
+  if (!url) {
+    return null
+  }
+
+  const path = normalizeText(photo?.path)
+  const name = normalizeText(photo?.name)
+  const updatedAtMsValue = Number(photo?.updatedAtMs)
+
+  return {
+    url,
+    path,
+    name,
+    updatedAtMs: Number.isFinite(updatedAtMsValue) ? Math.max(0, Math.trunc(updatedAtMsValue)) : Date.now(),
+  }
+}
+
+const normalizeClinicalPhotosByType = (photosByType) => {
+  const normalized = buildEmptyClinicalPhotosByType()
+
+  CLINICAL_PHOTO_TYPES.forEach((photoType) => {
+    const parts = CLINICAL_PHOTO_PARTS[photoType]
+
+    parts.forEach((part) => {
+      CLINICAL_PHOTO_MOMENTS.forEach((moment) => {
+        normalized[photoType][part][moment] = normalizeClinicalPhotoFile(photosByType?.[photoType]?.[part]?.[moment])
+      })
+    })
+  })
+
+  return normalized
+}
+
+const sanitizeStoragePathSegment = (value) => normalizeText(value).replace(/[^a-zA-Z0-9_-]/g, '_')
+
+const resolveStorageBucketHint = () => {
+  const bucket = normalizeText(firebaseConfig?.storageBucket)
+  return bucket ? `Bucket configurado: ${bucket}.` : 'Bucket de Firebase Storage no configurado.'
+}
+
+const resolveClinicalPhotoUploadErrorMessage = (error) => {
+  const code = normalizeText(error?.code).toLowerCase()
+  const message = normalizeText(error?.message).toLowerCase()
+
+  if (code === 'storage/unauthorized') {
+    return 'No tienes permisos para subir fotografias. Revisa las reglas de Firebase Storage y que tu sesion este activa.'
+  }
+
+  if (code === 'storage/canceled') {
+    return 'La subida de la fotografia fue cancelada.'
+  }
+
+  if (
+    code === 'storage/unknown'
+    || message.includes('xmlhttprequest')
+    || message.includes('cors')
+    || message.includes('preflight')
+    || message.includes('network request failed')
+  ) {
+    return `No se pudo subir la fotografia por configuracion de Firebase Storage (CORS o bucket). ${resolveStorageBucketHint()} Activa Storage en Firebase y agrega CORS para http://localhost:5173.`
+  }
+
+  return 'No se pudo subir la fotografia. Intenta de nuevo.'
+}
+
+const resolveImageExtension = (file) => {
+  const mime = String(file?.type || '').toLowerCase()
+
+  if (mime.includes('png')) {
+    return 'png'
+  }
+
+  if (mime.includes('webp')) {
+    return 'webp'
+  }
+
+  if (mime.includes('heic')) {
+    return 'heic'
+  }
+
+  if (mime.includes('heif')) {
+    return 'heif'
+  }
+
+  return 'jpg'
+}
+
 const normalizeStepOneData = (data) => ({
   tipoCliente: data?.tipoCliente === 'recurrente' ? 'recurrente' : 'nuevo',
   clienteId: normalizeText(data?.clienteId),
@@ -169,6 +279,14 @@ const normalizeStepOneData = (data) => ({
   objetivoPrincipal: normalizeText(data.objetivoPrincipal),
   inconformidadPrincipal: normalizeText(data.inconformidadPrincipal),
   fechaValoracion: normalizeText(data.fechaValoracion),
+})
+
+const normalizeRecurrentStepFourData = (data) => ({
+  cambiosSalud: normalizeText(data?.cambiosSalud),
+  medicamentoNuevo: normalizeText(data?.medicamentoNuevo),
+  reaccionUltimaSesion: normalizeText(data?.reaccionUltimaSesion),
+  siguioRutina: normalizeText(data?.siguioRutina),
+  mejoraOCambioPiel: normalizeText(data?.mejoraOCambioPiel),
 })
 
 const toNormalizedUniqueArray = (values, allowedSet) => {
@@ -469,7 +587,9 @@ const mapValuationSnapshot = (snapshot) => {
     step9: data.step9 ?? null,
     step10: data.step10 ?? null,
     step11: data.step11 ?? null,
+    recurrentStep4: data.recurrentStep4 ?? null,
     mapaInteractivo: data.mapaInteractivo ?? null,
+    fotografiasClinicas: normalizeClinicalPhotosByType(data.fotografiasClinicas),
     createdAtMs: data.createdAt?.toMillis?.() ?? 0,
     updatedAtMs: data.updatedAt?.toMillis?.() ?? 0,
   }
@@ -601,16 +721,6 @@ export const saveStepTwoValuation = async ({ valuationId, stepTwoData, knownCurr
 
   const normalizedStepTwoData = normalizeStepTwoData(stepTwoData)
 
-  if (
-    normalizedStepTwoData.motivosFaciales.length === 0
-    && normalizedStepTwoData.motivosCorporales.length === 0
-  ) {
-    return {
-      ok: false,
-      message: 'Selecciona al menos un motivo facial o corporal para continuar.',
-    }
-  }
-
   return await saveExistingValuationStep({
     valuationId,
     targetStep: 2,
@@ -632,12 +742,7 @@ export const saveStepThreeValuation = async ({ valuationId, stepThreeData, known
 
   const normalizedStepThreeData = normalizeStepThreeData(stepThreeData)
 
-  if (
-    !normalizedStepThreeData.mejoraPrincipal
-    || !normalizedStepThreeData.resultadoEsperado
-    || !normalizedStepThreeData.tiempoEsperado
-    || !normalizedStepThreeData.zonaIncomoda
-  ) {
+  if (!normalizedStepThreeData.mejoraPrincipal || !normalizedStepThreeData.resultadoEsperado || !normalizedStepThreeData.tiempoEsperado) {
     return {
       ok: false,
       message: 'Completa las preguntas principales del paso 3 para continuar.',
@@ -653,6 +758,55 @@ export const saveStepThreeValuation = async ({ valuationId, stepThreeData, known
     notFoundMessage: 'No se encontro la valoracion para actualizar el paso 3.',
     genericErrorMessage: 'No se pudo guardar el paso 3. Intenta de nuevo.',
   })
+}
+
+export const saveRecurrentStepFourValuation = async ({ valuationId, recurrentStepFourData }) => {
+  if (!valuationId) {
+    return {
+      ok: false,
+      message: 'Primero debes guardar los pasos anteriores para continuar.',
+    }
+  }
+
+  const normalizedData = normalizeRecurrentStepFourData(recurrentStepFourData)
+
+  if (
+    !normalizedData.cambiosSalud
+    || !normalizedData.medicamentoNuevo
+    || !normalizedData.reaccionUltimaSesion
+    || !normalizedData.siguioRutina
+    || !normalizedData.mejoraOCambioPiel
+  ) {
+    return {
+      ok: false,
+      message: 'Completa todas las preguntas del paso 4 para clientes recurrentes.',
+    }
+  }
+
+  try {
+    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
+      recurrentStep4: normalizedData,
+      updatedAt: serverTimestamp(),
+    })
+
+    return {
+      ok: true,
+      message: 'Paso 4 guardado correctamente.',
+      valuation: buildValuationReference(valuationId, 4),
+    }
+  } catch (error) {
+    if (error?.code === 'not-found') {
+      return {
+        ok: false,
+        message: 'No se encontro la valoracion para actualizar el paso 4 de recurrente.',
+      }
+    }
+
+    return {
+      ok: false,
+      message: 'No se pudo guardar el paso 4 de recurrente. Intenta de nuevo.',
+    }
+  }
 }
 
 export const saveStepFourValuation = async ({ valuationId, stepFourData, knownCurrentStep }) => {
@@ -868,6 +1022,109 @@ export const saveInteractiveMapData = async ({ valuationId, mapType, strokes }) 
   }
 }
 
+export const uploadClinicalPhoto = async ({ valuationId, photoType, part, moment, file }) => {
+  if (!valuationId) {
+    return {
+      ok: false,
+      message: 'No se encontro la valoracion para subir la fotografia.',
+    }
+  }
+
+  if (!CLINICAL_PHOTO_TYPES.includes(photoType)) {
+    return {
+      ok: false,
+      message: 'Selecciona un tipo de fotografia valido antes de subir.',
+    }
+  }
+
+  if (!CLINICAL_PHOTO_PARTS[photoType].includes(part)) {
+    return {
+      ok: false,
+      message: 'Selecciona una zona valida para subir la fotografia.',
+    }
+  }
+
+  if (!CLINICAL_PHOTO_MOMENTS.includes(moment)) {
+    return {
+      ok: false,
+      message: 'Selecciona si la fotografia es antes o despues.',
+    }
+  }
+
+  if (!(file instanceof File) || !String(file.type || '').toLowerCase().startsWith('image/')) {
+    return {
+      ok: false,
+      message: 'Selecciona una imagen valida para continuar.',
+    }
+  }
+
+  const extension = resolveImageExtension(file)
+  const safeType = sanitizeStoragePathSegment(photoType)
+  const safePart = sanitizeStoragePathSegment(part)
+  const safeMoment = sanitizeStoragePathSegment(moment)
+  const filePath = `valoraciones/${valuationId}/fotografias-clinicas/${safeType}/${safePart}/${safeMoment}-${Date.now()}.${extension}`
+
+  try {
+    const photoReference = ref(storage, filePath)
+    await uploadBytes(photoReference, file, {
+      contentType: file.type || 'image/jpeg',
+    })
+
+    const url = await getDownloadURL(photoReference)
+
+    return {
+      ok: true,
+      photo: {
+        url,
+        path: filePath,
+        name: normalizeText(file.name),
+        updatedAtMs: Date.now(),
+      },
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      message: resolveClinicalPhotoUploadErrorMessage(error),
+    }
+  }
+}
+
+export const saveClinicalPhotosData = async ({ valuationId, photosByType }) => {
+  if (!valuationId) {
+    return {
+      ok: false,
+      message: 'No se encontro la valoracion para guardar fotografias.',
+    }
+  }
+
+  const normalizedPhotosByType = normalizeClinicalPhotosByType(photosByType)
+
+  try {
+    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
+      fotografiasClinicas: normalizedPhotosByType,
+      updatedAt: serverTimestamp(),
+    })
+
+    return {
+      ok: true,
+      photosByType: normalizedPhotosByType,
+      message: 'Fotografias clinicas guardadas correctamente.',
+    }
+  } catch (error) {
+    if (error?.code === 'not-found') {
+      return {
+        ok: false,
+        message: 'No se encontro la valoracion para guardar fotografias.',
+      }
+    }
+
+    return {
+      ok: false,
+      message: 'No se pudieron guardar las fotografias clinicas. Intenta de nuevo.',
+    }
+  }
+}
+
 export const getValuationForEdition = async ({ valuationId }) => {
   try {
     const valuation = await readValuationById(valuationId)
@@ -902,5 +1159,38 @@ export const listPendingValuations = async () => {
   }
 }
 
-export const getValuationProgressLabel = (valuation) =>
-  `Paso ${valuation.currentStep} de ${valuation.totalSteps}`
+export const getValuationProgressLabel = (valuation) => {
+  const looksRecurrent =
+    valuation?.tipoCliente === 'recurrente'
+    || Boolean(valuation?.recurrentStep4)
+    || (
+      !valuation?.step5
+      && !valuation?.step6
+      && !valuation?.step7
+      && !valuation?.step8
+      && !valuation?.step9
+      && !valuation?.step10
+      && !valuation?.step11
+      && Number(valuation?.currentStep ?? 1) <= 4
+    )
+
+  if (looksRecurrent) {
+    const currentStep = Number(valuation?.currentStep ?? 1)
+
+    if (valuation?.recurrentStep4) {
+      return 'Paso 4 de 4'
+    }
+
+    if (currentStep >= 7) {
+      return 'Paso 3 de 4'
+    }
+
+    if (currentStep >= 2) {
+      return 'Paso 2 de 4'
+    }
+
+    return 'Paso 1 de 4'
+  }
+
+  return `Paso ${valuation?.currentStep ?? 1} de ${valuation?.totalSteps ?? 11}`
+}

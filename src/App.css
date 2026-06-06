@@ -312,6 +312,25 @@ label {
   color: #624834;
 }
 
+label:has(> input[required])::after,
+label:has(> select[required])::after,
+label:has(> textarea[required])::after {
+  content: '*';
+  order: -1;
+  justify-self: start;
+  margin-right: 0.2rem;
+  color: #c0262d;
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
+.required-title::after {
+  content: ' *';
+  color: #c0262d;
+  font-weight: 700;
+}
+
 input,
 button,
 select,
@@ -758,18 +777,205 @@ textarea {
   font-size: 0.86rem;
 }
 
-.mapa-modal {
-  width: min(900px, 100%);
+.fotos-clinicas-modal {
+  width: min(1080px, 100%);
+  max-height: min(94vh, 980px);
+  padding: 0.62rem;
+  gap: 0.5rem;
 }
 
-.mapa-type-toggle {
+.fotos-clinicas-modal .selection-modal-head {
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid rgba(205, 181, 154, 0.72);
+}
+
+.fotos-modal-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+.fotos-close-icon-button {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #ccb49a;
+  background: #fff8f1;
+  color: #614a37;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+.fotos-close-icon-button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.fotos-close-icon-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 14px rgba(98, 76, 58, 0.18);
+}
+
+.fotos-close-text-button {
+  min-height: 36px;
+}
+
+.fotos-step-pill {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #d7bea5;
+  border-radius: 10px;
+  width: fit-content;
+  padding: 0.26rem 0.56rem;
+  background: #f3e5d6;
+  color: #5f4734;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.fotos-clinicas-help-text {
+  font-size: 0.9rem;
+}
+
+.fotos-tipo-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
+.fotos-tipo-button {
+  width: 100%;
+}
+
+.fotos-tipo-button-active {
+  border-color: transparent;
+  background: linear-gradient(140deg, #7e6148 0%, #98795f 50%, #b69777 100%);
+  color: #fff9f2;
+}
+
+.fotos-partes-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.fotos-parte-card {
+  border: 1px solid #d6c0a7;
+  border-radius: 12px;
+  background: #fffaf3;
+  padding: 0.62rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.fotos-parte-title {
+  margin: 0;
+  color: #4a3426;
+  font-size: 0.98rem;
+}
+
+.fotos-momentos-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.55rem;
 }
 
+.fotos-momento-card {
+  border: 1px solid #dec8b1;
+  border-radius: 10px;
+  padding: 0.52rem;
+  background: #fefbf7;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.fotos-momento-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  color: #4a3426;
+}
+
+.fotos-preview-frame {
+  border: 1px dashed #ccb49b;
+  border-radius: 10px;
+  background: #f5ebde;
+  min-height: 132px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.fotos-preview-frame span {
+  color: #8a735d;
+  font-size: 0.84rem;
+}
+
+.fotos-preview-frame-filled {
+  border-style: solid;
+  border-color: #d6bda3;
+}
+
+.fotos-preview-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fotos-capture-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
+.fotos-capture-button {
+  width: 100%;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.fotos-hidden-input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.fotos-modal-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  background: #f8f1e8;
+  padding-top: 0.38rem;
+  border-top: 1px solid rgba(205, 181, 154, 0.8);
+}
+
+.mapa-modal {
+  width: min(1080px, 100%);
+  max-height: min(94vh, 980px);
+  padding: 0.62rem;
+  gap: 0.5rem;
+}
+
+.mapa-type-toggle {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.42rem;
+}
+
 .mapa-type-button {
   width: 100%;
+  min-height: 38px;
+  padding: 0.42rem 0.62rem;
 }
 
 .mapa-type-button-active {
@@ -778,72 +984,103 @@ textarea {
   color: #fff9f2;
 }
 
-.mapa-marker-toggle {
-  width: 100%;
+.mapa-marker-icon-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid #c8ad8f;
+  background: linear-gradient(160deg, #fffdf9 0%, #f3e6d8 100%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), 0 3px 8px rgba(79, 57, 40, 0.16);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
 }
 
-.mapa-marker-toggle-active {
-  border-color: transparent;
-  background: linear-gradient(140deg, #7e6148 0%, #98795f 50%, #b69777 100%);
-  color: #fff9f2;
+.mapa-marker-icon-button svg {
+  width: 1.24rem;
+  height: 1.24rem;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.1));
+}
+
+.mapa-marker-icon-button:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.74), 0 10px 18px rgba(98, 76, 58, 0.24);
+}
+
+.mapa-marker-icon-button:active {
+  transform: translateY(0);
+  box-shadow: inset 0 2px 5px rgba(30, 20, 12, 0.18);
+}
+
+.mapa-marker-icon-button-on {
+  color: #fcfffd;
+  border-color: #2a8750;
+  background: linear-gradient(160deg, #32b46a 0%, #1f7a46 100%);
+}
+
+.mapa-marker-icon-button-off {
+  color: #fff9f9;
+  border-color: #b84b4b;
+  background: linear-gradient(160deg, #de7575 0%, #b53a3a 100%);
 }
 
 .mapa-editor-toolbar {
   border: 1px solid #d6c0a7;
   border-radius: 12px;
   background: #fffaf3;
-  padding: 0.55rem;
+  padding: 0.42rem;
   display: grid;
-  gap: 0.55rem;
-}
-
-.mapa-color-palette {
-  display: flex;
-  flex-wrap: wrap;
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.4rem;
+  align-items: center;
 }
 
-.mapa-color-chip {
-  width: 1.7rem;
-  height: 1.7rem;
-  border-radius: 999px;
-  border: 1px solid rgba(74, 52, 38, 0.26);
-  cursor: pointer;
-}
-
-.mapa-color-chip-active {
-  box-shadow: 0 0 0 2px #f8f1e8, 0 0 0 4px #7e6148;
-}
-
-.mapa-brush-size {
+.mapa-compact-field {
   display: grid;
-  gap: 0.25rem;
-  font-size: 0.88rem;
+  gap: 0.14rem;
   color: #4a3426;
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
-.mapa-brush-size input {
-  width: 100%;
-}
-
-.mapa-zoom-controls {
+.mapa-compact-inline {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem;
+}
+
+.mapa-color-preview {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(74, 52, 38, 0.32);
+  flex-shrink: 0;
+}
+
+.mapa-select-small {
+  min-height: 32px;
+  padding: 0.28rem 0.45rem;
+  font-size: 0.82rem;
+}
+
+.mapa-editor-toolbar .mapa-select-small {
+  width: 100%;
 }
 
 .mapa-canvas-scroll {
   border: 1px solid #d6c0a7;
   border-radius: 12px;
   background: #fffaf3;
-  padding: 0.55rem;
+  padding: 0.35rem;
   overflow: auto;
-  max-height: 62vh;
+  max-height: 74vh;
 }
 
 .mapa-canvas-stage {
   position: relative;
-  min-width: 320px;
+  min-width: 300px;
 }
 
 .mapa-base-image {
@@ -869,6 +1106,97 @@ textarea {
 
 .mapa-draw-canvas-disabled:active {
   cursor: grabbing;
+}
+
+.mapa-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.mapa-actions-left {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.mapa-icon-action-button,
+.mapa-save-action-button {
+  width: 100%;
+  min-height: 44px;
+}
+
+.mapa-icon-action-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 3px 8px rgba(82, 60, 44, 0.15);
+  transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease;
+}
+
+.mapa-icon-action-button svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.08));
+}
+
+.mapa-icon-action-button:hover {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 10px 14px rgba(82, 60, 44, 0.2);
+}
+
+.mapa-icon-action-button:active {
+  transform: translateY(0);
+  box-shadow: inset 0 2px 5px rgba(33, 24, 16, 0.16);
+}
+
+.mapa-icon-action-button-undo {
+  background: linear-gradient(160deg, #fffaf4 0%, #e9dac8 100%);
+  border-color: #cfb79a;
+  color: #6b4f39;
+}
+
+.mapa-icon-action-button-clear {
+  background: linear-gradient(160deg, #f7b3ad 0%, #d56b61 100%);
+  border-color: #c35f57;
+  color: #fff8f8;
+}
+
+.mapa-save-action-button {
+  grid-column: 2 / span 1;
+  border: 1px solid #8b6a4f;
+  background: linear-gradient(140deg, #8b694e 0%, #a88362 52%, #c09c7a 100%);
+  color: #fff9f2;
+}
+
+.mapa-icon-action-button:disabled,
+.mapa-save-action-button:disabled {
+  opacity: 1;
+  transform: none;
+  box-shadow: none;
+  filter: none;
+}
+
+.mapa-icon-action-button-undo:disabled {
+  background: #f4ece3;
+  border-color: #decfbe;
+  color: #b09b87;
+}
+
+.mapa-icon-action-button-clear:disabled {
+  background: #f7efee;
+  border-color: #e7d6d4;
+  color: #cdb4b0;
+}
+
+.mapa-save-action-button:disabled {
+  background: #d8c3ae;
+  border-color: #ceb49d;
+  color: #f7efe7;
 }
 
 .fitzpatrick-options-grid {
@@ -1082,6 +1410,20 @@ textarea {
   .pending-valuation-actions {
     width: 100%;
   }
+
+  .fotos-close-text-button {
+    display: none;
+  }
+
+  .fotos-modal-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 681px) and (max-width: 1024px) {
+  .fotos-momentos-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 680px) {
@@ -1112,15 +1454,47 @@ textarea {
   }
 
   .mapa-type-toggle {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fotos-clinicas-modal {
+    width: 100%;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    padding: 0.48rem;
+    gap: 0.42rem;
+  }
+
+  .fotos-clinicas-modal .selection-modal-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8f1e8;
+    padding-bottom: 0.16rem;
+  }
+
+  .fotos-momentos-grid {
     grid-template-columns: 1fr;
   }
 
-  .mapa-canvas-stage {
-    min-width: 260px;
+  .fotos-preview-frame {
+    min-height: 150px;
   }
 
-  .mapa-zoom-controls {
-    justify-content: space-between;
+  .fotos-modal-actions {
+    padding-top: 0.5rem;
+    gap: 0.45rem;
+    padding-bottom: max(0.2rem, env(safe-area-inset-bottom));
+  }
+
+  .fotos-modal-actions .main-button {
+    min-height: 42px;
+  }
+
+  .mapa-canvas-stage {
+    min-width: 240px;
   }
 
   .mapa-modal-backdrop {
@@ -1134,8 +1508,8 @@ textarea {
     max-height: 100dvh;
     border-radius: 0;
     border: 0;
-    padding: 0.72rem;
-    gap: 0.6rem;
+    padding: 0.48rem;
+    gap: 0.42rem;
   }
 
   .mapa-modal .selection-modal-head {
@@ -1143,21 +1517,22 @@ textarea {
     top: 0;
     z-index: 2;
     background: #f8f1e8;
-    padding-bottom: 0.2rem;
+    padding-bottom: 0.16rem;
   }
 
-  .mapa-color-chip {
-    width: 1.9rem;
-    height: 1.9rem;
+  .mapa-editor-toolbar {
+    grid-template-columns: auto 1fr 1fr;
+    gap: 0.34rem;
+  }
+
+  .mapa-marker-icon-button {
+    width: 40px;
+    height: 40px;
   }
 
   .mapa-canvas-scroll {
-    max-height: calc(100dvh - 340px);
-    padding: 0.42rem;
-  }
-
-  .mapa-zoom-controls .main-button {
-    min-width: 44px;
+    max-height: calc(100dvh - 242px);
+    padding: 0.28rem;
   }
 }
 
@@ -1191,8 +1566,8 @@ textarea {
   }
 
   .mapa-editor-toolbar {
-    grid-template-columns: minmax(150px, auto) minmax(0, 1.3fr) minmax(0, 1fr) auto;
-    align-items: end;
+    grid-template-columns: auto minmax(160px, 220px) minmax(160px, 220px);
+    justify-content: space-between;
   }
 }
 
