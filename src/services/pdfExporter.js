@@ -58,7 +58,7 @@ const renderMapsSinglePage = (valuation) => {
   const corporalSvg = toSvgFromStrokes(corporalStrokes, 800, 800)
 
   return `
-    <div style="page-break-before:always; page-break-after:always; break-before:page; break-after:page; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
+    <div style="page-break-before:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
       <h2 style="font-size:16px; color:#333; text-align:center; margin:0 0 12px 0; padding-top:12px;">MAPAS INTERACTIVOS</h2>
       <div style="display:flex; gap:12px; justify-content:space-between; align-items:flex-start; margin-top:8px;">
         <div style="width:49%;">
@@ -135,7 +135,7 @@ const renderPhotosPages = (valuation) => {
     const imgsHtml = imgsParts.join('')
 
     pages.push(`
-      <div style="page-break-before:always; page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
+      <div style="page-break-before:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
         <h2 style="font-size:16px; color:#333; margin:0 0 8px 0; padding-top:12px;">FOTOGRAFÍAS CLÍNICAS</h2>
         <div style="display:flex; flex-wrap:wrap; gap:4%; justify-content:space-between; margin-top:8px;">
           ${imgsHtml}
@@ -147,7 +147,7 @@ const renderPhotosPages = (valuation) => {
   // If no photos at all, render an empty page with message
   if (pages.length === 0) {
     pages.push(`
-      <div style="page-break-before:always; page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto;">
+      <div style="page-break-before:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto;">
         <h2 style="font-size:16px; color:#333;">FOTOGRAFÍAS CLÍNICAS</h2>
         <p style="color:#666;">No hay fotografías registradas.</p>
       </div>
@@ -160,7 +160,7 @@ const renderPhotosPages = (valuation) => {
 const renderProtocolSection = (valuation) => {
   if (!Array.isArray(valuation.protocolProducts) || valuation.protocolProducts.length === 0) {
     return `
-      <div style="page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:12px; box-sizing:border-box;">
+      <div style="page-break-before:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:12px; box-sizing:border-box;">
         <h2 style="margin:0; padding-top:0; font-size:16px; color:#333;">PROTOCOLO DE PRODUCTOS RECOMENDADOS</h2>
         <p style="color:#666; margin-top:8px;">No hay protocolo de productos registrado.</p>
       </div>
@@ -172,7 +172,7 @@ const renderProtocolSection = (valuation) => {
     .join('')
 
   return `
-    <div style="page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:12px; box-sizing:border-box;">
+    <div style="page-break-before:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:12px; box-sizing:border-box;">
       <h2 style="margin:0; padding-top:0; font-size:16px; color:#333;">PROTOCOLO DE PRODUCTOS RECOMENDADOS</h2>
       <ul style="color:#333; margin-top:8px;">${items}</ul>
     </div>
