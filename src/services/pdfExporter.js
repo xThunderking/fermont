@@ -58,8 +58,8 @@ const renderMapsSinglePage = (valuation) => {
   const corporalSvg = toSvgFromStrokes(corporalStrokes, 800, 800)
 
   return `
-    <div style="page-break-after:always; width:100%; max-width:820px; margin:0 auto;">
-      <h2 style="font-size:16px; color:#333; text-align:center;">MAPAS INTERACTIVOS</h2>
+    <div style="page-break-before:always; page-break-after:always; break-before:page; break-after:page; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
+      <h2 style="font-size:16px; color:#333; text-align:center; margin:0 0 12px 0; padding-top:12px;">MAPAS INTERACTIVOS</h2>
       <div style="display:flex; gap:12px; justify-content:space-between; align-items:flex-start; margin-top:8px;">
         <div style="width:49%;">
           <h3 style="margin:6px 0 4px 0; font-size:14px;">Mapa facial</h3>
@@ -81,44 +81,62 @@ const renderMapsSinglePage = (valuation) => {
 }
 
 const renderPhotosPages = (valuation) => {
-  const partsFacial = ['frente', 'perfilDerecho', 'perfilIzquierdo']
-  const partsCorporal = ['frente', 'espalda', 'laterales']
-  const moments = ['antes', 'despues']
+  const partsFacial = [
+    { key: 'frente', label: 'Frente' },
+    { key: 'perfilDerecho', label: 'Perfil derecho' },
+    { key: 'perfilIzquierdo', label: 'Perfil izquierdo' },
+  ]
+  const partsCorporal = [
+    { key: 'frente', label: 'Frente' },
+    { key: 'espalda', label: 'Espalda' },
+    { key: 'laterales', label: 'Laterales' },
+  ]
+  const moments = [
+    { key: 'antes', label: 'Antes' },
+    { key: 'despues', label: 'Después' },
+  ]
 
   const photos = []
 
-  const pushIf = (photo) => {
-    if (photo && photo.url) photos.push(photo.url)
+  const pushIf = (photoObj, label) => {
+    if (photoObj && photoObj.url) photos.push({ url: photoObj.url, label })
   }
 
   // Order: facial parts (antes/despues), corporal parts (antes/despues)
   partsFacial.forEach((part) => {
     moments.forEach((m) => {
-      pushIf(valuation?.fotografiasClinicas?.facial?.[part]?.[m])
+      const photoObj = valuation?.fotografiasClinicas?.facial?.[part.key]?.[m.key]
+      pushIf(photoObj, `${part.label} — ${m.label}`)
     })
   })
   partsCorporal.forEach((part) => {
     moments.forEach((m) => {
-      pushIf(valuation?.fotografiasClinicas?.corporal?.[part]?.[m])
+      const photoObj = valuation?.fotografiasClinicas?.corporal?.[part.key]?.[m.key]
+      pushIf(photoObj, `${part.label} — ${m.label}`)
     })
   })
 
   const pages = []
   for (let i = 0; i < photos.length; i += 4) {
     const pagePhotos = photos.slice(i, i + 4)
-    const imgsParts = pagePhotos.map((url) => `<div style="width:48%; margin-bottom:8px;"><img src="${url}" style="width:100%; height:auto; display:block; border:1px solid #ddd;"/></div>`)
+    const imgsParts = pagePhotos.map((p) => `
+      <div style="width:48%; margin-bottom:8px;">
+        <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">${p.label}</div>
+        <img src="${p.url}" style="width:100%; height:auto; display:block; border:1px solid #ddd;"/>
+      </div>
+    `)
 
     // If less than 4, fill empty slots with blank placeholders
     const blanks = 4 - pagePhotos.length
     for (let j = 0; j < blanks; j++) {
-      imgsParts.push(`<div style="width:48%; margin-bottom:8px; background:#fafafa; height:180px; border:1px dashed #ddd;"></div>`)
+      imgsParts.push(`<div style="width:48%; margin-bottom:8px; background:#fafafa; height:220px; border:1px dashed #ddd;"></div>`)
     }
 
     const imgsHtml = imgsParts.join('')
 
     pages.push(`
-      <div style="page-break-after:always; width:100%; max-width:820px; margin:0 auto;">
-        <h2 style="font-size:16px; color:#333;">FOTOGRAFÍAS CLÍNICAS</h2>
+      <div style="page-break-before:always; page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
+        <h2 style="font-size:16px; color:#333; margin:0 0 8px 0; padding-top:12px;">FOTOGRAFÍAS CLÍNICAS</h2>
         <div style="display:flex; flex-wrap:wrap; gap:4%; justify-content:space-between; margin-top:8px;">
           ${imgsHtml}
         </div>
@@ -129,7 +147,7 @@ const renderPhotosPages = (valuation) => {
   // If no photos at all, render an empty page with message
   if (pages.length === 0) {
     pages.push(`
-      <div style="page-break-after:always; width:100%; max-width:820px; margin:0 auto;">
+      <div style="page-break-before:always; page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto;">
         <h2 style="font-size:16px; color:#333;">FOTOGRAFÍAS CLÍNICAS</h2>
         <p style="color:#666;">No hay fotografías registradas.</p>
       </div>
@@ -179,12 +197,14 @@ export const exportValuationToPDF = async (valuation) => {
     const protocolHtml = renderProtocolSection(valuation)
 
     const htmlContent = `
-      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px;">
-        <!-- Encabezado -->
-        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">
-          <h1 style="margin: 0; font-size: 24px; color: #333;">INFORME DE VALORACIÓN CLÍNICA</h1>
-          <p style="margin: 10px 0; color: #666;">Fecha: ${formatDate(new Date().toISOString())}</p>
-          <p style="margin: 0; color: #666;">Estado: ${valuation.status === 'completed' ? 'Finalizado' : valuation.status}</p>
+      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin:0 auto;">
+        <!-- Portada -->
+        <div style="page-break-after:always; width:100%; max-width:760px; margin:0 auto; padding:120px 20px 80px; text-align:center; box-sizing:border-box;">
+          <h1 style="margin:0; font-size:40px; color:#333; letter-spacing:4px;">FERMONT</h1>
+          <h2 style="margin:24px 0 8px 0; font-size:22px; color:#333;">Informe de valoración</h2>
+          <p style="margin:12px 0; font-size:16px; color:#555;">Paciente: ${valuation.clienteNombre || 'Sin nombre'}</p>
+          <p style="margin:12px 0; font-size:16px; color:#555;">Fecha: ${formatDate(new Date().toISOString())}</p>
+          <p style="margin:12px 0; font-size:16px; color:#555;">Estado: ${valuation.status === 'completed' ? 'Finalizado' : valuation.status}</p>
         </div>
 
         <!-- Datos del Cliente -->
@@ -327,19 +347,17 @@ export const exportValuationToPDF = async (valuation) => {
           </div>
         ` : ''}
 
+        ${protocolHtml}
+
         <!-- Mapas interactivos -->
         ${mapsHtml}
 
         <!-- Fotografías (páginas finales) -->
         ${photosHtml}
 
-        <!-- Protocolo de productos (al final) -->
-        ${protocolHtml}
-
         <!-- Pie de página -->
         <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #333; text-align: center; font-size: 11px; color: #666;">
           <p>Este informe fue generado automáticamente el ${formatDate(new Date().toISOString())} a las ${new Date().toLocaleTimeString('es-MX')}</p>
-          <p>Confidencial - Solo para uso clínico</p>
         </div>
       </div>
     `
