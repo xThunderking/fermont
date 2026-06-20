@@ -160,7 +160,7 @@ const renderPhotosPages = (valuation) => {
 const renderProtocolSection = (valuation) => {
   if (!Array.isArray(valuation.protocolProducts) || valuation.protocolProducts.length === 0) {
     return `
-      <div style="page-break-before:always; page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:12px; box-sizing:border-box;">
+      <div style="page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:12px; box-sizing:border-box;">
         <h2 style="margin:0; padding-top:0; font-size:16px; color:#333;">PROTOCOLO DE PRODUCTOS RECOMENDADOS</h2>
         <p style="color:#666; margin-top:8px;">No hay protocolo de productos registrado.</p>
       </div>
@@ -172,7 +172,7 @@ const renderProtocolSection = (valuation) => {
     .join('')
 
   return `
-    <div style="page-break-before:always; page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:12px; box-sizing:border-box;">
+    <div style="page-break-after:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:12px; box-sizing:border-box;">
       <h2 style="margin:0; padding-top:0; font-size:16px; color:#333;">PROTOCOLO DE PRODUCTOS RECOMENDADOS</h2>
       <ul style="color:#333; margin-top:8px;">${items}</ul>
     </div>
