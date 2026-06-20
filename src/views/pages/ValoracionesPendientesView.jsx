@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 import {
   CLINICAL_PHOTO_PARTS,
+  completeValuationById,
   deleteValuationById,
   getValuationProgressLabel,
   listPendingValuations,
@@ -152,6 +153,17 @@ const hasClinicalPhotoData = (photosByType) =>
     CLINICAL_PHOTO_PARTS[photoType].some((part) =>
       CLINICAL_PHOTO_MOMENTS.some((moment) => Boolean(photosByType?.[photoType]?.[part]?.[moment]?.url))),
   )
+
+const formatFieldLabel = (key) => {
+  if (!key) return '-'
+
+  const formatted = String(key)
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
+}
 
 const readFileAsDataUrl = (file) =>
   new Promise((resolve, reject) => {
@@ -1017,6 +1029,27 @@ function ValoracionesPendientesView() {
     setHistoryModalLoading(false)
   }
 
+  const openProtocol = (valuation) => {
+    navigate(`/app/nueva-valoracion/${valuation.id}?action=protocolo`)
+  }
+
+  const handleFinishValuation = async (valuation) => {
+    if (!valuation?.id) {
+      setError('No se encontro la valoracion para finalizar.')
+      return
+    }
+
+    const result = await completeValuationById(valuation.id)
+
+    if (!result.ok) {
+      setError(result.message)
+      return
+    }
+
+    setError('')
+    navigate(`/app/expedientes/${valuation.id}`)
+  }
+
   const closeClientHistoryModal = () => {
     setHistoryModalOpen(false)
     setHistoryModalClient(null)
@@ -1091,6 +1124,52 @@ function ValoracionesPendientesView() {
                         />
                       </svg>
                       <span>EDITAR</span>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="main-button secondary pending-action-button"
+                    onClick={() => openProtocol(valuation)}
+                  >
+                    <span className="pending-action-content">
+                      <svg className="pending-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path
+                          d="M6 4h12v16H6z"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M9 8h6M9 12h6M9 16h4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <span>PROTOCOLO</span>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    className="main-button pending-action-button"
+                    onClick={() => handleFinishValuation(valuation)}
+                  >
+                    <span className="pending-action-content">
+                      <svg className="pending-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path
+                          d="M5 12l5 5L19 7"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <span>TERMINAR VALORACION</span>
                     </span>
                   </button>
 
@@ -1178,7 +1257,7 @@ function ValoracionesPendientesView() {
 
       {historyModalOpen ? (
         <div className="selection-modal-backdrop" onClick={closeClientHistoryModal}>
-          <div className="selection-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+          <div className="selection-modal history-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
             <div className="selection-modal-head">
               <h3 className="consultation-block-title">Historia clinica</h3>
               <button type="button" className="main-button secondary" onClick={closeClientHistoryModal}>
@@ -1187,10 +1266,14 @@ function ValoracionesPendientesView() {
             </div>
 
             {!historyModalLoading && historyModalClient ? (
-              <div className="client-detail-grid">
-                <p><strong>Cliente:</strong> {historyModalClient.clienteNombre || '-'}</p>
-                <p><strong>Cliente ID:</strong> {historyModalClient.clienteId || '-'}</p>
-              </div>
+              <section className="history-modal-summary history-modal-section">
+                <div className="history-modal-client-info">
+                  <p className="history-modal-client-name"><strong>Cliente:</strong> {historyModalClient.clienteNombre || '-'}</p>
+                  {historyModalEntries.length > 0 ? (
+                    <p className="history-modal-client-meta">Entradas en historia clínica: {historyModalEntries.length}</p>
+                  ) : null}
+                </div>
+              </section>
             ) : null}
 
             {historyModalLoading ? <p className="subtitle">Cargando historia clinica...</p> : null}
@@ -1199,19 +1282,209 @@ function ValoracionesPendientesView() {
               <p className="subtitle">Aun no hay historia clinica para este cliente.</p>
             ) : null}
 
+            {/* modal para historia clinica en valoraciones pendientes */}
             {!historyModalLoading && historyModalEntries.length > 0 ? (
-              <ul className="users-list valuations-list">
+              <div className="max-h-[75vh] overflow-y-auto space-y-4">
                 {historyModalEntries.map((entry) => (
-                  <li className="user-row valuation-row" key={entry.id}>
-                    <div>
-                      <strong>Valoracion {entry.valuationId}</strong>
-                      <small className="small-tag">
-                        {entry.createdAtMs ? new Date(entry.createdAtMs).toLocaleDateString('es-MX') : 'Sin fecha'}
-                      </small>
+                  <details
+                    key={entry.id}
+                    className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden"
+                  >
+                    <summary className="history-entry-summary">
+                      <div className="history-entry-summary-top">
+                        <h3 className="history-entry-title">Valoración Clínica</h3>
+                        <span className="history-entry-date">
+                          {entry.createdAtMs
+                            ? new Date(entry.createdAtMs).toLocaleDateString('es-MX')
+                            : 'Sin fecha'}
+                        </span>
+                      </div>
+                    </summary>
+
+                    <div className="border-t border-stone-100 p-4 space-y-4">
+
+                      {/* DATOS PERSONALES */}
+                      <section>
+                        <h4 className="font-semibold text-lg mb-3 text-stone-800">
+                          Datos personales
+                        </h4>
+
+                        <div className="grid grid-cols-1 gap-2 text-sm">
+                          <div>
+                            <span className="font-medium">Nombre:</span>{' '}
+                            {entry.step1?.nombre} {entry.step1?.apellidoPaterno} {entry.step1?.apellidoMaterno}
+                          </div>
+
+                          <div>
+                            <span className="font-medium">Edad:</span>{' '}
+                            {entry.step1?.edad}
+                          </div>
+
+                          <div>
+                            <span className="font-medium">Teléfono:</span>{' '}
+                            {entry.step1?.telefono}
+                          </div>
+
+                          <div>
+                            <span className="font-medium">Correo:</span>{' '}
+                            {entry.step1?.correoElectronico}
+                          </div>
+
+                          <div>
+                            <span className="font-medium">Ocupación:</span>{' '}
+                            {entry.step1?.ocupacion}
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* PASO 3 */}
+                      <section className="history-modal-section">
+                        <h4 className="font-semibold mb-2">
+                          Antecedentes médicos
+                        </h4>
+
+                        <div className="text-sm whitespace-pre-wrap">
+                          {Object.entries(entry.step3 || {}).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                              {String(value)}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* PASO 4 */}
+                      <section className="history-modal-section">
+                        <h4 className="font-semibold mb-2">
+                          Hábitos y estilo de vida
+                        </h4>
+
+                        <div className="text-sm whitespace-pre-wrap">
+                          {Object.entries(entry.step4 || {}).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                              {String(value)}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* PASO 5 */}
+                      <section className="history-modal-section">
+                        <h4 className="font-semibold mb-2">
+                          Evaluación cutánea
+                        </h4>
+
+                        <div className="text-sm">
+                          {Object.entries(entry.step5 || {}).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                              {String(value)}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* PASO 6 */}
+                      <section className="history-modal-section">
+                        <h4 className="font-semibold mb-2">Paso 6</h4>
+
+                        <div className="text-sm">
+                          {Object.entries(entry.step6 || {}).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                              {String(value)}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* PASO 7 */}
+                      <section className="history-modal-section">
+                        <h4 className="font-semibold mb-2">Paso 7</h4>
+
+                        <div className="text-sm">
+                          {Object.entries(entry.step7 || {}).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                              {String(value)}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* PASO 8 */}
+                      <section className="history-modal-section">
+                        <h4 className="font-semibold mb-2">Paso 8</h4>
+
+                        <div className="text-sm">
+                          {Object.entries(entry.step8 || {}).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                              {String(value)}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* PASO 9 */}
+                      <section className="history-modal-section">
+                        <h4 className="font-semibold mb-2">Paso 9</h4>
+
+                        <div className="text-sm">
+                          {Object.entries(entry.step9 || {}).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                              {String(value)}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* PASO 10 */}
+                      <section className="history-modal-section">
+                        <h4 className="font-semibold mb-2">Diagnóstico profesional</h4>
+
+                        <div className="text-sm">
+                          {Object.entries(entry.step10 || {}).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                              {String(value)}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      {/* PASO 11 */}
+                      <section className="history-modal-section">
+                        <h4 className="font-semibold mb-2">
+                          Recomendaciones y plan de tratamiento
+                        </h4>
+
+                        <div className="text-sm">
+                          {Object.entries(entry.step11 || {}).map(([key, value]) => (
+                            <div key={key}>
+                              <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                              {String(value)}
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+
+                      <section className="rounded-xl border p-3">
+                        <h4 className="font-semibold mb-2">
+                          Semáforo cutáneo
+                        </h4>
+
+                        <div className="text-sm">
+                          {entry.semaforoCutaneo || 'Sin registro'}
+                        </div>
+                      </section>
+
                     </div>
-                  </li>
+                  </details>
                 ))}
-              </ul>
+              </div>
             ) : null}
           </div>
         </div>

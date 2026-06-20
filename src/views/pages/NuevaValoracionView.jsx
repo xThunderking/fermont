@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 import {
   listClients,
@@ -14,6 +14,7 @@ import {
   STEP_TEN_OPTIONS,
   STEP_TWO_OPTIONS,
   getValuationForEdition,
+  saveProtocolProducts,
   saveStepEightValuation,
   saveStepElevenValuation,
   saveStepNineValuation,
@@ -622,6 +623,7 @@ const clearClientCoreData = (data) => ({
 
 function NuevaValoracionView() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { valuationId } = useParams()
   const { currentUser } = useAuthController()
 
@@ -690,6 +692,9 @@ function NuevaValoracionView() {
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
   const [, setSuccessMessage] = useState('')
+  const [protocolProductName, setProtocolProductName] = useState('')
+  const [protocolProductUse, setProtocolProductUse] = useState('')
+  const [protocolProducts, setProtocolProducts] = useState([])
 
   useEffect(() => {
     let isMounted = true
@@ -747,6 +752,7 @@ function NuevaValoracionView() {
         setStepNineData(createStepNineInitialData())
         setStepTenData(createStepTenInitialData())
         setStepElevenData(createStepElevenInitialData())
+        setProtocolProducts([])
         setRecurrentStepFourData(createRecurrentStepFourInitialData())
         setStepTwoModal({ open: false, field: '', title: '', options: [] })
         setStepFourModal({ open: false, field: '', title: '', options: [] })
@@ -835,6 +841,14 @@ function NuevaValoracionView() {
       setStepNineData(normalizeExistingStepNineData(result.valuation.step9))
       setStepTenData(normalizeExistingStepTenData(result.valuation.step10))
       setStepElevenData(normalizeExistingStepElevenData(result.valuation.step11))
+      setProtocolProducts(
+        Array.isArray(result.valuation.protocolProducts)
+          ? result.valuation.protocolProducts.map((product) => ({
+              name: String(product.name ?? '').trim(),
+              use: String(product.use ?? '').trim(),
+            }))
+          : [],
+      )
       setCutaneoModal((previous) => ({
         ...previous,
         selected: String(result.valuation.semaforoCutaneo ?? ''),
@@ -864,6 +878,11 @@ function NuevaValoracionView() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [activeStep])
 
+  const isProtocolMode = useMemo(
+    () => new URLSearchParams(location.search).get('action') === 'protocolo',
+    [location.search],
+  )
+
   const filteredClients = useMemo(() => {
     const queryText = clientSearch.trim().toLowerCase()
 
@@ -877,14 +896,18 @@ function NuevaValoracionView() {
   }, [availableClients, clientSearch])
 
   const titleText = useMemo(() => {
+    if (isProtocolMode) {
+      return 'Protocolo'
+    }
+
     if (valuationDocId) {
       return 'Editar valoracion pendiente'
     }
 
     return 'Nueva Valoracion'
-  }, [valuationDocId])
+  }, [isProtocolMode, valuationDocId])
 
-  const isFlowSelected = clientFlowType === 'nuevo' || clientFlowType === 'recurrente'
+  const isFlowSelected = !isProtocolMode && (clientFlowType === 'nuevo' || clientFlowType === 'recurrente')
   const normalizedActiveStep = Number.isFinite(Number(activeStep))
     ? Math.max(1, Math.min(TOTAL_STEPS, Math.trunc(Number(activeStep))))
     : 1
@@ -2026,6 +2049,7 @@ function NuevaValoracionView() {
               clienteNombre: `${stepOneData.nombre} ${stepOneData.apellidoPaterno} ${stepOneData.apellidoMaterno}`.replace(/\s+/g, ' ').trim(),
             },
       })
+      console.log('historyResult', historyResult)
 
       if (!historyResult.ok) {
         historyWarning = historyResult.message
@@ -2386,6 +2410,61 @@ function NuevaValoracionView() {
     navigate('/app/valoraciones-pendientes')
   }
 
+  const handleAddProtocolProduct = () => {
+    const name = protocolProductName.trim()
+    const useText = protocolProductUse.trim()
+
+    if (!name || !useText) {
+      setError('Completa nombre y uso del producto antes de agregarlo.')
+      return
+    }
+
+    setProtocolProducts((previous) => [
+      ...previous,
+      { name, use: useText },
+    ])
+    setProtocolProductName('')
+    setProtocolProductUse('')
+    setError('')
+  }
+
+  const removeProtocolProduct = (index) => {
+    setProtocolProducts((previous) => previous.filter((_, itemIndex) => itemIndex !== index))
+  }
+
+  const saveProtocol = async ({ saveOnly = false } = {}) => {
+    if (!valuationDocId) {
+      setError('No se encontro la valoracion para guardar el protocolo.')
+      return null
+    }
+
+    if (protocolProducts.length === 0) {
+      setError('Agrega al menos un producto antes de guardar el protocolo.')
+      return null
+    }
+
+    setIsSaving(true)
+    const result = await saveProtocolProducts({
+      valuationId: valuationDocId,
+      protocolProducts,
+    })
+    setIsSaving(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      setSuccessMessage('')
+      return null
+    }
+
+    setError('')
+    setSuccessMessage(result.message)
+    return valuationDocId
+  }
+
+  const handleExitProtocol = () => {
+    navigate('/app/valoraciones-pendientes')
+  }
+
   return (
     <section className="module-screen">
       <div className="module-screen-head">
@@ -2412,7 +2491,7 @@ function NuevaValoracionView() {
 
       {isLoading ? <p className="subtitle">Cargando valoracion...</p> : null}
 
-      {!isLoading && !isFlowSelected ? (
+      {!isLoading && !isProtocolMode && !isFlowSelected ? (
         <div className="client-mode-toggle">
           <button
             type="button"
@@ -2429,6 +2508,93 @@ function NuevaValoracionView() {
             CLIENTE FRECUENTE
           </button>
         </div>
+      ) : null}
+
+      {!isLoading && isProtocolMode ? (
+        <form className="simple-form valuation-form" onSubmit={async (event) => {
+          event.preventDefault()
+          await saveProtocol({ saveOnly: true })
+        }}>
+          <div className="valuation-section-title">Registro de productos</div>
+
+          <div className="valuation-grid">
+            <label>
+              Nombre del producto
+              <input
+                type="text"
+                value={protocolProductName}
+                onChange={(event) => setProtocolProductName(event.target.value)}
+                placeholder="Ej. Crema hidratante"
+              />
+            </label>
+
+            <label>
+              Para qué se usó
+              <input
+                type="text"
+                value={protocolProductUse}
+                onChange={(event) => setProtocolProductUse(event.target.value)}
+                placeholder="Ej. Hidratacion facial"
+              />
+            </label>
+          </div>
+
+          <div className="valuation-actions" style={{ gap: '0.75rem' }}>
+            <button
+              type="button"
+              className="main-button secondary"
+              onClick={handleAddProtocolProduct}
+            >
+              Agregar producto
+            </button>
+          </div>
+
+          {protocolProducts.length > 0 ? (
+            <div className="selection-card valuation-field-large">
+              <p className="selection-title">Productos agregados</p>
+              <div className="protocol-products">
+                {protocolProducts.map((product, index) => (
+                  <div key={`${product.name}-${index}`} className="protocol-product-item">
+                    <div>
+                      <strong>{product.name}</strong>
+                      <p>{product.use}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="main-button secondary"
+                      onClick={() => removeProtocolProduct(index)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="selection-empty">No hay productos agregados.</p>
+          )}
+
+          {error ? <p className="error-text">{error}</p> : null}
+
+          <div className="valuation-actions">
+            <button
+              type="button"
+              className="main-button secondary"
+              disabled={isSaving}
+              onClick={handleExitProtocol}
+            >
+              Salir
+            </button>
+            <button
+              type="button"
+              className="main-button"
+              disabled={isSaving}
+              onClick={() => saveProtocol({ saveOnly: false })}
+            >
+              {isSaving ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </form>
       ) : null}
 
       {!isLoading && isFlowSelected && activeStep === 1 ? (
@@ -2723,7 +2889,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && clientFlowType === 'nuevo' && activeStep === 3 ? (
+      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 3 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepThreeAndExit}>
           <div className="valuation-section-title">Expectativas y prioridades del cliente</div>
 
@@ -2805,9 +2971,13 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && clientFlowType === 'nuevo' && activeStep === 4 ? (
+      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 4 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepFourAndExit}>
           <div className="valuation-section-title">Historial clinico</div>
+          <p className="valuation-section-description">
+            Completa los antecedentes médicos, alergias y medicamentos para que el tratamiento sea seguro
+            y personalizado. La información debe ser clara y fácil de consultar en dispositivos móviles y tablets.
+          </p>
 
           <div className="valuation-grid">
             <div className="valuation-field-large selection-card">
@@ -2954,7 +3124,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && clientFlowType === 'nuevo' && activeStep === 5 ? (
+      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 5 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepFiveAndExit}>
           <div className="valuation-section-title">Habitos y estilo de vida</div>
 
@@ -3111,7 +3281,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && clientFlowType === 'nuevo' && activeStep === 6 ? (
+      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 6 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepSixAndExit}>
           <div className="valuation-section-title">Exposicion solar</div>
 
@@ -3202,7 +3372,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && ((clientFlowType === 'nuevo' && activeStep === 7) || (clientFlowType === 'recurrente' && activeStep === 3)) ? (
+      {!isLoading && !isProtocolMode && ((clientFlowType === 'nuevo' && activeStep === 7) || (clientFlowType === 'recurrente' && activeStep === 3)) ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepSevenAndExit}>
           <div className="valuation-section-title">Historial estetico</div>
 
@@ -3385,7 +3555,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && clientFlowType === 'recurrente' && activeStep === 4 ? (
+      {!isLoading && !isProtocolMode && clientFlowType === 'recurrente' && activeStep === 4 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveRecurrentStepFourAndExit}>
           <div className="valuation-section-title">Paso 4</div>
 
@@ -3481,7 +3651,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && clientFlowType === 'nuevo' && activeStep === 8 ? (
+      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 8 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepEightAndExit}>
           <div className="valuation-section-title">Rutina actual</div>
 
@@ -3658,7 +3828,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && clientFlowType === 'nuevo' && activeStep === 9 ? (
+      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 9 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepNineAndExit}>
           <div className="valuation-section-title">Evaluacion facial</div>
 
@@ -3768,7 +3938,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && clientFlowType === 'nuevo' && activeStep === 10 ? (
+      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 10 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepTenAndExit}>
           <div className="valuation-section-title">Evaluacion facial 2</div>
 
@@ -4031,7 +4201,7 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && clientFlowType === 'nuevo' && activeStep === 11 ? (
+      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 11 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepElevenAndExit}>
           <div className="valuation-section-title">Preguntas corporales</div>
 

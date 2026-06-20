@@ -599,6 +599,12 @@ const mapValuationSnapshot = (snapshot) => {
     step10: data.step10 ?? null,
     step11: data.step11 ?? null,
     recurrentStep4: data.recurrentStep4 ?? null,
+    protocolProducts: Array.isArray(data.protocolProducts)
+      ? data.protocolProducts.map((product) => ({
+          name: String(product.name ?? '').trim(),
+          use: String(product.use ?? '').trim(),
+        }))
+      : [],
     semaforoCutaneo: String(data.semaforoCutaneo ?? ''),
     mapaInteractivo: data.mapaInteractivo ?? null,
     fotografiasClinicas: normalizeClinicalPhotosByType(data.fotografiasClinicas),
@@ -989,6 +995,53 @@ export const saveStepElevenValuation = async ({ valuationId, stepElevenData, kno
   })
 }
 
+export const saveProtocolProducts = async ({ valuationId, protocolProducts }) => {
+  if (!valuationId) {
+    return {
+      ok: false,
+      message: 'No se encontro la valoracion para guardar el protocolo.',
+    }
+  }
+
+  const normalizedProducts = Array.isArray(protocolProducts)
+    ? protocolProducts.map((product) => ({
+        name: normalizeText(product.name),
+        use: normalizeText(product.use),
+      }))
+    : []
+
+  if (normalizedProducts.length === 0) {
+    return {
+      ok: false,
+      message: 'Agrega al menos un producto al protocolo antes de guardar.',
+    }
+  }
+
+  try {
+    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
+      protocolProducts: normalizedProducts,
+      updatedAt: serverTimestamp(),
+    })
+
+    return {
+      ok: true,
+      message: 'Protocolo guardado correctamente.',
+    }
+  } catch (error) {
+    if (error?.code === 'not-found') {
+      return {
+        ok: false,
+        message: 'No se encontro la valoracion para guardar el protocolo.',
+      }
+    }
+
+    return {
+      ok: false,
+      message: 'No se pudo guardar el protocolo. Intenta de nuevo.',
+    }
+  }
+}
+
 export const saveInteractiveMapData = async ({ valuationId, mapType, strokes }) => {
   if (!valuationId) {
     return {
@@ -1063,10 +1116,17 @@ export const uploadClinicalPhoto = async ({ valuationId, photoType, part, moment
     }
   }
 
-  if (!(file instanceof File) || !String(file.type || '').toLowerCase().startsWith('image/')) {
+  if (!(file instanceof File) && !(file instanceof Blob)) {
     return {
       ok: false,
       message: 'Selecciona una imagen valida para continuar.',
+    }
+  }
+
+  if (!String(file.type || '').toLowerCase().startsWith('image/')) {
+    return {
+      ok: false,
+      message: 'Selecciona una imagen valida (tipo imagen) para continuar.',
     }
   }
 
@@ -1123,11 +1183,22 @@ export const saveClinicalPhotosData = async ({ valuationId, photosByType }) => {
       message: 'Fotografias clinicas guardadas correctamente.',
     }
   } catch (error) {
+    console.error('saveClinicalPhotosData error:', error)
     if (error?.code === 'not-found') {
       return {
         ok: false,
         message: 'No se encontro la valoracion para guardar fotografias.',
       }
+    }
+    const code = String(error?.code || '').toLowerCase()
+    const msg = String(error?.message || '')
+
+    if (code === 'permission-denied') {
+      return { ok: false, message: 'Permisos insuficientes para guardar las fotografías. Revisa tu sesión o reglas de Firestore.' }
+    }
+
+    if (code === 'unavailable' || msg.includes('offline') || msg.includes('network')) {
+      return { ok: false, message: 'No hay conexión de red. Intenta guardar las fotografías con una conexión estable.' }
     }
 
     return {
@@ -1166,6 +1237,26 @@ export const listPendingValuations = async () => {
     return {
       ok: false,
       message: 'No se pudieron cargar las valoraciones pendientes.',
+      valuations: [],
+    }
+  }
+}
+
+export const listCompletedValuations = async () => {
+  try {
+    const valuationsQuery = query(collection(db, VALUATIONS_COLLECTION), where('status', '==', 'completed'))
+
+    const snapshots = await getDocs(valuationsQuery)
+
+    const valuations = snapshots.docs
+      .map(mapValuationSnapshot)
+      .sort((left, right) => right.updatedAtMs - left.updatedAtMs)
+
+    return { ok: true, valuations }
+  } catch {
+    return {
+      ok: false,
+      message: 'No se pudieron cargar los expedientes completados.',
       valuations: [],
     }
   }
@@ -1239,6 +1330,39 @@ export const deleteValuationById = async (valuationId) => {
       message: error?.code
         ? `No se pudo eliminar la valoracion (${error.code}).`
         : 'No se pudo eliminar la valoracion. Intenta de nuevo.',
+    }
+  }
+}
+
+export const completeValuationById = async (valuationId) => {
+  if (!valuationId) {
+    return {
+      ok: false,
+      message: 'No se encontro la valoracion para completar.',
+    }
+  }
+
+  try {
+    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
+      status: 'completed',
+      updatedAt: serverTimestamp(),
+    })
+
+    return {
+      ok: true,
+      message: 'Valoracion finalizada correctamente.',
+    }
+  } catch (error) {
+    if (error?.code === 'not-found') {
+      return {
+        ok: false,
+        message: 'No se encontro la valoracion para completar.',
+      }
+    }
+
+    return {
+      ok: false,
+      message: 'No se pudo completar la valoracion. Intenta de nuevo.',
     }
   }
 }

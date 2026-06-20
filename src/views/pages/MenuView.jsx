@@ -26,6 +26,14 @@ function MenuView() {
 
         <button
           type="button"
+          className="module-card module-card-expedientes"
+          aria-label="Expedientes"
+          title="Expedientes"
+          onClick={() => navigate('/app/expedientes')}
+        />
+
+        <button
+          type="button"
           className="module-card module-card-clientes"
           aria-label="Clientes"
           title="Clientes"

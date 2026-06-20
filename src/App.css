@@ -187,6 +187,10 @@ h2 {
   background-image: url('./img/usuarios.jpeg');
 }
 
+.module-card-expedientes {
+  background-image: url('./img/expedientes.jpeg');
+}
+
 .module-kicker {
   margin: 0;
   font-size: 0.74rem;
@@ -466,15 +470,50 @@ textarea {
 }
 
 .valuation-form {
-  margin-top: 0.9rem;
+  margin-top: 1rem;
   display: grid;
-  gap: 0.9rem;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #e2d1bd;
+  border-radius: 22px;
+  background: rgba(255, 250, 243, 0.95);
+  box-shadow: 0 14px 28px rgba(118, 87, 64, 0.12);
+}
+
+.valuation-section-description {
+  margin: 0;
+  color: #675244;
+  font-size: 0.98rem;
+  line-height: 1.65;
 }
 
 .valuation-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.valuation-grid label,
+.client-search-box label,
+.consultation-block,
+.selection-card {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.valuation-grid label {
+  color: #5a4032;
+  font-weight: 600;
+}
+
+.valuation-grid input,
+.valuation-grid select,
+.valuation-grid textarea,
+.client-search-box input,
+.client-search-box select,
+.client-search-box textarea {
+  width: 100%;
+  min-width: 0;
 }
 
 .valuation-field-large {
@@ -483,6 +522,7 @@ textarea {
 
 .valuation-section-title {
   margin: 0;
+  margin-bottom: 0.35rem;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.1rem;
   color: #3b281c;
@@ -586,6 +626,77 @@ textarea {
   color: #4a3426;
 }
 
+.history-modal-summary {
+  border: 1px solid #d9c4ae;
+  border-radius: 14px;
+  background: rgba(247, 242, 236, 0.96);
+  padding: 0.95rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.history-modal-client-info {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.history-modal-client-name,
+.history-modal-client-meta {
+  margin: 0;
+  color: #3b281c;
+  font-size: 0.95rem;
+}
+
+.history-modal-client-meta {
+  color: #5a4735;
+}
+
+.history-modal-section {
+  background: rgba(248, 241, 232, 0.9);
+  border: 1px solid #e1d0bf;
+  border-radius: 14px;
+  padding: 0.9rem;
+}
+
+.history-entry-summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 1rem;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.history-entry-summary-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.history-entry-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #3b281c;
+}
+
+.history-entry-date {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  background: #f2ede6;
+  color: #5a4735;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.history-modal-section h4 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
 .client-detail-full {
   grid-column: 1 / -1;
 }
@@ -598,10 +709,11 @@ textarea {
 .consultation-block {
   border: 1px solid #d9c4ae;
   border-radius: 12px;
-  padding: 0.7rem;
-  background: rgba(247, 242, 236, 0.82);
+  padding: 0.9rem;
+  background: rgba(247, 242, 236, 0.92);
   display: grid;
-  gap: 0.55rem;
+  gap: 0.65rem;
+  min-height: 180px;
 }
 
 .consultation-block-title {
@@ -631,10 +743,11 @@ textarea {
 .selection-card {
   border: 1px solid #d9c4ae;
   border-radius: 12px;
-  padding: 0.7rem;
-  background: rgba(247, 242, 236, 0.82);
+  padding: 0.95rem;
+  background: rgba(247, 242, 236, 0.94);
   display: grid;
-  gap: 0.55rem;
+  gap: 0.65rem;
+  min-height: 170px;
 }
 
 .selection-title {
@@ -651,6 +764,27 @@ textarea {
   margin: 0;
   font-size: 0.88rem;
   color: #7a6757;
+}
+
+.protocol-products {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.protocol-product-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #d9c4ae;
+  border-radius: 10px;
+  background: #fffaf3;
+}
+
+.protocol-product-item p {
+  margin: 0.3rem 0 0;
+  color: #5a4032;
 }
 
 .selection-tags {
@@ -1519,6 +1653,45 @@ textarea {
     z-index: 2;
     background: #f8f1e8;
     padding-bottom: 0.16rem;
+  }
+
+  .history-modal {
+    width: 100%;
+    min-height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .history-modal .selection-modal-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8f1e8;
+    padding-bottom: 0.25rem;
+  }
+
+  .history-modal-section {
+    padding: 0.85rem;
+  }
+
+  .history-modal-section h4 {
+    margin-bottom: 0.65rem;
+  }
+
+  .history-modal-client-name,
+  .history-modal-client-meta {
+    font-size: 1rem;
+  }
+
+  .history-modal-client-meta {
+    color: #523f2b;
+  }
+
+  .history-modal-section div {
+    gap: 0.25rem;
   }
 
   .mapa-editor-toolbar {

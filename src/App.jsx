@@ -10,6 +10,7 @@ import MenuView from './views/pages/MenuView.jsx'
 import NuevaValoracionView from './views/pages/NuevaValoracionView.jsx'
 import UsersView from './views/pages/UsersView.jsx'
 import ValoracionesPendientesView from './views/pages/ValoracionesPendientesView.jsx'
+import ExpedientesView from './views/pages/ExpedientesView.jsx'
 
 function AppRoutes() {
   return (
@@ -24,6 +25,8 @@ function AppRoutes() {
           <Route path="nueva-valoracion" element={<NuevaValoracionView />} />
           <Route path="nueva-valoracion/:valuationId" element={<NuevaValoracionView />} />
           <Route path="valoraciones-pendientes" element={<ValoracionesPendientesView />} />
+          <Route path="expedientes" element={<ExpedientesView />} />
+          <Route path="expedientes/:valuationId" element={<ExpedientesView />} />
           <Route
             path="usuarios"
             element={

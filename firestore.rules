@@ -1,6 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isSignedIn() {
       return request.auth != null;
     }
@@ -25,7 +26,9 @@ service cloud.firestore {
     }
 
     function validValuationStatus(status) {
-      return status == 'pending' || status == 'completed' || status == 'deleted';
+      return status == 'pending'
+        || status == 'completed'
+        || status == 'deleted';
     }
 
     function validProgressStep(step) {
@@ -95,6 +98,14 @@ service cloud.firestore {
           )
         );
 
+      allow delete: if false;
+    }
+
+    // NUEVA REGLA PARA HISTORIA CLINICA
+    match /clientes/{clientId}/historiaClinica/{historyId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
       allow delete: if false;
     }
 
