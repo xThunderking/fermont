@@ -34,16 +34,34 @@ const formatPdfValue = (value, fallback = 'No especificado') => {
   return normalized
 }
 
+const loadImageDimensions = async (src) => {
+  return new Promise((resolve) => {
+    const image = new Image()
+    image.onload = () => {
+      resolve({
+        width: image.naturalWidth || image.width || 1200,
+        height: image.naturalHeight || image.height || 1200,
+      })
+    }
+    image.onerror = () => {
+      resolve({ width: 1200, height: 1200 })
+    }
+    image.src = src
+  })
+}
+
 const toSvgFromStrokes = (strokes, width = 1200, height = 1200) => {
   if (!Array.isArray(strokes) || strokes.length === 0) return ''
+  const svgWidth = Number.isFinite(Number(width)) ? Number(width) : 1200
+  const svgHeight = Number.isFinite(Number(height)) ? Number(height) : 1200
 
   const paths = strokes
     .map((stroke) => {
       if (!Array.isArray(stroke.points) || stroke.points.length === 0) return ''
       const d = stroke.points
         .map((p, i) => {
-          const x = (Number(p.x || 0) * width).toFixed(2)
-          const y = (Number(p.y || 0) * height).toFixed(2)
+          const x = (Number(p.x || 0) * svgWidth).toFixed(2)
+          const y = (Number(p.y || 0) * svgHeight).toFixed(2)
           return `${i === 0 ? 'M' : 'L'} ${x} ${y}`
         })
         .join(' ')
@@ -56,44 +74,55 @@ const toSvgFromStrokes = (strokes, width = 1200, height = 1200) => {
     .filter(Boolean)
     .join('')
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" style="position:absolute; left:0; top:0; width:100%; height:100%;">${paths}</svg>`
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth} ${svgHeight}" preserveAspectRatio="xMidYMid meet" style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none;">${paths}</svg>`
 }
 
-const renderMapPage = (label, imageUrl, strokes) => {
-  const svg = toSvgFromStrokes(strokes || [], 1200, 1200)
+const renderMapPage = (label, imageUrl, strokes, imageDimensions = { width: 1200, height: 1200 }) => {
+  const svg = toSvgFromStrokes(strokes || [], imageDimensions.width, imageDimensions.height)
+  const imageRatio = Number.isFinite(Number(imageDimensions.width)) && Number.isFinite(Number(imageDimensions.height))
+    ? (imageDimensions.height / imageDimensions.width) * 100
+    : 100
+
   return `
-    <div style="page-break-after:always; display:block; width:100%; height:100%;">
+    <div style="page-break-after:always; display:block; width:100%; height:auto;">
       <div style="text-align:center; margin-top:10px;"><h2 style="font-size:16px; color:#333;">MAPA: ${label}</h2></div>
-      <div style="position:relative; width:100%; max-width:820px; margin:12px auto;">
-        <img src="${imageUrl}" style="display:block; width:100%; height:auto;" />
+      <div style="position:relative; width:100%; max-width:820px; margin:12px auto; background:#fff; border:1px solid #eee; box-sizing:border-box; padding-top:${imageRatio}%;">
+        <img src="${imageUrl}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain;" />
         ${svg}
       </div>
     </div>
   `
 }
 
-const renderMapsSinglePage = (valuation) => {
+const renderMapsSinglePage = (valuation, facialImageDimensions = { width: 1200, height: 1200 }, corporalImageDimensions = { width: 1200, height: 1200 }) => {
   const facialStrokes = (valuation?.mapaInteractivo?.facial?.strokes) || valuation?.mapaInteractivo?.facial || []
   const corporalStrokes = (valuation?.mapaInteractivo?.corporal?.strokes) || valuation?.mapaInteractivo?.corporal || []
 
-  const facialSvg = toSvgFromStrokes(facialStrokes, 800, 800)
-  const corporalSvg = toSvgFromStrokes(corporalStrokes, 800, 800)
+  const facialSvg = toSvgFromStrokes(facialStrokes, facialImageDimensions.width, facialImageDimensions.height)
+  const corporalSvg = toSvgFromStrokes(corporalStrokes, corporalImageDimensions.width, corporalImageDimensions.height)
+
+  const facialAspect = Number.isFinite(Number(facialImageDimensions.width)) && Number.isFinite(Number(facialImageDimensions.height))
+    ? (facialImageDimensions.height / facialImageDimensions.width) * 100
+    : 100
+  const corporalAspect = Number.isFinite(Number(corporalImageDimensions.width)) && Number.isFinite(Number(corporalImageDimensions.height))
+    ? (corporalImageDimensions.height / corporalImageDimensions.width) * 100
+    : 100
 
   return `
     <div style="page-break-before:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
       <h2 style="font-size:16px; color:#333; text-align:center; margin:0 0 12px 0; padding-top:12px;">MAPAS INTERACTIVOS</h2>
-      <div style="display:flex; gap:12px; justify-content:space-between; align-items:flex-start; margin-top:8px;">
-        <div style="width:49%;">
+      <div style="display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; align-items:flex-start; margin-top:8px;">
+        <div style="flex:1 1 100%; max-width:calc(50% - 6px); min-width:240px;">
           <h3 style="margin:6px 0 4px 0; font-size:14px;">Mapa facial</h3>
-          <div style="position:relative; width:100%; background:#fff; border:1px solid #eee;">
-            <img src="${mapaFacialImage}" style="display:block; width:100%; height:auto;" />
+          <div style="position:relative; width:100%; background:#fff; border:1px solid #eee; box-sizing:border-box; padding-top:${facialAspect}%;">
+            <img src="${mapaFacialImage}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain;" />
             ${facialSvg}
           </div>
         </div>
-        <div style="width:49%;">
+        <div style="flex:1 1 100%; max-width:calc(50% - 6px); min-width:240px;">
           <h3 style="margin:6px 0 4px 0; font-size:14px;">Mapa corporal</h3>
-          <div style="position:relative; width:100%; background:#fff; border:1px solid #eee;">
-            <img src="${mapaCorporalImage}" style="display:block; width:100%; height:auto;" />
+          <div style="position:relative; width:100%; background:#fff; border:1px solid #eee; box-sizing:border-box; padding-top:${corporalAspect}%;">
+            <img src="${mapaCorporalImage}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain;" />
             ${corporalSvg}
           </div>
         </div>
@@ -139,51 +168,51 @@ const renderPhotosPages = (valuation) => {
   })
 
   const pages = []
+
+  const makePhotoCell = (photo) => {
+    if (!photo) {
+      return '<td style="width:50%; padding:4px; vertical-align:top;"></td>'
+    }
+
+    return `
+      <td style="width:50%; padding:4px; vertical-align:top;">
+        <div style="font-size:11px; font-weight:600; color:#333; margin-bottom:3px;">${photo.label}</div>
+        <div style="width:100%; height:140px; border:1px solid #ddd; background:#fff; text-align:center; padding:2px; box-sizing:border-box; display:flex; align-items:center; justify-content:center;">
+          <img src="${photo.url}" style="max-width:100%; max-height:100%; width:auto; height:auto; display:block;" />
+        </div>
+      </td>
+    `
+  }
+
   for (let i = 0; i < photos.length; i += 4) {
     const pagePhotos = photos.slice(i, i + 4)
     const isLastPage = i + 4 >= photos.length
-    const photoRows = []
-    const rowCount = Math.ceil(pagePhotos.length / 2)
-    const photoFrameHeight = rowCount <= 1 ? 420 : 250
+    const rowHtml = []
 
     for (let rowIndex = 0; rowIndex < pagePhotos.length; rowIndex += 2) {
-      const rowPhotos = pagePhotos.slice(rowIndex, rowIndex + 2)
-      const rowHtml = rowPhotos
-        .map((p) => `
-          <div style="width:48%; page-break-inside:avoid; break-inside:avoid;">
-            <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">${p.label}</div>
-            <div style="height:${photoFrameHeight}px; border:1px solid #ddd; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;">
-              <img src="${p.url}" style="max-width:100%; max-height:100%; width:auto; height:auto; display:block;"/>
-            </div>
-          </div>
-        `)
-        .join('')
-
-      photoRows.push(`
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:4%; margin-bottom:10px; page-break-inside:avoid; break-inside:avoid;">
-          ${rowHtml}
-        </div>
+      rowHtml.push(`
+        <tr style="page-break-inside:avoid; break-inside:avoid;">
+          ${makePhotoCell(pagePhotos[rowIndex])}
+          ${makePhotoCell(pagePhotos[rowIndex + 1])}
+        </tr>
       `)
     }
 
-    const imgsHtml = photoRows.join('')
-
     pages.push(`
-      <div style="${i === 0 ? 'page-break-before:always; break-before:page;' : ''} page-break-after:${isLastPage ? 'auto' : 'always'}; break-after:${isLastPage ? 'auto' : 'page'}; page-break-inside:avoid; break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
-        <h2 style="font-size:16px; color:#333; margin:0 0 8px 0; padding-top:12px;">FOTOGRAFÍAS CLÍNICAS</h2>
-        <div style="margin-top:8px;">
-          ${imgsHtml}
-        </div>
+      <div style="${i === 0 ? 'page-break-before:always; break-before:page;' : ''} page-break-after:${isLastPage ? 'auto' : 'always'}; break-after:${isLastPage ? 'auto' : 'page'}; page-break-inside:avoid; break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:10px; padding-bottom:10px; box-sizing:border-box;">
+        <h2 style="font-size:16px; color:#333; margin:0 0 6px 0; padding-top:8px;">FOTOGRAFÍAS CLÍNICAS</h2>
+        <table style="width:100%; border-collapse:collapse; margin:0; padding:0;">
+          ${rowHtml.join('')}
+        </table>
       </div>
     `)
   }
 
-  // If no photos at all, render an empty page with message
   if (pages.length === 0) {
     pages.push(`
-      <div style="page-break-before:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto;">
+      <div style="page-break-before:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
         <h2 style="font-size:16px; color:#333;">FOTOGRAFÍAS CLÍNICAS</h2>
-        <p style="color:#666;">No hay fotografías registradas.</p>
+        <p style="color:#666; margin-top:8px;">No hay fotografías registradas.</p>
       </div>
     `)
   }
@@ -225,13 +254,18 @@ export const exportValuationToPDF = async (valuation) => {
        !valuation.step9 && !valuation.step10 && !valuation.step11 && 
        Number(valuation.currentStep ?? 1) <= 4)
 
-    const mapsHtml = renderMapsSinglePage(valuation)
+    const [facialImageDimensions, corporalImageDimensions] = await Promise.all([
+      loadImageDimensions(mapaFacialImage),
+      loadImageDimensions(mapaCorporalImage),
+    ])
+
+    const mapsHtml = renderMapsSinglePage(valuation, facialImageDimensions, corporalImageDimensions)
 
     const photosHtml = renderPhotosPages(valuation)
     const protocolHtml = renderProtocolSection(valuation)
 
     const htmlContent = `
-      <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin:0 auto;">
+      <div style="font-family: Arial, sans-serif; padding: 10px; max-width: 780px; margin:0 auto;">
         <!-- Portada -->
         <div style="page-break-after:always; width:100%; max-width:760px; margin:0 auto; padding:120px 20px 80px; text-align:center; box-sizing:border-box;">
           <h1 style="margin:0; font-size:40px; color:#333; letter-spacing:4px;">FERMONT</h1>
