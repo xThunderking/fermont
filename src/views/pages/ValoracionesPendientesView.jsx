@@ -430,7 +430,7 @@ function ValoracionesPendientesView() {
   useEffect(() => {
     const layoutHiddenClass = 'mapa-interactivo-open'
 
-    if (mapaModal.open || fotosModal.open) {
+    if (mapaModal.open || fotosModal.open || historyModalOpen) {
       document.body.classList.add(layoutHiddenClass)
     } else {
       document.body.classList.remove(layoutHiddenClass)
@@ -439,7 +439,7 @@ function ValoracionesPendientesView() {
     return () => {
       document.body.classList.remove(layoutHiddenClass)
     }
-  }, [fotosModal.open, mapaModal.open])
+  }, [fotosModal.open, historyModalOpen, mapaModal.open])
 
   const selectMapaOption = (value) => {
     resetMapaDrawingState()
@@ -1256,10 +1256,21 @@ function ValoracionesPendientesView() {
       ) : null}
 
       {historyModalOpen ? (
-        <div className="selection-modal-backdrop" onClick={closeClientHistoryModal}>
-          <div className="selection-modal history-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-            <div className="selection-modal-head">
-              <h3 className="consultation-block-title">Historia clinica</h3>
+        <div className="selection-modal-backdrop history-modal-backdrop" onClick={closeClientHistoryModal}>
+          <div
+            className="selection-modal history-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Historia clinica"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head history-modal-head">
+              <div className="history-modal-head-copy">
+                <h3 className="consultation-block-title">Historia clinica</h3>
+                {!historyModalLoading && historyModalClient ? (
+                  <p className="history-modal-head-subtitle">{historyModalClient.clienteNombre || 'Cliente sin nombre'}</p>
+                ) : null}
+              </div>
               <button type="button" className="main-button secondary" onClick={closeClientHistoryModal}>
                 Cerrar
               </button>
@@ -1268,10 +1279,13 @@ function ValoracionesPendientesView() {
             {!historyModalLoading && historyModalClient ? (
               <section className="history-modal-summary history-modal-section">
                 <div className="history-modal-client-info">
-                  <p className="history-modal-client-name"><strong>Cliente:</strong> {historyModalClient.clienteNombre || '-'}</p>
-                  {historyModalEntries.length > 0 ? (
-                    <p className="history-modal-client-meta">Entradas en historia clínica: {historyModalEntries.length}</p>
-                  ) : null}
+                  <p className="history-modal-client-name">{historyModalClient.clienteNombre || '-'}</p>
+                  <div className="history-modal-meta-row">
+                    <p className="history-modal-client-meta">Cliente ID: {historyModalClient.clienteId || 'Sin registro'}</p>
+                    <span className="history-modal-count-pill">
+                      {historyModalEntries.length} {historyModalEntries.length === 1 ? 'entrada' : 'entradas'}
+                    </span>
+                  </div>
                 </div>
               </section>
             ) : null}
@@ -1284,15 +1298,19 @@ function ValoracionesPendientesView() {
 
             {/* modal para historia clinica en valoraciones pendientes */}
             {!historyModalLoading && historyModalEntries.length > 0 ? (
-              <div className="max-h-[75vh] overflow-y-auto space-y-4">
-                {historyModalEntries.map((entry) => (
+              <div className="history-modal-entries">
+                {historyModalEntries.map((entry, index) => (
                   <details
                     key={entry.id}
-                    className="bg-white border border-stone-200 rounded-2xl shadow-sm overflow-hidden"
+                    className="history-entry-card"
+                    open={index === 0}
                   >
                     <summary className="history-entry-summary">
                       <div className="history-entry-summary-top">
-                        <h3 className="history-entry-title">Valoración Clínica</h3>
+                        <div className="history-entry-heading">
+                          <h3 className="history-entry-title">Valoracion clinica</h3>
+                          <p className="history-entry-subtitle">Registro {index + 1}</p>
+                        </div>
                         <span className="history-entry-date">
                           {entry.createdAtMs
                             ? new Date(entry.createdAtMs).toLocaleDateString('es-MX')
@@ -1301,15 +1319,15 @@ function ValoracionesPendientesView() {
                       </div>
                     </summary>
 
-                    <div className="border-t border-stone-100 p-4 space-y-4">
+                    <div className="history-entry-content">
 
                       {/* DATOS PERSONALES */}
-                      <section>
-                        <h4 className="font-semibold text-lg mb-3 text-stone-800">
+                      <section className="history-modal-section">
+                        <h4>
                           Datos personales
                         </h4>
 
-                        <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="history-fields-grid history-fields-grid-legacy">
                           <div>
                             <span className="font-medium">Nombre:</span>{' '}
                             {entry.step1?.nombre} {entry.step1?.apellidoPaterno} {entry.step1?.apellidoMaterno}
@@ -1339,7 +1357,7 @@ function ValoracionesPendientesView() {
 
                       {/* PASO 3 */}
                       <section className="history-modal-section">
-                        <h4 className="font-semibold mb-2">
+                        <h4>
                           Antecedentes médicos
                         </h4>
 
@@ -1355,7 +1373,7 @@ function ValoracionesPendientesView() {
 
                       {/* PASO 4 */}
                       <section className="history-modal-section">
-                        <h4 className="font-semibold mb-2">
+                        <h4>
                           Hábitos y estilo de vida
                         </h4>
 
@@ -1371,11 +1389,11 @@ function ValoracionesPendientesView() {
 
                       {/* PASO 5 */}
                       <section className="history-modal-section">
-                        <h4 className="font-semibold mb-2">
+                        <h4>
                           Evaluación cutánea
                         </h4>
 
-                        <div className="text-sm">
+                        <div className="history-fields-grid">
                           {Object.entries(entry.step5 || {}).map(([key, value]) => (
                             <div key={key}>
                               <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
@@ -1387,7 +1405,7 @@ function ValoracionesPendientesView() {
 
                       {/* PASO 6 */}
                       <section className="history-modal-section">
-                        <h4 className="font-semibold mb-2">Paso 6</h4>
+                        <h4>Paso 6</h4>
 
                         <div className="text-sm">
                           {Object.entries(entry.step6 || {}).map(([key, value]) => (
@@ -1401,7 +1419,7 @@ function ValoracionesPendientesView() {
 
                       {/* PASO 7 */}
                       <section className="history-modal-section">
-                        <h4 className="font-semibold mb-2">Paso 7</h4>
+                        <h4>Paso 7</h4>
 
                         <div className="text-sm">
                           {Object.entries(entry.step7 || {}).map(([key, value]) => (
@@ -1415,7 +1433,7 @@ function ValoracionesPendientesView() {
 
                       {/* PASO 8 */}
                       <section className="history-modal-section">
-                        <h4 className="font-semibold mb-2">Paso 8</h4>
+                        <h4>Paso 8</h4>
 
                         <div className="text-sm">
                           {Object.entries(entry.step8 || {}).map(([key, value]) => (
@@ -1429,7 +1447,7 @@ function ValoracionesPendientesView() {
 
                       {/* PASO 9 */}
                       <section className="history-modal-section">
-                        <h4 className="font-semibold mb-2">Paso 9</h4>
+                        <h4>Paso 9</h4>
 
                         <div className="text-sm">
                           {Object.entries(entry.step9 || {}).map(([key, value]) => (
@@ -1443,7 +1461,7 @@ function ValoracionesPendientesView() {
 
                       {/* PASO 10 */}
                       <section className="history-modal-section">
-                        <h4 className="font-semibold mb-2">Diagnóstico profesional</h4>
+                        <h4>Diagnóstico profesional</h4>
 
                         <div className="text-sm">
                           {Object.entries(entry.step10 || {}).map(([key, value]) => (
@@ -1457,7 +1475,7 @@ function ValoracionesPendientesView() {
 
                       {/* PASO 11 */}
                       <section className="history-modal-section">
-                        <h4 className="font-semibold mb-2">
+                        <h4>
                           Recomendaciones y plan de tratamiento
                         </h4>
 
@@ -1471,8 +1489,8 @@ function ValoracionesPendientesView() {
                         </div>
                       </section>
 
-                      <section className="rounded-xl border p-3">
-                        <h4 className="font-semibold mb-2">
+                      <section className="history-modal-section">
+                        <h4>
                           Semáforo cutáneo
                         </h4>
 

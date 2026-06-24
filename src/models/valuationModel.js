@@ -519,8 +519,6 @@ const normalizeStepElevenData = (data) => ({
   ),
   pesoCambiosRecientes: normalizeBinaryAnswer(normalizeText(data?.pesoCambiosRecientes).toLowerCase()),
   pesoFluctuaciones: normalizeBinaryAnswer(normalizeText(data?.pesoFluctuaciones).toLowerCase()),
-  actividadEjercicio: normalizeBinaryAnswer(normalizeText(data?.actividadEjercicio).toLowerCase()),
-  actividadFrecuenciaSemanal: normalizeText(data?.actividadFrecuenciaSemanal),
   objetivoZonaMejorar: normalizeText(data?.objetivoZonaMejorar),
   objetivoIncomodidadVisual: normalizeText(data?.objetivoIncomodidadVisual),
 })

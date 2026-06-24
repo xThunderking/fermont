@@ -1,16 +1,19 @@
 ﻿import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { getValuationForEdition, listCompletedValuations } from '../../models/valuationModel.js'
+import { useAuthController } from '../../controllers/authController.jsx'
+import { deleteValuationById, getValuationForEdition, listCompletedValuations } from '../../models/valuationModel.js'
 import { exportValuationToPDF } from '../../services/pdfExporter.js'
 
 function ExpedientesView() {
   const navigate = useNavigate()
+  const { isAdmin } = useAuthController()
   const { valuationId } = useParams()
   const [valuation, setValuation] = useState(null)
   const [completedValuations, setCompletedValuations] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [isExporting, setIsExporting] = useState(false)
+  const [deleteValuationId, setDeleteValuationId] = useState('')
 
   useEffect(() => {
     let isMounted = true
@@ -91,6 +94,14 @@ function ExpedientesView() {
     }
   }
 
+  const formatConsultationReason = (step2) => {
+    const facialReasons = Array.isArray(step2?.motivosFaciales) ? step2.motivosFaciales : []
+    const corporalReasons = Array.isArray(step2?.motivosCorporales) ? step2.motivosCorporales : []
+    const reasons = [...facialReasons, ...corporalReasons].filter(Boolean)
+
+    return reasons.length > 0 ? reasons.join(', ') : 'No registrado'
+  }
+
   const handleExportFromList = async (id) => {
     setIsExporting(true)
     try {
@@ -106,6 +117,39 @@ function ExpedientesView() {
     } finally {
       setIsExporting(false)
     }
+  }
+
+  const handleDeleteValuation = async (nextValuationId) => {
+    if (!isAdmin) {
+      return
+    }
+
+    setDeleteValuationId(nextValuationId)
+  }
+
+  const confirmDeleteValuation = async () => {
+    if (!deleteValuationId) {
+      return
+    }
+
+    const result = await deleteValuationById(deleteValuationId)
+
+    if (!result.ok) {
+      setError(result.message)
+      setDeleteValuationId('')
+      return
+    }
+
+    setError('')
+
+    if (valuation?.id === deleteValuationId || valuationId === deleteValuationId) {
+      setDeleteValuationId('')
+      navigate('/app/expedientes')
+      return
+    }
+
+    setCompletedValuations((previous) => previous.filter((item) => item.id !== deleteValuationId))
+    setDeleteValuationId('')
   }
 
   return (
@@ -137,8 +181,9 @@ function ExpedientesView() {
                   <div>
                     <strong>{item.clienteNombre || 'Cliente sin nombre'}</strong>
                     <p className="subtitle">{formatListDate(item.updatedAtMs)}</p>
+                    <p className="subtitle">Motivo de consulta: {formatConsultationReason(item.step2)}</p>
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       className="main-button"
@@ -147,13 +192,15 @@ function ExpedientesView() {
                     >
                       {isExporting ? 'Exportando...' : '📄 Imprimir informe'}
                     </button>
-                    <button
-                      type="button"
-                      className="main-button pending-action-button"
-                      onClick={() => navigate(`/app/expedientes/${item.id}`)}
-                    >
-                      Ver
-                    </button>
+                    {isAdmin ? (
+                      <button
+                        type="button"
+                        className="main-button danger"
+                        onClick={() => handleDeleteValuation(item.id)}
+                      >
+                        Eliminar
+                      </button>
+                    ) : null}
                   </div>
                 </li>
               ))}
@@ -166,20 +213,31 @@ function ExpedientesView() {
         <div className="valuation-grid">
           <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h2 style={{ margin: 0, fontSize: '18px', color: '#333' }}>Detalles del Expediente</h2>
-            <button
-              type="button"
-              className="main-button"
-              onClick={handleExportPDF}
-              disabled={isExporting}
-              style={{
-                padding: '10px 20px',
-                fontSize: '14px',
-                opacity: isExporting ? 0.6 : 1,
-                cursor: isExporting ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {isExporting ? 'Exportando...' : '📄 Exportar Informe'}
-            </button>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className="main-button"
+                onClick={handleExportPDF}
+                disabled={isExporting}
+                style={{
+                  padding: '10px 20px',
+                  fontSize: '14px',
+                  opacity: isExporting ? 0.6 : 1,
+                  cursor: isExporting ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {isExporting ? 'Exportando...' : '📄 Exportar Informe'}
+              </button>
+              {isAdmin ? (
+                <button
+                  type="button"
+                  className="main-button danger"
+                  onClick={() => handleDeleteValuation(valuation.id)}
+                >
+                  Eliminar expediente
+                </button>
+              ) : null}
+            </div>
           </div>
 
           <div className="selection-card valuation-field-large">
@@ -226,6 +284,28 @@ function ExpedientesView() {
               ))}
             </div>
           ) : null}
+        </div>
+      ) : null}
+
+      {deleteValuationId ? (
+        <div className="selection-modal-backdrop" onClick={() => setDeleteValuationId('')}>
+          <div className="selection-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            <div className="selection-modal-head">
+              <h3 className="consultation-block-title">Eliminar expediente</h3>
+              <button type="button" className="main-button secondary" onClick={() => setDeleteValuationId('')}>
+                Cerrar
+              </button>
+            </div>
+            <p className="subtitle">Seguro que deseas eliminar este expediente? Esta accion no se puede deshacer.</p>
+            <div className="valuation-actions">
+              <button type="button" className="main-button secondary" onClick={() => setDeleteValuationId('')}>
+                Cancelar
+              </button>
+              <button type="button" className="main-button danger" onClick={confirmDeleteValuation}>
+                Eliminar
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </section>

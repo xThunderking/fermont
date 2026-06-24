@@ -178,8 +178,6 @@ const createStepElevenInitialData = () => ({
   circulacionDolorTacto: '',
   pesoCambiosRecientes: '',
   pesoFluctuaciones: '',
-  actividadEjercicio: '',
-  actividadFrecuenciaSemanal: '',
   objetivoZonaMejorar: '',
   objetivoIncomodidadVisual: '',
 })
@@ -601,8 +599,6 @@ const normalizeExistingStepElevenData = (rawStepEleven) => {
     circulacionDolorTacto: normalizeBinaryValue(rawStepEleven.circulacionDolorTacto),
     pesoCambiosRecientes: normalizeBinaryValue(rawStepEleven.pesoCambiosRecientes),
     pesoFluctuaciones: normalizeBinaryValue(rawStepEleven.pesoFluctuaciones),
-    actividadEjercicio: normalizeBinaryValue(rawStepEleven.actividadEjercicio),
-    actividadFrecuenciaSemanal: String(rawStepEleven.actividadFrecuenciaSemanal ?? ''),
     objetivoZonaMejorar: String(rawStepEleven.objetivoZonaMejorar ?? ''),
     objetivoIncomodidadVisual: String(rawStepEleven.objetivoIncomodidadVisual ?? ''),
   }
@@ -1626,7 +1622,6 @@ function NuevaValoracionView() {
         stepElevenData.circulacionDolorTacto,
         stepElevenData.pesoCambiosRecientes,
         stepElevenData.pesoFluctuaciones,
-        stepElevenData.actividadEjercicio,
       ]
 
       if (requiredFields.some((field) => !hasValue(field))) {
@@ -2974,11 +2969,6 @@ function NuevaValoracionView() {
       {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 4 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepFourAndExit}>
           <div className="valuation-section-title">Historial clinico</div>
-          <p className="valuation-section-description">
-            Completa los antecedentes médicos, alergias y medicamentos para que el tratamiento sea seguro
-            y personalizado. La información debe ser clara y fácil de consultar en dispositivos móviles y tablets.
-          </p>
-
           <div className="valuation-grid">
             <div className="valuation-field-large selection-card">
               <p className="selection-title">Enfermedades</p>
@@ -4295,35 +4285,6 @@ function NuevaValoracionView() {
                     <option value="si">Si</option>
                     <option value="no">No</option>
                   </select>
-                </label>
-              </div>
-            </div>
-
-            <div className="selection-card valuation-field-large">
-              <p className="selection-title">Actividad fisica</p>
-
-              <div className="valuation-grid">
-                <label>
-                  Haces ejercicio?
-                  <select
-                    required
-                    value={stepElevenData.actividadEjercicio}
-                    onChange={(event) => setStepElevenFieldValue('actividadEjercicio', event.target.value)}
-                  >
-                    <option value="">Sin respuesta</option>
-                    <option value="si">Si</option>
-                    <option value="no">No</option>
-                  </select>
-                </label>
-
-                <label>
-                  Cuantas veces por semana?
-                  <input
-                    value={stepElevenData.actividadFrecuenciaSemanal}
-                    onChange={(event) =>
-                      setStepElevenFieldValue('actividadFrecuenciaSemanal', event.target.value)}
-                    placeholder="Ejemplo: 3 veces"
-                  />
                 </label>
               </div>
             </div>

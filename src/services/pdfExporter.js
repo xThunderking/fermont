@@ -12,6 +12,28 @@ const formatDate = (dateString) => {
   }
 }
 
+const formatPdfValue = (value, fallback = 'No especificado') => {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value.join(', ') : fallback
+  }
+
+  const normalized = String(value ?? '').trim()
+
+  if (!normalized) {
+    return fallback
+  }
+
+  if (normalized.toLowerCase() === 'si') {
+    return 'Sí'
+  }
+
+  if (normalized.toLowerCase() === 'no') {
+    return 'No'
+  }
+
+  return normalized
+}
+
 const toSvgFromStrokes = (strokes, width = 1200, height = 1200) => {
   if (!Array.isArray(strokes) || strokes.length === 0) return ''
 
@@ -119,25 +141,37 @@ const renderPhotosPages = (valuation) => {
   const pages = []
   for (let i = 0; i < photos.length; i += 4) {
     const pagePhotos = photos.slice(i, i + 4)
-    const imgsParts = pagePhotos.map((p) => `
-      <div style="width:48%; margin-bottom:8px;">
-        <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">${p.label}</div>
-        <img src="${p.url}" style="width:100%; height:auto; display:block; border:1px solid #ddd;"/>
-      </div>
-    `)
+    const isLastPage = i + 4 >= photos.length
+    const photoRows = []
+    const rowCount = Math.ceil(pagePhotos.length / 2)
+    const photoFrameHeight = rowCount <= 1 ? 420 : 250
 
-    // If less than 4, fill empty slots with blank placeholders
-    const blanks = 4 - pagePhotos.length
-    for (let j = 0; j < blanks; j++) {
-      imgsParts.push(`<div style="width:48%; margin-bottom:8px; background:#fafafa; height:220px; border:1px dashed #ddd;"></div>`)
+    for (let rowIndex = 0; rowIndex < pagePhotos.length; rowIndex += 2) {
+      const rowPhotos = pagePhotos.slice(rowIndex, rowIndex + 2)
+      const rowHtml = rowPhotos
+        .map((p) => `
+          <div style="width:48%; page-break-inside:avoid; break-inside:avoid;">
+            <div style="font-size:12px; font-weight:600; color:#333; margin-bottom:6px;">${p.label}</div>
+            <div style="height:${photoFrameHeight}px; border:1px solid #ddd; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+              <img src="${p.url}" style="max-width:100%; max-height:100%; width:auto; height:auto; display:block;"/>
+            </div>
+          </div>
+        `)
+        .join('')
+
+      photoRows.push(`
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:4%; margin-bottom:10px; page-break-inside:avoid; break-inside:avoid;">
+          ${rowHtml}
+        </div>
+      `)
     }
 
-    const imgsHtml = imgsParts.join('')
+    const imgsHtml = photoRows.join('')
 
     pages.push(`
-      <div style="page-break-before:always; page-break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
+      <div style="${i === 0 ? 'page-break-before:always; break-before:page;' : ''} page-break-after:${isLastPage ? 'auto' : 'always'}; break-after:${isLastPage ? 'auto' : 'page'}; page-break-inside:avoid; break-inside:avoid; width:100%; max-width:820px; margin:0 auto; padding-top:18px; box-sizing:border-box;">
         <h2 style="font-size:16px; color:#333; margin:0 0 8px 0; padding-top:12px;">FOTOGRAFÍAS CLÍNICAS</h2>
-        <div style="display:flex; flex-wrap:wrap; gap:4%; justify-content:space-between; margin-top:8px;">
+        <div style="margin-top:8px;">
           ${imgsHtml}
         </div>
       </div>
@@ -327,10 +361,10 @@ export const exportValuationToPDF = async (valuation) => {
           <div style="margin-bottom: 25px;">
             <h2 style="font-size: 16px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 8px;">10. ANÁLISIS DE MANCHAS Y FOTOENVEJECIMIENTO</h2>
             <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-              <tr><td style="padding: 8px; font-weight: bold; width: 40%;">Acne empeora período:</td><td style="padding: 8px;">${valuation.step10?.acneEmpeoraPeriodo || 'No'}</td></tr>
-              <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Manipula granitos:</td><td style="padding: 8px;">${valuation.step10?.manipulaGranitos || 'No'}</td></tr>
-              <tr><td style="padding: 8px; font-weight: bold;">Escala Fitzpatrick:</td><td style="padding: 8px;">${valuation.step10?.escalaFitzpatrick || 'No especificado'}</td></tr>
-              <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Escala Glogau:</td><td style="padding: 8px;">${valuation.step10?.escalaGlogau || 'No especificado'}</td></tr>
+              <tr><td style="padding: 8px; font-weight: bold; width: 40%;">Acne empeora período:</td><td style="padding: 8px;">${formatPdfValue(valuation.step10?.acneEmpeoraPeriodo, 'No')}</td></tr>
+              <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Manipula granitos:</td><td style="padding: 8px;">${formatPdfValue(valuation.step10?.manipulaGranitos, 'No')}</td></tr>
+              <tr><td style="padding: 8px; font-weight: bold;">Escala Fitzpatrick:</td><td style="padding: 8px;">${formatPdfValue(valuation.step10?.escalaFitzpatrick)}</td></tr>
+              <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Escala Glogau:</td><td style="padding: 8px;">${formatPdfValue(valuation.step10?.escalaGlogau)}</td></tr>
             </table>
           </div>
 
@@ -338,11 +372,10 @@ export const exportValuationToPDF = async (valuation) => {
           <div style="margin-bottom: 25px;">
             <h2 style="font-size: 16px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 8px;">11. CIRCULACIÓN Y OBJETIVOS CORPORALES</h2>
             <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-              <tr><td style="padding: 8px; font-weight: bold; width: 40%;">Piernas cansadas:</td><td style="padding: 8px;">${valuation.step11?.circulacionPiernasCansadas || 'No'}</td></tr>
-              <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Varices:</td><td style="padding: 8px;">${valuation.step11?.circulacionVarices || 'No'}</td></tr>
-              <tr><td style="padding: 8px; font-weight: bold;">Retención de líquidos:</td><td style="padding: 8px;">${valuation.step11?.circulacionRetencionLiquidos || 'No'}</td></tr>
-              <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Actividad/Ejercicio:</td><td style="padding: 8px;">${valuation.step11?.actividadEjercicio || 'No'}</td></tr>
-              <tr><td style="padding: 8px; font-weight: bold;">Objetivo zona a mejorar:</td><td style="padding: 8px;">${valuation.step11?.objetivoZonaMejorar || 'No especificado'}</td></tr>
+              <tr><td style="padding: 8px; font-weight: bold; width: 40%;">Piernas cansadas:</td><td style="padding: 8px;">${formatPdfValue(valuation.step11?.circulacionPiernasCansadas, 'No')}</td></tr>
+              <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Varices:</td><td style="padding: 8px;">${formatPdfValue(valuation.step11?.circulacionVarices, 'No')}</td></tr>
+              <tr><td style="padding: 8px; font-weight: bold;">Retención de líquidos:</td><td style="padding: 8px;">${formatPdfValue(valuation.step11?.circulacionRetencionLiquidos, 'No')}</td></tr>
+              <tr><td style="padding: 8px; font-weight: bold;">Objetivo zona a mejorar:</td><td style="padding: 8px;">${formatPdfValue(valuation.step11?.objetivoZonaMejorar)}</td></tr>
             </table>
           </div>
         ` : ''}
@@ -356,7 +389,7 @@ export const exportValuationToPDF = async (valuation) => {
         ${photosHtml}
 
         <!-- Pie de página -->
-        <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #333; text-align: center; font-size: 11px; color: #666;">
+        <div style="margin-top: 16px; padding-top: 14px; border-top: 2px solid #333; text-align: center; font-size: 11px; color: #666; page-break-inside:avoid;">
           <p>Este informe fue generado automáticamente el ${formatDate(new Date().toISOString())} a las ${new Date().toLocaleTimeString('es-MX')}</p>
         </div>
       </div>
@@ -372,7 +405,7 @@ export const exportValuationToPDF = async (valuation) => {
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+      pagebreak: { mode: ['css', 'legacy'] }
     }
 
     // Generate the PDF and try to download it in a way that works better on Safari/iOS.

@@ -3,12 +3,22 @@ import { useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 import { deleteClientById, listClientClinicalHistory, listClients } from '../../models/clientModel.js'
 
+const formatFieldLabel = (key) => {
+  if (!key) return '-'
+
+  const formatted = String(key)
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/[_-]+/g, ' ')
+    .trim()
+
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
+}
+
 function ClientesView() {
   const navigate = useNavigate()
   const { isAdmin } = useAuthController()
   const [clients, setClients] = useState([])
   const [search, setSearch] = useState('')
-  const [selectedClientId, setSelectedClientId] = useState('')
   const [clientHistory, setClientHistory] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
@@ -47,6 +57,20 @@ function ClientesView() {
     }
   }, [])
 
+  useEffect(() => {
+    const layoutHiddenClass = 'mapa-interactivo-open'
+
+    if (historyModalOpen) {
+      document.body.classList.add(layoutHiddenClass)
+    } else {
+      document.body.classList.remove(layoutHiddenClass)
+    }
+
+    return () => {
+      document.body.classList.remove(layoutHiddenClass)
+    }
+  }, [historyModalOpen])
+
   const filteredClients = useMemo(() => {
     const queryText = search.trim().toLowerCase()
 
@@ -56,11 +80,6 @@ function ClientesView() {
 
     return clients.filter((client) => client.nombreCompletoLower.includes(queryText))
   }, [clients, search])
-
-  const selectedClient = useMemo(
-    () => filteredClients.find((client) => client.id === selectedClientId) || null,
-    [filteredClients, selectedClientId],
-  )
 
   const openClientHistoryModal = async (client) => {
     setHistoryModalClient(client)
@@ -88,10 +107,6 @@ function ClientesView() {
     setHistoryLoading(false)
   }
 
-  const handleSelectClient = (clientId) => {
-    setSelectedClientId((previous) => (previous === clientId ? '' : clientId))
-  }
-
   const handleDeleteClient = async (clientId) => {
     if (!isAdmin) {
       return
@@ -115,7 +130,6 @@ function ClientesView() {
 
     setError('')
     setClients((previous) => previous.filter((client) => client.id !== deleteClientId))
-    setSelectedClientId((previous) => (previous === deleteClientId ? '' : previous))
     setDeleteClientId('')
   }
 
@@ -157,8 +171,7 @@ function ClientesView() {
             <li className="user-row valuation-row" key={client.id}>
               <button
                 type="button"
-                className={`client-row-button ${selectedClientId === client.id ? 'selected' : ''}`}
-                onClick={() => handleSelectClient(client.id)}
+                className="client-row-button"
               >
                 <strong>{client.nombreCompleto || 'Cliente sin nombre'}</strong>
                 <small className="small-tag">{client.correoElectronico || 'Sin correo'}</small>
@@ -187,30 +200,22 @@ function ClientesView() {
         </ul>
       ) : null}
 
-      {selectedClient ? (
-        <section className="client-detail-panel">
-          <h2>Datos generales del cliente</h2>
-          <div className="client-detail-grid">
-            <p><strong>Apellido paterno:</strong> {selectedClient.apellidoPaterno || '-'}</p>
-            <p><strong>Apellido materno:</strong> {selectedClient.apellidoMaterno || '-'}</p>
-            <p><strong>Nombre:</strong> {selectedClient.nombre || '-'}</p>
-            <p><strong>Edad:</strong> {selectedClient.edad || '-'}</p>
-            <p><strong>Fecha nacimiento:</strong> {selectedClient.fechaNacimiento || '-'}</p>
-            <p><strong>Telefono:</strong> {selectedClient.telefono || '-'}</p>
-            <p><strong>Correo electronico:</strong> {selectedClient.correoElectronico || '-'}</p>
-            <p><strong>Ocupacion:</strong> {selectedClient.ocupacion || '-'}</p>
-            <p className="client-detail-full">
-              <strong>Contacto de emergencia:</strong> {selectedClient.contactoEmergencia || '-'}
-            </p>
-          </div>
-        </section>
-      ) : null}
-
       {historyModalOpen ? (
-        <div className="selection-modal-backdrop" onClick={closeHistoryModal}>
-          <div className="selection-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-            <div className="selection-modal-head">
-              <h3 className="consultation-block-title">Historia clinica</h3>
+        <div className="selection-modal-backdrop history-modal-backdrop" onClick={closeHistoryModal}>
+          <div
+            className="selection-modal history-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Historia clinica"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head history-modal-head">
+              <div className="history-modal-head-copy">
+                <h3 className="consultation-block-title">Historia clinica</h3>
+                {!historyLoading && historyModalClient ? (
+                  <p className="history-modal-head-subtitle">{historyModalClient.nombreCompleto || 'Cliente sin nombre'}</p>
+                ) : null}
+              </div>
               <button type="button" className="main-button secondary" onClick={closeHistoryModal}>
                 Cerrar
               </button>
@@ -219,11 +224,18 @@ function ClientesView() {
             {historyLoading ? <p className="subtitle">Cargando historia clinica...</p> : null}
 
             {!historyLoading && historyModalClient ? (
-              <div className="client-detail-grid">
-                <p><strong>Cliente:</strong> {historyModalClient.nombreCompleto || '-'}</p>
-                <p><strong>Telefono:</strong> {historyModalClient.telefono || '-'}</p>
-                <p><strong>Correo:</strong> {historyModalClient.correoElectronico || '-'}</p>
-              </div>
+              <section className="history-modal-summary history-modal-section">
+                <div className="history-modal-client-info">
+                  <p className="history-modal-client-name">{historyModalClient.nombreCompleto || '-'}</p>
+                  <div className="history-modal-meta-row">
+                    <p className="history-modal-client-meta">Telefono: {historyModalClient.telefono || 'Sin registro'}</p>
+                    <span className="history-modal-count-pill">
+                      {clientHistory.length} {clientHistory.length === 1 ? 'entrada' : 'entradas'}
+                    </span>
+                  </div>
+                  <p className="history-modal-client-meta">Correo: {historyModalClient.correoElectronico || 'Sin registro'}</p>
+                </div>
+              </section>
             ) : null}
 
             {!historyLoading && clientHistory.length === 0 ? (
@@ -231,18 +243,88 @@ function ClientesView() {
             ) : null}
 
             {!historyLoading && clientHistory.length > 0 ? (
-              <ul className="users-list valuations-list">
-                {clientHistory.map((entry) => (
-                  <li className="user-row valuation-row" key={entry.id}>
-                    <div>
-                      <strong>Valoracion {entry.valuationId}</strong>
-                      <small className="small-tag">
-                        {entry.createdAtMs ? new Date(entry.createdAtMs).toLocaleDateString('es-MX') : 'Sin fecha'}
-                      </small>
+              <div className="history-modal-entries">
+                {clientHistory.map((entry, index) => (
+                  <details key={entry.id} className="history-entry-card" open={index === 0}>
+                    <summary className="history-entry-summary">
+                      <div className="history-entry-summary-top">
+                        <div className="history-entry-heading">
+                          <h3 className="history-entry-title">Valoracion clinica</h3>
+                          <p className="history-entry-subtitle">Registro {index + 1}</p>
+                        </div>
+                        <span className="history-entry-date">
+                          {entry.createdAtMs ? new Date(entry.createdAtMs).toLocaleDateString('es-MX') : 'Sin fecha'}
+                        </span>
+                      </div>
+                    </summary>
+
+                    <div className="history-entry-content">
+                      <section className="history-modal-section">
+                        <h4>Datos personales</h4>
+                        <div className="history-fields-grid history-fields-grid-legacy">
+                          <div>
+                            <span className="font-medium">Nombre:</span>{' '}
+                            {[entry.step1?.nombre, entry.step1?.apellidoPaterno, entry.step1?.apellidoMaterno].filter(Boolean).join(' ') || 'Sin registro'}
+                          </div>
+                          <div>
+                            <span className="font-medium">Edad:</span>{' '}
+                            {entry.step1?.edad || 'Sin registro'}
+                          </div>
+                          <div>
+                            <span className="font-medium">Telefono:</span>{' '}
+                            {entry.step1?.telefono || 'Sin registro'}
+                          </div>
+                          <div>
+                            <span className="font-medium">Correo:</span>{' '}
+                            {entry.step1?.correoElectronico || 'Sin registro'}
+                          </div>
+                          <div>
+                            <span className="font-medium">Ocupacion:</span>{' '}
+                            {entry.step1?.ocupacion || 'Sin registro'}
+                          </div>
+                        </div>
+                      </section>
+
+                      {[
+                        ['step3', 'Expectativas y prioridades'],
+                        ['step4', 'Historial clinico'],
+                        ['step5', 'Habitos y estilo de vida'],
+                        ['step6', 'Exposicion solar'],
+                        ['step7', 'Historial estetico'],
+                        ['step8', 'Rutina actual'],
+                        ['step9', 'Evaluacion cutanea'],
+                        ['step10', 'Diagnostico profesional'],
+                        ['step11', 'Preguntas corporales'],
+                      ].map(([stepKey, title]) => {
+                        const values = Object.entries(entry[stepKey] || {})
+
+                        if (values.length === 0) {
+                          return null
+                        }
+
+                        return (
+                          <section key={`${entry.id}-${stepKey}`} className="history-modal-section">
+                            <h4>{title}</h4>
+                            <div className="text-sm">
+                              {values.map(([key, value]) => (
+                                <div key={`${entry.id}-${stepKey}-${key}`}>
+                                  <span className="font-medium">{formatFieldLabel(key)}:</span>{' '}
+                                  {Array.isArray(value) ? (value.length > 0 ? value.join(', ') : 'Sin registro') : String(value || 'Sin registro')}
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+                        )
+                      })}
+
+                      <section className="history-modal-section">
+                        <h4>Semaforo cutaneo</h4>
+                        <div className="text-sm">{entry.semaforoCutaneo || 'Sin registro'}</div>
+                      </section>
                     </div>
-                  </li>
+                  </details>
                 ))}
-              </ul>
+              </div>
             ) : null}
           </div>
         </div>
