@@ -1,5 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
+import logoFermont from '../../img/LOGOFERMONT2.png'
 
 function SystemLayout() {
   const { currentUser, logout } = useAuthController()
@@ -19,8 +20,11 @@ function SystemLayout() {
     <main className={`app-page app-layout-fixed ${isValuationFlow ? 'app-layout-immersive' : ''}`}>
       {!isValuationFlow ? (
         <header className="topbar">
-          <p className="brand-kicker">FERMONT</p>
-          <p className="brand-title">Sistema de cosmetologia</p>
+          <div className="brand-block brand-block-with-logo">
+            <img className="brand-logo" src={logoFermont} alt="Fermont" />
+            <p className="brand-kicker">FERMONT</p>
+            <p className="brand-title">Sistema de cosmetologia</p>
+          </div>
           <p className="topbar-user">{currentUser?.username}</p>
         </header>
       ) : null}

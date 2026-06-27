@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from 'react'
 import {
   createUserAccount,
   deleteUserAccount,
+  loginWithCredentials,
   listUsers,
   loginWithGoogle,
   logoutSession,
@@ -103,6 +104,26 @@ export const AuthProvider = ({ children }) => {
     return result
   }
 
+  const loginCredentials = async ({ email, password }) => {
+    setAuthError('')
+    const result = await loginWithCredentials(email, password)
+
+    if (!result.ok) {
+      return result
+    }
+
+    setCurrentUser(result.user)
+    setAuthResolved(true)
+
+    if (result.user.role === 'admin') {
+      await refreshUsers()
+    } else {
+      setUsers([])
+    }
+
+    return result
+  }
+
   const logout = async () => {
     await logoutSession()
     setCurrentUser(null)
@@ -177,6 +198,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: Boolean(currentUser),
     isAdmin: currentUser?.role === 'admin',
     users,
+    loginWithCredentials: loginCredentials,
     loginWithGoogle: loginGoogle,
     logout,
     createUser,
