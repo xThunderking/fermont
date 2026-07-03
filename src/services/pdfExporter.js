@@ -177,7 +177,7 @@ const renderPhotosPages = (valuation) => {
     return `
       <td style="width:50%; padding:4px; vertical-align:top;">
         <div style="font-size:11px; font-weight:600; color:#333; margin-bottom:3px;">${photo.label}</div>
-        <div style="width:100%; height:140px; border:1px solid #ddd; background:#fff; text-align:center; padding:2px; box-sizing:border-box; display:flex; align-items:center; justify-content:center;">
+        <div style="width:100%; height:250px; border:1px solid #ddd; background:#fff; text-align:center; padding:4px; box-sizing:border-box; display:flex; align-items:center; justify-content:center;">
           <img src="${photo.url}" style="max-width:100%; max-height:100%; width:auto; height:auto; display:block;" />
         </div>
       </td>
@@ -280,7 +280,7 @@ export const exportValuationToPDF = async (valuation) => {
           <h2 style="font-size: 16px; color: #333; border-bottom: 1px solid #ddd; padding-bottom: 8px;">1. DATOS DEL CLIENTE</h2>
           <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
             <tr><td style="padding: 8px; font-weight: bold; width: 40%;">Nombre completo:</td><td style="padding: 8px;">${valuation.clienteNombre || 'Sin nombre'}</td></tr>
-            <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">ID cliente:</td><td style="padding: 8px;">${valuation.clienteId || 'Sin cliente asociado'}</td></tr>
+            <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Sexo:</td><td style="padding: 8px;">${formatPdfValue(valuation.step1?.sexo)}</td></tr>
             <tr><td style="padding: 8px; font-weight: bold;">Edad:</td><td style="padding: 8px;">${valuation.step1?.edad || 'No especificado'}</td></tr>
             <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Fecha de nacimiento:</td><td style="padding: 8px;">${valuation.step1?.fechaNacimiento || 'No especificado'}</td></tr>
             <tr><td style="padding: 8px; font-weight: bold;">Teléfono:</td><td style="padding: 8px;">${valuation.step1?.telefono || 'No especificado'}</td></tr>
@@ -332,8 +332,10 @@ export const exportValuationToPDF = async (valuation) => {
               <tr><td style="padding: 8px; font-weight: bold; width: 40%;">Enfermedades:</td><td style="padding: 8px;">${Array.isArray(valuation.step4?.enfermedades) ? valuation.step4.enfermedades.join(', ') : 'Ninguna'}</td></tr>
               <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Medicamentos:</td><td style="padding: 8px;">${Array.isArray(valuation.step4?.medicamentosActuales) ? valuation.step4.medicamentosActuales.join(', ') : 'Ninguno'}</td></tr>
               <tr><td style="padding: 8px; font-weight: bold;">Alergias:</td><td style="padding: 8px;">${Array.isArray(valuation.step4?.alergias) ? valuation.step4.alergias.join(', ') : 'Ninguna'}</td></tr>
-              <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Embarazo actual:</td><td style="padding: 8px;">${valuation.step4?.embarazoActual || 'No'}</td></tr>
-              <tr><td style="padding: 8px; font-weight: bold;">Lactancia actual:</td><td style="padding: 8px;">${valuation.step4?.lactanciaActual || 'No'}</td></tr>
+              ${valuation.step1?.sexo !== 'masculino' ? `
+                <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Embarazo actual:</td><td style="padding: 8px;">${valuation.step4?.embarazoActual || 'No'}</td></tr>
+                <tr><td style="padding: 8px; font-weight: bold;">Lactancia actual:</td><td style="padding: 8px;">${valuation.step4?.lactanciaActual || 'No'}</td></tr>
+              ` : ''}
             </table>
           </div>
 

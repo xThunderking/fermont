@@ -32,6 +32,9 @@ const normalizeClientData = (data) => {
     nombre,
     nombreCompleto,
     nombreCompletoLower: nombreCompleto.toLowerCase(),
+    sexo: ['masculino', 'femenino'].includes(normalizeText(data?.sexo).toLowerCase())
+      ? normalizeText(data?.sexo).toLowerCase()
+      : '',
     edad: normalizeText(data.edad),
     fechaNacimiento: normalizeText(data.fechaNacimiento),
     telefono: normalizeText(data.telefono),
@@ -52,6 +55,7 @@ const mapClientSnapshot = (snapshot) => {
     nombre: String(data.nombre ?? ''),
     nombreCompleto: String(data.nombreCompleto ?? ''),
     nombreCompletoLower: String(data.nombreCompletoLower ?? ''),
+    sexo: String(data.sexo ?? ''),
     edad: String(data.edad ?? ''),
     fechaNacimiento: String(data.fechaNacimiento ?? ''),
     telefono: String(data.telefono ?? ''),

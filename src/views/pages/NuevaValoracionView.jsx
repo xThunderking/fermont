@@ -64,6 +64,7 @@ const createStepOneInitialData = () => ({
   apellidoPaterno: '',
   apellidoMaterno: '',
   nombre: '',
+  sexo: '',
   edad: '',
   fechaNacimiento: '',
   telefono: '',
@@ -609,6 +610,7 @@ const clearClientCoreData = (data) => ({
   apellidoPaterno: '',
   apellidoMaterno: '',
   nombre: '',
+  sexo: '',
   edad: '',
   fechaNacimiento: '',
   telefono: '',
@@ -913,12 +915,22 @@ function NuevaValoracionView() {
       : normalizedActiveStep
   const progressTotalSteps = clientFlowType === 'recurrente' ? RECURRENT_TOTAL_STEPS : TOTAL_STEPS
   const progressPercent = Math.round((normalizedProgressStep / progressTotalSteps) * 100)
+  const isMalePatient = stepOneData.sexo === 'masculino'
 
   const setFieldValue = (field, value) => {
     setStepOneData((previous) => ({
       ...previous,
       [field]: value,
     }))
+
+    if (field === 'sexo' && value === 'masculino') {
+      setStepFourData((previousStepFourData) => ({
+        ...previousStepFourData,
+        embarazoActual: '',
+        lactanciaActual: '',
+        embarazoProximo: '',
+      }))
+    }
   }
 
   const toggleStepTwoMotive = (field, motivo) => {
@@ -1364,6 +1376,7 @@ function NuevaValoracionView() {
       apellidoPaterno: client.apellidoPaterno,
       apellidoMaterno: client.apellidoMaterno,
       nombre: client.nombre,
+      sexo: client.sexo || '',
       edad: client.edad,
       fechaNacimiento: client.fechaNacimiento,
       telefono: client.telefono,
@@ -1461,6 +1474,7 @@ function NuevaValoracionView() {
         stepOneData.apellidoPaterno,
         stepOneData.apellidoMaterno,
         stepOneData.nombre,
+        stepOneData.sexo,
         stepOneData.edad,
         stepOneData.fechaNacimiento,
         stepOneData.telefono,
@@ -1489,14 +1503,16 @@ function NuevaValoracionView() {
     }
 
     if (step === 4) {
-      const requiredFields = [
-        stepFourData.embarazoActual,
-        stepFourData.lactanciaActual,
-        stepFourData.embarazoProximo,
-      ]
+      if (!isMalePatient) {
+        const requiredFields = [
+          stepFourData.embarazoActual,
+          stepFourData.lactanciaActual,
+          stepFourData.embarazoProximo,
+        ]
 
-      if (requiredFields.some((field) => !hasValue(field))) {
-        return 'Completa todos los campos obligatorios del paso 4.'
+        if (requiredFields.some((field) => !hasValue(field))) {
+          return 'Completa todos los campos obligatorios del paso 4.'
+        }
       }
 
       if (isStepFourOtherSelected('enfermedades') && !hasValue(stepFourData.enfermedadesOtro)) {
@@ -1776,7 +1792,10 @@ function NuevaValoracionView() {
     const result = await saveStepFourValuation({
       valuationId: valuationDocId,
       knownCurrentStep: highestSavedStep,
-      stepFourData,
+      stepFourData: {
+        ...stepFourData,
+        sexo: stepOneData.sexo,
+      },
     })
     setIsSaving(false)
 
@@ -2680,6 +2699,19 @@ function NuevaValoracionView() {
                 </label>
 
                 <label>
+                  Sexo
+                  <select
+                    required
+                    value={stepOneData.sexo}
+                    onChange={(event) => setFieldValue('sexo', event.target.value)}
+                  >
+                    <option value="">Selecciona una opcion</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="femenino">Femenino</option>
+                  </select>
+                </label>
+
+                <label>
                   Edad
                   <input
                     required
@@ -2994,44 +3026,48 @@ function NuevaValoracionView() {
               )}
             </div>
 
-            <label>
-              Estas embarazada?
-              <select
-                required
-                value={stepFourData.embarazoActual}
-                onChange={(event) => setStepFourFieldValue('embarazoActual', event.target.value)}
-              >
-                <option value="">Sin respuesta</option>
-                <option value="si">Si</option>
-                <option value="no">No</option>
-              </select>
-            </label>
+            {!isMalePatient ? (
+              <>
+                <label>
+                  Estas embarazada?
+                  <select
+                    required
+                    value={stepFourData.embarazoActual}
+                    onChange={(event) => setStepFourFieldValue('embarazoActual', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
 
-            <label>
-              Estas lactando?
-              <select
-                required
-                value={stepFourData.lactanciaActual}
-                onChange={(event) => setStepFourFieldValue('lactanciaActual', event.target.value)}
-              >
-                <option value="">Sin respuesta</option>
-                <option value="si">Si</option>
-                <option value="no">No</option>
-              </select>
-            </label>
+                <label>
+                  Estas lactando?
+                  <select
+                    required
+                    value={stepFourData.lactanciaActual}
+                    onChange={(event) => setStepFourFieldValue('lactanciaActual', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
 
-            <label>
-              Planeas embarazo proximamente?
-              <select
-                required
-                value={stepFourData.embarazoProximo}
-                onChange={(event) => setStepFourFieldValue('embarazoProximo', event.target.value)}
-              >
-                <option value="">Sin respuesta</option>
-                <option value="si">Si</option>
-                <option value="no">No</option>
-              </select>
-            </label>
+                <label>
+                  Planeas embarazo proximamente?
+                  <select
+                    required
+                    value={stepFourData.embarazoProximo}
+                    onChange={(event) => setStepFourFieldValue('embarazoProximo', event.target.value)}
+                  >
+                    <option value="">Sin respuesta</option>
+                    <option value="si">Si</option>
+                    <option value="no">No</option>
+                  </select>
+                </label>
+              </>
+            ) : null}
 
             <div className="valuation-field-large selection-card">
               <p className="selection-title">Medicamentos</p>

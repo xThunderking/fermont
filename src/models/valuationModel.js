@@ -281,6 +281,9 @@ const normalizeStepOneData = (data) => ({
   apellidoPaterno: normalizeText(data.apellidoPaterno),
   apellidoMaterno: normalizeText(data.apellidoMaterno),
   nombre: normalizeText(data.nombre),
+  sexo: ['masculino', 'femenino'].includes(normalizeText(data?.sexo).toLowerCase())
+    ? normalizeText(data?.sexo).toLowerCase()
+    : '',
   edad: normalizeText(data.edad),
   fechaNacimiento: normalizeText(data.fechaNacimiento),
   telefono: normalizeText(data.telefono),
@@ -371,6 +374,8 @@ const normalizeStepFourData = (data) => {
   const medicamentosActuales = toNormalizedUniqueArray(data?.medicamentosActuales, medicamentosSet)
   const alergias = toNormalizedUniqueArray(data?.alergias, alergiasSet)
 
+  const isMalePatient = normalizeText(data?.sexo).toLowerCase() === 'masculino'
+
   return {
     enfermedades,
     enfermedadesOtro: enfermedades.includes('Otro') ? normalizeText(data?.enfermedadesOtro) : '',
@@ -380,9 +385,15 @@ const normalizeStepFourData = (data) => {
       : '',
     alergias,
     alergiasOtro: alergias.includes('Otras alergias') ? normalizeText(data?.alergiasOtro) : '',
-    embarazoActual: normalizeBinaryAnswer(normalizeText(data?.embarazoActual).toLowerCase()),
-    lactanciaActual: normalizeBinaryAnswer(normalizeText(data?.lactanciaActual).toLowerCase()),
-    embarazoProximo: normalizeBinaryAnswer(normalizeText(data?.embarazoProximo).toLowerCase()),
+    embarazoActual: isMalePatient
+      ? ''
+      : normalizeBinaryAnswer(normalizeText(data?.embarazoActual).toLowerCase()),
+    lactanciaActual: isMalePatient
+      ? ''
+      : normalizeBinaryAnswer(normalizeText(data?.lactanciaActual).toLowerCase()),
+    embarazoProximo: isMalePatient
+      ? ''
+      : normalizeBinaryAnswer(normalizeText(data?.embarazoProximo).toLowerCase()),
   }
 }
 
