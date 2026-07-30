@@ -1199,7 +1199,7 @@ function ValoracionesPendientesView() {
                           strokeLinejoin="round"
                         />
                       </svg>
-                      <span>HISTORIA CLINICA</span>
+                      <span>EXPEDIENTE COSMETOLÓGICO</span>
                     </span>
                   </button>
 
@@ -1261,12 +1261,12 @@ function ValoracionesPendientesView() {
             className="selection-modal history-modal"
             role="dialog"
             aria-modal="true"
-            aria-label="Historia clinica"
+            aria-label="Expediente cosmetológico"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="selection-modal-head history-modal-head">
               <div className="history-modal-head-copy">
-                <h3 className="consultation-block-title">Historia clinica</h3>
+                <h3 className="consultation-block-title">Expediente cosmetológico</h3>
                 {!historyModalLoading && historyModalClient ? (
                   <p className="history-modal-head-subtitle">{historyModalClient.clienteNombre || 'Cliente sin nombre'}</p>
                 ) : null}
@@ -1290,13 +1290,13 @@ function ValoracionesPendientesView() {
               </section>
             ) : null}
 
-            {historyModalLoading ? <p className="subtitle">Cargando historia clinica...</p> : null}
+            {historyModalLoading ? <p className="subtitle">Cargando expediente cosmetológico...</p> : null}
 
             {!historyModalLoading && historyModalEntries.length === 0 ? (
-              <p className="subtitle">Aun no hay historia clinica para este cliente.</p>
+              <p className="subtitle">Aún no hay registros en el expediente cosmetológico de este cliente.</p>
             ) : null}
 
-            {/* modal para historia clinica en valoraciones pendientes */}
+            {/* modal para expediente cosmetológico en valoraciones pendientes */}
             {!historyModalLoading && historyModalEntries.length > 0 ? (
               <div className="history-modal-entries">
                 {historyModalEntries.map((entry, index) => (
@@ -1308,7 +1308,7 @@ function ValoracionesPendientesView() {
                     <summary className="history-entry-summary">
                       <div className="history-entry-summary-top">
                         <div className="history-entry-heading">
-                          <h3 className="history-entry-title">Valoracion clinica</h3>
+                          <h3 className="history-entry-title">Valoración cosmetológica</h3>
                           <p className="history-entry-subtitle">Registro {index + 1}</p>
                         </div>
                         <span className="history-entry-date">

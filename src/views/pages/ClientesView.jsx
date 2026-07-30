@@ -183,7 +183,7 @@ function ClientesView() {
                 className="main-button secondary"
                 onClick={() => openClientHistoryModal(client)}
               >
-                Historia clinica
+                Expediente cosmetológico
               </button>
 
               {isAdmin ? (
@@ -206,12 +206,12 @@ function ClientesView() {
             className="selection-modal history-modal"
             role="dialog"
             aria-modal="true"
-            aria-label="Historia clinica"
+            aria-label="Expediente cosmetológico"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="selection-modal-head history-modal-head">
               <div className="history-modal-head-copy">
-                <h3 className="consultation-block-title">Historia clinica</h3>
+                <h3 className="consultation-block-title">Expediente cosmetológico</h3>
                 {!historyLoading && historyModalClient ? (
                   <p className="history-modal-head-subtitle">{historyModalClient.nombreCompleto || 'Cliente sin nombre'}</p>
                 ) : null}
@@ -221,7 +221,7 @@ function ClientesView() {
               </button>
             </div>
 
-            {historyLoading ? <p className="subtitle">Cargando historia clinica...</p> : null}
+            {historyLoading ? <p className="subtitle">Cargando expediente cosmetológico...</p> : null}
 
             {!historyLoading && historyModalClient ? (
               <section className="history-modal-summary history-modal-section">
@@ -239,7 +239,7 @@ function ClientesView() {
             ) : null}
 
             {!historyLoading && clientHistory.length === 0 ? (
-              <p className="subtitle">Aun no hay historia clinica para este cliente.</p>
+              <p className="subtitle">Aún no hay registros en el expediente cosmetológico de este cliente.</p>
             ) : null}
 
             {!historyLoading && clientHistory.length > 0 ? (
@@ -249,7 +249,7 @@ function ClientesView() {
                     <summary className="history-entry-summary">
                       <div className="history-entry-summary-top">
                         <div className="history-entry-heading">
-                          <h3 className="history-entry-title">Valoracion clinica</h3>
+                          <h3 className="history-entry-title">Valoración cosmetológica</h3>
                           <p className="history-entry-subtitle">Registro {index + 1}</p>
                         </div>
                         <span className="history-entry-date">
@@ -287,7 +287,7 @@ function ClientesView() {
 
                       {[
                         ['step3', 'Expectativas y prioridades'],
-                        ['step4', 'Historial clinico'],
+                        ['step4', 'Antecedentes de salud'],
                         ['step5', 'Habitos y estilo de vida'],
                         ['step6', 'Exposicion solar'],
                         ['step7', 'Historial estetico'],

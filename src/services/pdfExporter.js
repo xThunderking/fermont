@@ -1,6 +1,7 @@
 import html2pdf from 'html2pdf.js'
 import mapaFacialImage from '../img/mapainteractivo/mapafacial.jpeg'
 import mapaCorporalImage from '../img/mapainteractivo/mapacorporal.jpeg'
+import logoFermontImage from '../img/LOGOFERMONT2.png'
 
 const formatDate = (dateString) => {
   if (!dateString) return 'No especificado'
@@ -177,7 +178,7 @@ const renderPhotosPages = (valuation) => {
     return `
       <td style="width:50%; padding:4px; vertical-align:top;">
         <div style="font-size:11px; font-weight:600; color:#333; margin-bottom:3px;">${photo.label}</div>
-        <div style="width:100%; height:250px; border:1px solid #ddd; background:#fff; text-align:center; padding:4px; box-sizing:border-box; display:flex; align-items:center; justify-content:center;">
+        <div style="width:100%; height:350px; border:1px solid #ddd; background:#fff; text-align:center; padding:6px; box-sizing:border-box; display:flex; align-items:center; justify-content:center;">
           <img src="${photo.url}" style="max-width:100%; max-height:100%; width:auto; height:auto; display:block;" />
         </div>
       </td>
@@ -268,6 +269,7 @@ export const exportValuationToPDF = async (valuation) => {
       <div style="font-family: Arial, sans-serif; padding: 10px; max-width: 780px; margin:0 auto;">
         <!-- Portada -->
         <div style="page-break-after:always; width:100%; max-width:760px; margin:0 auto; padding:120px 20px 80px; text-align:center; box-sizing:border-box;">
+          <img src="${logoFermontImage}" alt="Fermont" style="display:block; width:140px; max-width:100%; margin:0 auto 24px auto;" />
           <h1 style="margin:0; font-size:40px; color:#333; letter-spacing:4px;">FERMONT</h1>
           <h2 style="margin:24px 0 8px 0; font-size:22px; color:#333;">Informe de valoración</h2>
           <p style="margin:12px 0; font-size:16px; color:#555;">Paciente: ${valuation.clienteNombre || 'Sin nombre'}</p>

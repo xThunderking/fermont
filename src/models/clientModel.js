@@ -220,7 +220,7 @@ export const saveClientClinicalHistoryFromValuation = async ({
   if (!clientId || !valuationId) {
     return {
       ok: false,
-      message: 'No se pudo guardar la historia clínica.',
+      message: 'No se pudo guardar el expediente cosmetológico.',
     }
   }
 
@@ -251,19 +251,19 @@ export const saveClientClinicalHistoryFromValuation = async ({
 
     return {
       ok: true,
-      message: 'Historia clínica guardada correctamente.',
+      message: 'Expediente cosmetológico guardado correctamente.',
     }
   } catch (error) {
     if (error?.code === 'not-found') {
       return {
         ok: false,
-        message: 'No se encontro el cliente para guardar la historia clínica.',
+        message: 'No se encontró el cliente para guardar el expediente cosmetológico.',
       }
     }
 
     return {
       ok: false,
-      message: 'No se pudo guardar la historia clínica. Intenta de nuevo.',
+      message: 'No se pudo guardar el expediente cosmetológico. Intenta de nuevo.',
     }
   }
 }
@@ -272,7 +272,7 @@ export const listClientClinicalHistory = async (clientId) => {
   if (!clientId) {
     return {
       ok: false,
-      message: 'No se encontro el cliente para cargar la historia clínica.',
+      message: 'No se encontró el cliente para cargar el expediente cosmetológico.',
       history: [],
     }
   }
@@ -306,7 +306,7 @@ export const listClientClinicalHistory = async (clientId) => {
   } catch {
     return {
       ok: true,
-      message: 'Aun no hay historia clínica registrada para este cliente.',
+      message: 'Aún no hay registros en el expediente cosmetológico de este cliente.',
       history: [],
     }
   }

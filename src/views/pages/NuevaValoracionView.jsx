@@ -3000,7 +3000,7 @@ function NuevaValoracionView() {
 
       {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 4 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepFourAndExit}>
-          <div className="valuation-section-title">Historial clinico</div>
+          <div className="valuation-section-title">Antecedentes de salud</div>
           <div className="valuation-grid">
             <div className="valuation-field-large selection-card">
               <p className="selection-title">Enfermedades</p>

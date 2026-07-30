@@ -101,7 +101,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // NUEVA REGLA PARA HISTORIA CLINICA
+    // REGLA PARA EL EXPEDIENTE COSMETOLÓGICO
     match /clientes/{clientId}/historiaClinica/{historyId} {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn();
