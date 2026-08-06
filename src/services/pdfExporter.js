@@ -78,23 +78,6 @@ const toSvgFromStrokes = (strokes, width = 1200, height = 1200) => {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgWidth} ${svgHeight}" preserveAspectRatio="xMidYMid meet" style="position:absolute; left:0; top:0; width:100%; height:100%; pointer-events:none;">${paths}</svg>`
 }
 
-const renderMapPage = (label, imageUrl, strokes, imageDimensions = { width: 1200, height: 1200 }) => {
-  const svg = toSvgFromStrokes(strokes || [], imageDimensions.width, imageDimensions.height)
-  const imageRatio = Number.isFinite(Number(imageDimensions.width)) && Number.isFinite(Number(imageDimensions.height))
-    ? (imageDimensions.height / imageDimensions.width) * 100
-    : 100
-
-  return `
-    <div style="page-break-after:always; display:block; width:100%; height:auto;">
-      <div style="text-align:center; margin-top:10px;"><h2 style="font-size:16px; color:#333;">MAPA: ${label}</h2></div>
-      <div style="position:relative; width:100%; max-width:820px; margin:12px auto; background:#fff; border:1px solid #eee; box-sizing:border-box; padding-top:${imageRatio}%;">
-        <img src="${imageUrl}" style="position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain;" />
-        ${svg}
-      </div>
-    </div>
-  `
-}
-
 const renderMapsSinglePage = (valuation, facialImageDimensions = { width: 1200, height: 1200 }, corporalImageDimensions = { width: 1200, height: 1200 }) => {
   const facialStrokes = (valuation?.mapaInteractivo?.facial?.strokes) || valuation?.mapaInteractivo?.facial || []
   const corporalStrokes = (valuation?.mapaInteractivo?.corporal?.strokes) || valuation?.mapaInteractivo?.corporal || []
@@ -285,7 +268,7 @@ export const exportValuationToPDF = async (valuation) => {
             <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Sexo:</td><td style="padding: 8px;">${formatPdfValue(valuation.step1?.sexo)}</td></tr>
             <tr><td style="padding: 8px; font-weight: bold;">Edad:</td><td style="padding: 8px;">${valuation.step1?.edad || 'No especificado'}</td></tr>
             <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Fecha de nacimiento:</td><td style="padding: 8px;">${valuation.step1?.fechaNacimiento || 'No especificado'}</td></tr>
-            <tr><td style="padding: 8px; font-weight: bold;">Teléfono:</td><td style="padding: 8px;">${valuation.step1?.telefono || 'No especificado'}</td></tr>
+            <tr><td style="padding: 8px; font-weight: bold;">Teléfono:</td><td style="padding: 8px;">${valuation.step1?.teléfono || 'No especificado'}</td></tr>
             <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Email:</td><td style="padding: 8px;">${valuation.step1?.correoElectronico || 'No especificado'}</td></tr>
             <tr><td style="padding: 8px; font-weight: bold;">Ocupación:</td><td style="padding: 8px;">${valuation.step1?.ocupacion || 'No especificado'}</td></tr>
             <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Contacto emergencia:</td><td style="padding: 8px;">${valuation.step1?.contactoEmergencia || 'No especificado'}</td></tr>

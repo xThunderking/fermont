@@ -1,133 +1,72 @@
-# FERMONT
+# Fermont
 
-Aplicacion web para la gestion y control operativo de una cosmetologia.
+Sistema web para administrar clientes, valoraciones cosmetológicas, expedientes, consentimientos firmados, protocolos, mapas interactivos y fotografías clínicas.
 
-## Stack
+## Tecnologías
 
-- React + Vite
-- Firebase Authentication (email/password)
-- Firebase Firestore
-- Firebase Storage (fotografias clinicas)
+- React 19 y Vite
+- Firebase Authentication
+- Cloud Firestore
+- Firebase Storage
 - Firebase Hosting
+- jsPDF y html2pdf para documentos
 
-## Modulos incluidos
+## Módulos
 
-- Panel con metricas principales
-- Registro y listado de clientes
-- Registro y listado de servicios
-- Agenda de citas con actualizacion de estado
+- Inicio de sesión con correo o Google
+- Administración de usuarios y roles
+- Clientes e historial clínico
+- Valoraciones nuevas y recurrentes
+- Valoraciones pendientes
+- Consentimiento informado con firma táctil
+- Protocolo de productos
+- Fotografías clínicas y mapas interactivos
+- Expedientes finalizados e informes PDF
 
-## 1) Instalar dependencias
+## Desarrollo local
 
-```bash
-npm install
-```
+1. Instala las dependencias con `npm install`.
+2. Copia `.env.example` como `.env` y configura Firebase.
+3. Ejecuta `npm run dev`.
+4. Valida con `npm run lint` y `npm run build`.
 
-## 2) Configurar Firebase
+## Configuración de Firebase
 
-1. Crea un proyecto en Firebase Console.
-2. Activa Firebase Authentication y habilita los proveedores Email/Password y Google.
-3. Activa Firestore Database.
-4. Activa Firebase Storage y crea el bucket por defecto del proyecto.
-5. En Configuracion del proyecto, copia la config web.
-6. Duplica `.env.example` como `.env` y completa tus valores.
-7. Reemplaza el valor `default` en `.firebaserc` por tu `projectId`.
-8. Crea tu admin inicial:
-	 - En Authentication crea un usuario (email/password).
-	 - En Firestore crea el documento `users/{uid}` con este contenido base:
+Activa Authentication, Firestore y Storage. Configura los proveedores de acceso necesarios y crea el primer perfil administrador en `users/{uid}`.
 
-```json
-{
-	"uid": "UID_DEL_USUARIO",
-	"username": "admin",
-	"usernameLower": "admin",
-	"email": "admin@tu-dominio.com",
-	"emailLower": "admin@tu-dominio.com",
-	"role": "admin",
-	"status": "active"
-}
-```
+La variable `VITE_ALLOWED_EMAILS` controla qué correos acepta la interfaz. Esta lista no sustituye las reglas de Firebase.
 
-9. Para limitar acceso a correos especificos (por ejemplo solo 3), configura en `.env`:
+## Despliegue
+
+Los cambios en consultas paginadas requieren desplegar índices, reglas de Firestore y reglas de Storage:
 
 ```bash
-VITE_ALLOWED_EMAILS=admin@tu-dominio.com,usuario1@tu-dominio.com,usuario2@tu-dominio.com
-```
-
-Solo esos correos podran iniciar sesion en la app.
-
-10. Para desarrollo local (http://localhost:5173), configura CORS del bucket para permitir subidas desde el navegador.
-
-Este repositorio ya incluye un archivo `cors.json` en la raiz con origenes de desarrollo y produccion.
-
-Aplicar CORS (Google Cloud SDK o Cloud Shell):
-
-```bash
-gcloud storage buckets update gs://TU_BUCKET --cors-file=cors.json
-```
-
-Para este proyecto, el bucket actual es:
-
-```bash
-gs://fermont-bbade.firebasestorage.app
-```
-
-Comando directo para este bucket:
-
-```bash
-gcloud storage buckets update gs://fermont-bbade.firebasestorage.app --cors-file=cors.json
-```
-
-## 3) Ejecutar en desarrollo
-
-```bash
-npm run dev
-```
-
-## 4) Build
-
-```bash
-npm run build
-```
-
-## 5) Desplegar en Firebase Hosting
-
-Primera vez (login):
-
-```bash
-npx firebase-tools login
-```
-
-Deploy:
-
-```bash
+npx firebase-tools deploy --only firestore:rules,firestore:indexes,storage
 npm run deploy
 ```
 
-Preview channel:
+## Almacenamiento
 
-```bash
-npm run hosting:preview
-```
+- Fotografías: `valoraciones/{valuationId}/fotografias-clinicas/...`
+- Firmas: `valoraciones/{valuationId}/consentimiento-firmas/...`
+- Firestore conserva únicamente URLs y rutas de las firmas nuevas.
+- Al reemplazar fotografías se eliminan los archivos anteriores.
+- Al eliminar una valoración se eliminan también sus archivos de Storage y su referencia en el historial clínico.
 
-## Reglas de Firestore
+## Requisitos para finalizar una valoración
 
-El archivo `firestore.rules` ya incluye reglas por autenticacion y rol para la coleccion `users`.
-Recuerda desplegarlas cuando hagas cambios:
+Una valoración solo puede finalizar cuando tenga:
 
-```bash
-npx firebase-tools deploy --only firestore:rules
-```
+- Firma del cliente
+- Firma de la cosmetóloga
+- Al menos dos fotografías clínicas
+- Al menos un producto en el protocolo
 
-Para Storage (fotografias clinicas), este proyecto tambien incluye `storage.rules`:
+Una vez finalizada, el consentimiento se ofrece como documento de solo lectura desde Expedientes.
 
-```bash
-npx firebase-tools deploy --only storage
-```
+## Consideraciones operativas
 
-Validacion rapida de carga de fotos:
-
-1. Inicia sesion en la app con un usuario autenticado.
-2. En Valoraciones Pendientes, abre una valoracion existente.
-3. En el modal de Fotografias, sube una imagen en Antes o Despues.
-4. Verifica que aparezca en Firebase Storage en la ruta `valoraciones/{valuationId}/fotografias-clinicas/...`.
+- Las listas se cargan en páginas de 25 registros.
+- Los generadores PDF se cargan bajo demanda.
+- La pantalla de valoración advierte antes de cerrar la pestaña cuando detecta cambios sin guardar.
+- Deben desplegarse las reglas e índices incluidos en este repositorio antes de usar los cambios en producción.

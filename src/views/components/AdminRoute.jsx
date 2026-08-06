@@ -9,7 +9,7 @@ function AdminRoute({ children }) {
     return (
       <main className="app-page login-page">
         <section className="login-panel">
-          <h1>Validando sesion</h1>
+          <h1>Validando sesión</h1>
           <p className="subtitle">Espera un momento...</p>
         </section>
       </main>

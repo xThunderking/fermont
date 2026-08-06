@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 import {
   listClients,
+  searchClientsByName,
   saveClientClinicalHistoryFromValuation,
   saveClientFromStepOne,
 } from '../../models/clientModel.js'
@@ -67,7 +68,7 @@ const createStepOneInitialData = () => ({
   sexo: '',
   edad: '',
   fechaNacimiento: '',
-  telefono: '',
+  teléfono: '',
   correoElectronico: '',
   ocupacion: '',
   contactoEmergencia: '',
@@ -605,20 +606,6 @@ const normalizeExistingStepElevenData = (rawStepEleven) => {
   }
 }
 
-const clearClientCoreData = (data) => ({
-  ...data,
-  apellidoPaterno: '',
-  apellidoMaterno: '',
-  nombre: '',
-  sexo: '',
-  edad: '',
-  fechaNacimiento: '',
-  telefono: '',
-  correoElectronico: '',
-  ocupacion: '',
-  contactoEmergencia: '',
-})
-
 function NuevaValoracionView() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -689,10 +676,31 @@ function NuevaValoracionView() {
   const [isLoading, setIsLoading] = useState(Boolean(valuationId))
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
-  const [, setSuccessMessage] = useState('')
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [, setSuccessMessageState] = useState('')
+  const setSuccessMessage = (message) => {
+    setSuccessMessageState(message)
+    if (message) setHasUnsavedChanges(false)
+  }
+  const navigateSafely = (destination) => {
+    if (hasUnsavedChanges && !window.confirm('Hay cambios sin guardar. ¿Deseas salir de la valoración?')) return
+    setHasUnsavedChanges(false)
+    navigate(destination)
+  }
   const [protocolProductName, setProtocolProductName] = useState('')
   const [protocolProductUse, setProtocolProductUse] = useState('')
   const [protocolProducts, setProtocolProducts] = useState([])
+
+  useEffect(() => {
+    const preventAccidentalExit = (event) => {
+      if (!hasUnsavedChanges || isSaving) return
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', preventAccidentalExit)
+    return () => window.removeEventListener('beforeunload', preventAccidentalExit)
+  }, [hasUnsavedChanges, isSaving])
 
   useEffect(() => {
     let isMounted = true
@@ -728,6 +736,18 @@ function NuevaValoracionView() {
       isMounted = false
     }
   }, [currentUser?.id])
+
+  useEffect(() => {
+    const queryText = clientSearch.trim()
+    if (!queryText) return undefined
+
+    const timeoutId = window.setTimeout(async () => {
+      const result = await searchClientsByName(queryText)
+      if (result.ok) setAvailableClients(result.clients)
+    }, 250)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [clientSearch])
 
   useEffect(() => {
     let isMounted = true
@@ -899,10 +919,10 @@ function NuevaValoracionView() {
     }
 
     if (valuationDocId) {
-      return 'Editar valoracion pendiente'
+      return 'Editar valoración pendiente'
     }
 
-    return 'Nueva Valoracion'
+    return 'Nueva Valoración'
   }, [isProtocolMode, valuationDocId])
 
   const isFlowSelected = !isProtocolMode && (clientFlowType === 'nuevo' || clientFlowType === 'recurrente')
@@ -1379,7 +1399,7 @@ function NuevaValoracionView() {
       sexo: client.sexo || '',
       edad: client.edad,
       fechaNacimiento: client.fechaNacimiento,
-      telefono: client.telefono,
+      teléfono: client.teléfono,
       correoElectronico: client.correoElectronico,
       ocupacion: client.ocupacion,
       contactoEmergencia: client.contactoEmergencia,
@@ -1424,7 +1444,7 @@ function NuevaValoracionView() {
         }
 
         if (!hasValue(stepOneData.fechaValoracion)) {
-          return 'Selecciona la fecha de valoracion para continuar.'
+          return 'Selecciona la fecha de valoración para continuar.'
         }
       }
 
@@ -1477,7 +1497,7 @@ function NuevaValoracionView() {
         stepOneData.sexo,
         stepOneData.edad,
         stepOneData.fechaNacimiento,
-        stepOneData.telefono,
+        stepOneData.teléfono,
         stepOneData.correoElectronico,
         stepOneData.ocupacion,
         stepOneData.contactoEmergencia,
@@ -1659,7 +1679,7 @@ function NuevaValoracionView() {
     }
 
     if (!currentUser?.id) {
-      setError('No hay sesion activa para guardar la valoracion.')
+      setError('No hay sesión activa para guardar la valoración.')
       return null
     }
 
@@ -1679,7 +1699,7 @@ function NuevaValoracionView() {
 
     if (!clientResult.ok || !clientResult.client?.id) {
       setIsSaving(false)
-      setError(clientResult.message || 'No se pudo guardar la informacion del cliente.')
+      setError(clientResult.message || 'No se pudo guardar la información del cliente.')
       setSuccessMessage('')
       return null
     }
@@ -2093,7 +2113,7 @@ function NuevaValoracionView() {
 
   const saveCutaneoStatus = async () => {
     if (!valuationDocId) {
-      setError('Primero guarda la valoracion para registrar el semaforo cutaneo.')
+      setError('Primero guarda la valoración para registrar el semaforo cutáneo.')
       return false
     }
 
@@ -2446,9 +2466,9 @@ function NuevaValoracionView() {
     setProtocolProducts((previous) => previous.filter((_, itemIndex) => itemIndex !== index))
   }
 
-  const saveProtocol = async ({ saveOnly = false } = {}) => {
+  const saveProtocol = async () => {
     if (!valuationDocId) {
-      setError('No se encontro la valoracion para guardar el protocolo.')
+      setError('No se encontro la valoración para guardar el protocolo.')
       return null
     }
 
@@ -2476,14 +2496,18 @@ function NuevaValoracionView() {
   }
 
   const handleExitProtocol = () => {
-    navigate('/app/valoraciones-pendientes')
+    navigateSafely('/app/valoraciones-pendientes')
   }
 
   return (
-    <section className="module-screen">
+    <section
+      className="module-screen"
+      onChangeCapture={() => setHasUnsavedChanges(true)}
+      onInputCapture={() => setHasUnsavedChanges(true)}
+    >
       <div className="module-screen-head">
-        <button type="button" className="main-button secondary" onClick={() => navigate('/app')}>
-          Regresar al menu principal
+        <button type="button" className="main-button secondary" onClick={() => navigateSafely('/app')}>
+          Regresar al menú principal
         </button>
 
         <div>
@@ -2492,7 +2516,7 @@ function NuevaValoracionView() {
             <div
               className="valuation-progress-track"
               role="progressbar"
-              aria-label={`Progreso de valoracion: paso ${normalizedProgressStep} de ${progressTotalSteps}`}
+              aria-label={`Progreso de valoración: paso ${normalizedProgressStep} de ${progressTotalSteps}`}
               aria-valuemin={1}
               aria-valuemax={progressTotalSteps}
               aria-valuenow={normalizedProgressStep}
@@ -2503,7 +2527,7 @@ function NuevaValoracionView() {
         </div>
       </div>
 
-      {isLoading ? <p className="subtitle">Cargando valoracion...</p> : null}
+      {isLoading ? <p className="subtitle">Cargando valoración...</p> : null}
 
       {!isLoading && !isProtocolMode && !isFlowSelected ? (
         <div className="client-mode-toggle">
@@ -2527,7 +2551,7 @@ function NuevaValoracionView() {
       {!isLoading && isProtocolMode ? (
         <form className="simple-form valuation-form" onSubmit={async (event) => {
           event.preventDefault()
-          await saveProtocol({ saveOnly: true })
+          await saveProtocol()
         }}>
           <div className="valuation-section-title">Registro de productos</div>
 
@@ -2603,7 +2627,7 @@ function NuevaValoracionView() {
               type="button"
               className="main-button"
               disabled={isSaving}
-              onClick={() => saveProtocol({ saveOnly: false })}
+              onClick={saveProtocol}
             >
               {isSaving ? 'Guardando...' : 'Guardar'}
             </button>
@@ -2640,7 +2664,7 @@ function NuevaValoracionView() {
                         onClick={() => selectRecurrentClient(client)}
                       >
                         <strong>{client.nombreCompleto}</strong>
-                        <small>{client.telefono || client.correoElectronico || 'Sin contacto'}</small>
+                        <small>{client.teléfono || client.correoElectronico || 'Sin contacto'}</small>
                       </button>
                     ))
                   )}
@@ -2656,7 +2680,7 @@ function NuevaValoracionView() {
 
               <div className="valuation-grid">
                 <label>
-                  Fecha de valoracion
+                  Fecha de valoración
                   <input
                     required
                     type="date"
@@ -2733,12 +2757,12 @@ function NuevaValoracionView() {
                 </label>
 
                 <label>
-                  Telefono
+                  Teléfono
                   <input
                     required
                     type="tel"
-                    value={stepOneData.telefono}
-                    onChange={(event) => setFieldValue('telefono', event.target.value)}
+                    value={stepOneData.teléfono}
+                    onChange={(event) => setFieldValue('teléfono', event.target.value)}
                   />
                 </label>
 
@@ -2792,7 +2816,7 @@ function NuevaValoracionView() {
                 </label>
 
                 <label>
-                  Fecha de valoracion
+                  Fecha de valoración
                   <input
                     required
                     type="date"
@@ -2879,14 +2903,14 @@ function NuevaValoracionView() {
           {error ? <p className="error-text">{error}</p> : null}
 
           <div className="selection-card valuation-field-large">
-            <p className="selection-title">Semaforo cutaneo</p>
+            <p className="selection-title">Semaforo cutáneo</p>
             <p className="selection-empty">
               {cutaneoModal.selected
                 ? CUTANEO_OPTIONS.find((option) => option.value === cutaneoModal.selected)?.label || 'Sin seleccion'
                 : 'Sin seleccion'}
             </p>
             <button type="button" className="main-button secondary selection-trigger" onClick={openCutaneoModal}>
-              Seleccionar semaforo cutaneo
+              Seleccionar semaforo cutáneo
             </button>
           </div>
 
@@ -3152,7 +3176,7 @@ function NuevaValoracionView() {
 
       {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 5 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepFiveAndExit}>
-          <div className="valuation-section-title">Habitos y estilo de vida</div>
+          <div className="valuation-section-title">Hábitos y estilo de vida</div>
 
           <div className="valuation-grid">
             <label>
@@ -3309,7 +3333,7 @@ function NuevaValoracionView() {
 
       {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 6 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepSixAndExit}>
-          <div className="valuation-section-title">Exposicion solar</div>
+          <div className="valuation-section-title">Exposición solar</div>
 
           <div className="valuation-grid">
             <label>
@@ -3607,7 +3631,7 @@ function NuevaValoracionView() {
             </label>
 
             <label className="valuation-field-large">
-              Tuviste alguna reaccion despues de la ultima sesion?
+              Tuviste alguna reaccion despues de la ultima sesión?
               <textarea
                 required
                 rows="3"
@@ -3640,14 +3664,14 @@ function NuevaValoracionView() {
           {error ? <p className="error-text">{error}</p> : null}
 
           <div className="selection-card valuation-field-large">
-            <p className="selection-title">Semaforo cutaneo</p>
+            <p className="selection-title">Semaforo cutáneo</p>
             <p className="selection-empty">
               {cutaneoModal.selected
                 ? CUTANEO_OPTIONS.find((option) => option.value === cutaneoModal.selected)?.label || 'Sin seleccion'
                 : 'Sin seleccion'}
             </p>
             <button type="button" className="main-button secondary selection-trigger" onClick={openCutaneoModal}>
-              Seleccionar semaforo cutaneo
+              Seleccionar semaforo cutáneo
             </button>
           </div>
 
@@ -3856,7 +3880,7 @@ function NuevaValoracionView() {
 
       {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 9 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepNineAndExit}>
-          <div className="valuation-section-title">Evaluacion facial</div>
+          <div className="valuation-section-title">Evaluación facial</div>
 
           <div className="valuation-grid">
             <div className="selection-card">
@@ -3966,7 +3990,7 @@ function NuevaValoracionView() {
 
       {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 10 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveStepTenAndExit}>
-          <div className="valuation-section-title">Evaluacion facial 2</div>
+          <div className="valuation-section-title">Evaluación facial 2</div>
 
           <div className="valuation-grid">
             <div className="selection-card valuation-field-large">
@@ -4294,7 +4318,7 @@ function NuevaValoracionView() {
             </div>
 
             <div className="selection-card valuation-field-large">
-              <p className="selection-title">Peso y habitos</p>
+              <p className="selection-title">Peso y hábitos</p>
 
               <div className="valuation-grid">
                 <label>
@@ -4700,11 +4724,11 @@ function NuevaValoracionView() {
             className="selection-modal semaforo-modal"
             role="dialog"
             aria-modal="true"
-            aria-label="Semaforo cutaneo"
+            aria-label="Semaforo cutáneo"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="selection-modal-head">
-              <h3 className="consultation-block-title">Semaforo cutaneo</h3>
+              <h3 className="consultation-block-title">Semaforo cutáneo</h3>
               <button type="button" className="main-button secondary" onClick={closeCutaneoModal}>
                 Cerrar
               </button>

@@ -1,23 +1,35 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
+  limit,
+  orderBy,
   query,
   serverTimestamp,
   updateDoc,
   where,
-  deleteDoc,
+  startAfter,
 } from 'firebase/firestore'
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage'
+import { deleteObject, getDownloadURL, listAll, ref, uploadBytes, uploadString } from 'firebase/storage'
 import { db, firebaseConfig, storage } from '../services/firebase'
 
 const VALUATIONS_COLLECTION = 'valoraciones'
 const TOTAL_STEPS = 11
 const FIRESTORE_COMPAT_TOTAL_STEPS = 14
+const LIST_PAGE_SIZE = 25
 const CLINICAL_PHOTO_TYPES = ['facial', 'corporal']
 const CLINICAL_PHOTO_MOMENTS = ['antes', 'despues']
+
+const normalizeStoredAsset = (asset) => {
+  if (typeof asset === 'string') return { url: asset, path: '' }
+  return {
+    url: String(asset?.url ?? ''),
+    path: String(asset?.path ?? ''),
+  }
+}
 
 export const CLINICAL_PHOTO_PARTS = {
   facial: ['frente', 'perfilDerecho', 'perfilIzquierdo'],
@@ -233,11 +245,11 @@ const resolveClinicalPhotoUploadErrorMessage = (error) => {
   const message = normalizeText(error?.message).toLowerCase()
 
   if (code === 'storage/unauthorized') {
-    return 'No tienes permisos para subir fotografias. Revisa las reglas de Firebase Storage y que tu sesion este activa.'
+    return 'No tienes permisos para subir fotografías. Revisa las reglas de Firebase Storage y que tu sesión este activa.'
   }
 
   if (code === 'storage/canceled') {
-    return 'La subida de la fotografia fue cancelada.'
+    return 'La subida de la fotografía fue cancelada.'
   }
 
   if (
@@ -247,32 +259,10 @@ const resolveClinicalPhotoUploadErrorMessage = (error) => {
     || message.includes('preflight')
     || message.includes('network request failed')
   ) {
-    return `No se pudo subir la fotografia por configuracion de Firebase Storage (CORS o bucket). ${resolveStorageBucketHint()} Activa Storage en Firebase y agrega CORS para http://localhost:5173.`
+    return `No se pudo subir la fotografía por configuración de Firebase Storage (CORS o bucket). ${resolveStorageBucketHint()} Activa Storage en Firebase y agrega CORS para http://localhost:5173.`
   }
 
-  return 'No se pudo subir la fotografia. Intenta de nuevo.'
-}
-
-const resolveImageExtension = (file) => {
-  const mime = String(file?.type || '').toLowerCase()
-
-  if (mime.includes('png')) {
-    return 'png'
-  }
-
-  if (mime.includes('webp')) {
-    return 'webp'
-  }
-
-  if (mime.includes('heic')) {
-    return 'heic'
-  }
-
-  if (mime.includes('heif')) {
-    return 'heif'
-  }
-
-  return 'jpg'
+  return 'No se pudo subir la fotografía. Intenta de nuevo.'
 }
 
 const normalizeStepOneData = (data) => ({
@@ -286,7 +276,7 @@ const normalizeStepOneData = (data) => ({
     : '',
   edad: normalizeText(data.edad),
   fechaNacimiento: normalizeText(data.fechaNacimiento),
-  telefono: normalizeText(data.telefono),
+  teléfono: normalizeText(data.teléfono),
   correoElectronico: normalizeText(data.correoElectronico).toLowerCase(),
   ocupacion: normalizeText(data.ocupacion),
   contactoEmergencia: normalizeText(data.contactoEmergencia),
@@ -617,6 +607,10 @@ const mapValuationSnapshot = (snapshot) => {
     semaforoCutaneo: String(data.semaforoCutaneo ?? ''),
     mapaInteractivo: data.mapaInteractivo ?? null,
     fotografiasClinicas: normalizeClinicalPhotosByType(data.fotografiasClinicas),
+    consentimientoFirmado: {
+      clienteFirma: normalizeStoredAsset(data.consentimientoFirmado?.clienteFirma),
+      cosmetologaFirma: normalizeStoredAsset(data.consentimientoFirmado?.cosmetologaFirma),
+    },
     createdAtMs: data.createdAt?.toMillis?.() ?? 0,
     updatedAtMs: data.updatedAt?.toMillis?.() ?? 0,
   }
@@ -692,7 +686,7 @@ export const saveStepOneValuation = async ({ valuationId, userId, stepOneData, k
   const clienteNombre = buildClienteNombre(normalizedStepOneData)
 
   if (!clienteNombre) {
-    return { ok: false, message: 'Completa nombre y apellidos para guardar la valoracion.' }
+    return { ok: false, message: 'Completa nombre y apellidos para guardar la valoración.' }
   }
 
   try {
@@ -712,7 +706,7 @@ export const saveStepOneValuation = async ({ valuationId, userId, stepOneData, k
 
       return {
         ok: true,
-        message: 'Paso 1 guardado. Valoracion pendiente creada.',
+        message: 'Paso 1 guardado. Valoración pendiente creada.',
         valuation: buildValuationReference(created.id, resolvedCurrentStep),
       }
     }
@@ -727,7 +721,7 @@ export const saveStepOneValuation = async ({ valuationId, userId, stepOneData, k
         step1: normalizedStepOneData,
       },
       successMessage: 'Paso 1 actualizado correctamente.',
-      notFoundMessage: 'No se encontro la valoracion para actualizar el paso 1.',
+      notFoundMessage: 'No se encontro la valoración para actualizar el paso 1.',
       genericErrorMessage: 'No se pudo guardar el paso 1. Intenta de nuevo.',
     })
   } catch {
@@ -754,7 +748,7 @@ export const saveStepTwoValuation = async ({ valuationId, stepTwoData, knownCurr
     knownCurrentStep,
     payload: { step2: normalizedStepTwoData },
     successMessage: 'Paso 2 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 2.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 2.',
     genericErrorMessage: 'No se pudo guardar el paso 2. Intenta de nuevo.',
   })
 }
@@ -782,7 +776,7 @@ export const saveStepThreeValuation = async ({ valuationId, stepThreeData, known
     knownCurrentStep,
     payload: { step3: normalizedStepThreeData },
     successMessage: 'Paso 3 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 3.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 3.',
     genericErrorMessage: 'No se pudo guardar el paso 3. Intenta de nuevo.',
   })
 }
@@ -825,7 +819,7 @@ export const saveRecurrentStepFourValuation = async ({ valuationId, recurrentSte
     if (error?.code === 'not-found') {
       return {
         ok: false,
-        message: 'No se encontro la valoracion para actualizar el paso 4 de recurrente.',
+        message: 'No se encontro la valoración para actualizar el paso 4 de recurrente.',
       }
     }
 
@@ -852,7 +846,7 @@ export const saveStepFourValuation = async ({ valuationId, stepFourData, knownCu
     knownCurrentStep,
     payload: { step4: normalizedStepFourData },
     successMessage: 'Paso 4 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 4.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 4.',
     genericErrorMessage: 'No se pudo guardar el paso 4. Intenta de nuevo.',
   })
 }
@@ -873,7 +867,7 @@ export const saveStepFiveValuation = async ({ valuationId, stepFiveData, knownCu
     knownCurrentStep,
     payload: { step5: normalizedStepFiveData },
     successMessage: 'Paso 5 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 5.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 5.',
     genericErrorMessage: 'No se pudo guardar el paso 5. Intenta de nuevo.',
   })
 }
@@ -894,7 +888,7 @@ export const saveStepSixValuation = async ({ valuationId, stepSixData, knownCurr
     knownCurrentStep,
     payload: { step6: normalizedStepSixData },
     successMessage: 'Paso 6 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 6.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 6.',
     genericErrorMessage: 'No se pudo guardar el paso 6. Intenta de nuevo.',
   })
 }
@@ -915,7 +909,7 @@ export const saveStepSevenValuation = async ({ valuationId, stepSevenData, known
     knownCurrentStep,
     payload: { step7: normalizedStepSevenData },
     successMessage: 'Paso 7 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 7.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 7.',
     genericErrorMessage: 'No se pudo guardar el paso 7. Intenta de nuevo.',
   })
 }
@@ -936,7 +930,7 @@ export const saveStepEightValuation = async ({ valuationId, stepEightData, known
     knownCurrentStep,
     payload: { step8: normalizedStepEightData },
     successMessage: 'Paso 8 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 8.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 8.',
     genericErrorMessage: 'No se pudo guardar el paso 8. Intenta de nuevo.',
   })
 }
@@ -957,7 +951,7 @@ export const saveStepNineValuation = async ({ valuationId, stepNineData, knownCu
     knownCurrentStep,
     payload: { step9: normalizedStepNineData },
     successMessage: 'Paso 9 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 9.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 9.',
     genericErrorMessage: 'No se pudo guardar el paso 9. Intenta de nuevo.',
   })
 }
@@ -978,7 +972,7 @@ export const saveStepTenValuation = async ({ valuationId, stepTenData, knownCurr
     knownCurrentStep,
     payload: { step10: normalizedStepTenData },
     successMessage: 'Paso 10 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 10.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 10.',
     genericErrorMessage: 'No se pudo guardar el paso 10. Intenta de nuevo.',
   })
 }
@@ -999,7 +993,7 @@ export const saveStepElevenValuation = async ({ valuationId, stepElevenData, kno
     knownCurrentStep,
     payload: { step11: normalizedStepElevenData },
     successMessage: 'Paso 11 guardado correctamente.',
-    notFoundMessage: 'No se encontro la valoracion para actualizar el paso 11.',
+    notFoundMessage: 'No se encontro la valoración para actualizar el paso 11.',
     genericErrorMessage: 'No se pudo guardar el paso 11. Intenta de nuevo.',
   })
 }
@@ -1008,7 +1002,7 @@ export const saveProtocolProducts = async ({ valuationId, protocolProducts }) =>
   if (!valuationId) {
     return {
       ok: false,
-      message: 'No se encontro la valoracion para guardar el protocolo.',
+      message: 'No se encontro la valoración para guardar el protocolo.',
     }
   }
 
@@ -1040,7 +1034,7 @@ export const saveProtocolProducts = async ({ valuationId, protocolProducts }) =>
     if (error?.code === 'not-found') {
       return {
         ok: false,
-        message: 'No se encontro la valoracion para guardar el protocolo.',
+        message: 'No se encontro la valoración para guardar el protocolo.',
       }
     }
 
@@ -1055,7 +1049,7 @@ export const saveInteractiveMapData = async ({ valuationId, mapType, strokes }) 
   if (!valuationId) {
     return {
       ok: false,
-      message: 'Primero debes guardar la valoracion para usar el mapa interactivo.',
+      message: 'Primero debes guardar la valoración para usar el mapa interactivo.',
     }
   }
 
@@ -1085,7 +1079,7 @@ export const saveInteractiveMapData = async ({ valuationId, mapType, strokes }) 
     if (error?.code === 'not-found') {
       return {
         ok: false,
-        message: 'No se encontro la valoracion para guardar el mapa interactivo.',
+        message: 'No se encontro la valoración para guardar el mapa interactivo.',
       }
     }
 
@@ -1100,28 +1094,28 @@ export const uploadClinicalPhoto = async ({ valuationId, photoType, part, moment
   if (!valuationId) {
     return {
       ok: false,
-      message: 'No se encontro la valoracion para subir la fotografia.',
+      message: 'No se encontro la valoración para subir la fotografía.',
     }
   }
 
   if (!CLINICAL_PHOTO_TYPES.includes(photoType)) {
     return {
       ok: false,
-      message: 'Selecciona un tipo de fotografia valido antes de subir.',
+      message: 'Selecciona un tipo de fotografía valido antes de subir.',
     }
   }
 
   if (!CLINICAL_PHOTO_PARTS[photoType].includes(part)) {
     return {
       ok: false,
-      message: 'Selecciona una zona valida para subir la fotografia.',
+      message: 'Selecciona una zona valida para subir la fotografía.',
     }
   }
 
   if (!CLINICAL_PHOTO_MOMENTS.includes(moment)) {
     return {
       ok: false,
-      message: 'Selecciona si la fotografia es antes o despues.',
+      message: 'Selecciona si la fotografía es antes o despues.',
     }
   }
 
@@ -1139,11 +1133,10 @@ export const uploadClinicalPhoto = async ({ valuationId, photoType, part, moment
     }
   }
 
-  const extension = resolveImageExtension(file)
   const safeType = sanitizeStoragePathSegment(photoType)
   const safePart = sanitizeStoragePathSegment(part)
   const safeMoment = sanitizeStoragePathSegment(moment)
-  const filePath = `valoraciones/${valuationId}/fotografias-clinicas/${safeType}/${safePart}/${safeMoment}-${Date.now()}.${extension}`
+  const filePath = `valoraciones/${valuationId}/fotografias-clinicas/${safeType}/${safePart}/${safeMoment}`
 
   try {
     const photoReference = ref(storage, filePath)
@@ -1174,7 +1167,7 @@ export const saveClinicalPhotosData = async ({ valuationId, photosByType }) => {
   if (!valuationId) {
     return {
       ok: false,
-      message: 'No se encontro la valoracion para guardar fotografias.',
+      message: 'No se encontro la valoración para guardar fotografías.',
     }
   }
 
@@ -1189,14 +1182,14 @@ export const saveClinicalPhotosData = async ({ valuationId, photosByType }) => {
     return {
       ok: true,
       photosByType: normalizedPhotosByType,
-      message: 'Fotografias clinicas guardadas correctamente.',
+      message: 'Fotografías clinicas guardadas correctamente.',
     }
   } catch (error) {
     console.error('saveClinicalPhotosData error:', error)
     if (error?.code === 'not-found') {
       return {
         ok: false,
-        message: 'No se encontro la valoracion para guardar fotografias.',
+        message: 'No se encontro la valoración para guardar fotografías.',
       }
     }
     const code = String(error?.code || '').toLowerCase()
@@ -1212,8 +1205,65 @@ export const saveClinicalPhotosData = async ({ valuationId, photosByType }) => {
 
     return {
       ok: false,
-      message: 'No se pudieron guardar las fotografias clinicas. Intenta de nuevo.',
+      message: 'No se pudieron guardar las fotografías clinicas. Intenta de nuevo.',
     }
+  }
+}
+
+export const deleteStoredValuationFile = async (filePath) => {
+  const normalizedPath = String(filePath || '').trim()
+  if (!normalizedPath) return
+
+  try {
+    await deleteObject(ref(storage, normalizedPath))
+  } catch (error) {
+    if (error?.code !== 'storage/object-not-found') throw error
+  }
+}
+
+export const saveInformedConsentSignature = async ({ valuationId, signatureType, signature }) => {
+  if (!valuationId || !['cliente', 'cosmetologa'].includes(signatureType)) {
+    return { ok: false, message: 'No se pudo identificar la firma del consentimiento.' }
+  }
+
+  const normalizedSignature = String(signature || '').trim()
+  if (!normalizedSignature.startsWith('data:image/png;base64,')) {
+    return { ok: false, message: 'La firma no tiene un formato válido.' }
+  }
+
+  try {
+    const valuationRef = doc(db, VALUATIONS_COLLECTION, valuationId)
+    const snapshot = await getDoc(valuationRef)
+
+    if (!snapshot.exists()) {
+      return { ok: false, message: 'No se encontró la valoración para guardar la firma.' }
+    }
+
+    if (snapshot.data()?.status === 'completed') {
+      return { ok: false, message: 'Una valoración terminada ya no permite modificar las firmas.' }
+    }
+
+    const signatureField = signatureType === 'cliente' ? 'clienteFirma' : 'cosmetologaFirma'
+    const signaturePath = `valoraciones/${valuationId}/consentimiento-firmas/${signatureType}`
+    const signatureReference = ref(storage, signaturePath)
+    await uploadString(signatureReference, normalizedSignature, 'data_url', { contentType: 'image/png' })
+    const signatureUrl = await getDownloadURL(signatureReference)
+    await updateDoc(valuationRef, {
+      [`consentimientoFirmado.${signatureField}`]: {
+        url: signatureUrl,
+        path: signaturePath,
+      },
+      [`consentimientoFirmado.${signatureType}FirmadoAt`]: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+
+    return {
+      ok: true,
+      signature: { url: signatureUrl, path: signaturePath },
+      message: 'Firma guardada correctamente.',
+    }
+  } catch {
+    return { ok: false, message: 'No se pudo guardar la firma. Intenta de nuevo.' }
   }
 }
 
@@ -1222,54 +1272,49 @@ export const getValuationForEdition = async ({ valuationId }) => {
     const valuation = await readValuationById(valuationId)
 
     if (!valuation) {
-      return { ok: false, message: 'No se encontro la valoracion solicitada.' }
+      return { ok: false, message: 'No se encontro la valoración solicitada.' }
     }
 
     return { ok: true, valuation }
   } catch {
-    return { ok: false, message: 'No se pudo cargar la valoracion.' }
+    return { ok: false, message: 'No se pudo cargar la valoración.' }
   }
 }
 
-export const listPendingValuations = async () => {
+const listValuationsByStatus = async ({ status, cursor = null }) => {
   try {
-    const valuationsQuery = query(collection(db, VALUATIONS_COLLECTION), where('status', '==', 'pending'))
+    const constraints = [
+      where('status', '==', status),
+      orderBy('updatedAt', 'desc'),
+      ...(cursor ? [startAfter(cursor)] : []),
+      limit(LIST_PAGE_SIZE),
+    ]
+    const valuationsQuery = query(collection(db, VALUATIONS_COLLECTION), ...constraints)
 
     const snapshots = await getDocs(valuationsQuery)
 
-    const valuations = snapshots.docs
-      .map(mapValuationSnapshot)
-      .sort((left, right) => right.updatedAtMs - left.updatedAtMs)
+    const valuations = snapshots.docs.map(mapValuationSnapshot)
 
-    return { ok: true, valuations }
+    return {
+      ok: true,
+      valuations,
+      cursor: snapshots.docs.at(-1) || null,
+      hasMore: snapshots.size === LIST_PAGE_SIZE,
+    }
   } catch {
     return {
       ok: false,
-      message: 'No se pudieron cargar las valoraciones pendientes.',
+      message: `No se pudieron cargar las valoraciones ${status === 'pending' ? 'pendientes' : 'finalizadas'}.`,
       valuations: [],
+      cursor: null,
+      hasMore: false,
     }
   }
 }
 
-export const listCompletedValuations = async () => {
-  try {
-    const valuationsQuery = query(collection(db, VALUATIONS_COLLECTION), where('status', '==', 'completed'))
+export const listPendingValuations = (cursor = null) => listValuationsByStatus({ status: 'pending', cursor })
 
-    const snapshots = await getDocs(valuationsQuery)
-
-    const valuations = snapshots.docs
-      .map(mapValuationSnapshot)
-      .sort((left, right) => right.updatedAtMs - left.updatedAtMs)
-
-    return { ok: true, valuations }
-  } catch {
-    return {
-      ok: false,
-      message: 'No se pudieron cargar los expedientes completados.',
-      valuations: [],
-    }
-  }
-}
+export const listCompletedValuations = (cursor = null) => listValuationsByStatus({ status: 'completed', cursor })
 
 export const getValuationProgressLabel = (valuation) => {
   const looksRecurrent =
@@ -1311,34 +1356,49 @@ export const deleteValuationById = async (valuationId) => {
   if (!valuationId) {
     return {
       ok: false,
-      message: 'No se encontro la valoracion para eliminar.',
+      message: 'No se encontro la valoración para eliminar.',
     }
   }
 
   try {
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
-      status: 'deleted',
-      deletedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    })
+    const valuationRef = doc(db, VALUATIONS_COLLECTION, valuationId)
+    const valuationSnapshot = await getDoc(valuationRef)
+    if (!valuationSnapshot.exists()) {
+      return { ok: false, message: 'No se encontro la valoración para eliminar.' }
+    }
+
+    const storedFiles = await listAll(ref(storage, `valoraciones/${valuationId}`))
+    const deleteFolder = async (folder) => {
+      const contents = await listAll(folder)
+      await Promise.all(contents.items.map((item) => deleteObject(item)))
+      await Promise.all(contents.prefixes.map(deleteFolder))
+    }
+    await Promise.all(storedFiles.items.map((item) => deleteObject(item)))
+    await Promise.all(storedFiles.prefixes.map(deleteFolder))
+
+    const clientId = String(valuationSnapshot.data()?.clienteId || '')
+    if (clientId) {
+      await deleteDoc(doc(db, 'clientes', clientId, 'historiaClinica', valuationId))
+    }
+    await deleteDoc(valuationRef)
 
     return {
       ok: true,
-      message: 'Valoracion eliminada correctamente.',
+      message: 'Valoración eliminada correctamente.',
     }
   } catch (error) {
     if (error?.code === 'not-found') {
       return {
         ok: false,
-        message: 'No se encontro la valoracion para eliminar.',
+        message: 'No se encontro la valoración para eliminar.',
       }
     }
 
     return {
       ok: false,
       message: error?.code
-        ? `No se pudo eliminar la valoracion (${error.code}).`
-        : 'No se pudo eliminar la valoracion. Intenta de nuevo.',
+        ? `No se pudo eliminar la valoración (${error.code}).`
+        : 'No se pudo eliminar la valoración. Intenta de nuevo.',
     }
   }
 }
@@ -1347,31 +1407,77 @@ export const completeValuationById = async (valuationId) => {
   if (!valuationId) {
     return {
       ok: false,
-      message: 'No se encontro la valoracion para completar.',
+      message: 'No se encontro la valoración para completar.',
     }
   }
 
   try {
-    await updateDoc(doc(db, VALUATIONS_COLLECTION, valuationId), {
+    const valuationRef = doc(db, VALUATIONS_COLLECTION, valuationId)
+    const snapshot = await getDoc(valuationRef)
+
+    if (!snapshot.exists()) {
+      return { ok: false, message: 'No se encontro la valoración para completar.' }
+    }
+
+    const valuation = snapshot.data() || {}
+    const missingRequirements = []
+    const clientSignature = normalizeStoredAsset(valuation.consentimientoFirmado?.clienteFirma)
+    const cosmetologistSignature = normalizeStoredAsset(valuation.consentimientoFirmado?.cosmetologaFirma)
+    if (!clientSignature.url) {
+      missingRequirements.push('firma del cliente')
+    }
+    if (!cosmetologistSignature.url) {
+      missingRequirements.push('firma de la cosmetóloga')
+    }
+
+    const clinicalPhotoCount = CLINICAL_PHOTO_TYPES.reduce(
+      (typeTotal, photoType) => typeTotal + CLINICAL_PHOTO_PARTS[photoType].reduce(
+        (partTotal, part) => partTotal + CLINICAL_PHOTO_MOMENTS.filter(
+          (moment) => Boolean(valuation.fotografiasClinicas?.[photoType]?.[part]?.[moment]?.url),
+        ).length,
+        0,
+      ),
+      0,
+    )
+    if (clinicalPhotoCount < 2) {
+      missingRequirements.push(`mínimo 2 fotografías (${clinicalPhotoCount} guardada${clinicalPhotoCount === 1 ? '' : 's'})`)
+    }
+
+    const validProtocolProducts = Array.isArray(valuation.protocolProducts)
+      ? valuation.protocolProducts.filter((product) => String(product?.name || '').trim())
+      : []
+    if (validProtocolProducts.length < 1) {
+      missingRequirements.push('mínimo 1 producto en el protocolo')
+    }
+
+    if (missingRequirements.length > 0) {
+      return {
+        ok: false,
+        message: `No se puede terminar. Falta: ${missingRequirements.join(', ')}.`,
+      }
+    }
+
+    await updateDoc(valuationRef, {
       status: 'completed',
+      completedAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     })
 
     return {
       ok: true,
-      message: 'Valoracion finalizada correctamente.',
+      message: 'Valoración finalizada correctamente.',
     }
   } catch (error) {
     if (error?.code === 'not-found') {
       return {
         ok: false,
-        message: 'No se encontro la valoracion para completar.',
+        message: 'No se encontro la valoración para completar.',
       }
     }
 
     return {
       ok: false,
-      message: 'No se pudo completar la valoracion. Intenta de nuevo.',
+      message: 'No se pudo completar la valoración. Intenta de nuevo.',
     }
   }
 }
@@ -1380,7 +1486,7 @@ export const saveCutaneoStatusData = async ({ valuationId, cutaneoStatus }) => {
   if (!valuationId) {
     return {
       ok: false,
-      message: 'No se encontro la valoracion para guardar el semaforo cutaneo.',
+      message: 'No se encontro la valoración para guardar el semaforo cutáneo.',
     }
   }
 
@@ -1395,19 +1501,19 @@ export const saveCutaneoStatusData = async ({ valuationId, cutaneoStatus }) => {
     return {
       ok: true,
       cutaneoStatus: normalizedStatus,
-      message: 'Semaforo cutaneo guardado correctamente.',
+      message: 'Semaforo cutáneo guardado correctamente.',
     }
   } catch (error) {
     if (error?.code === 'not-found') {
       return {
         ok: false,
-        message: 'No se encontro la valoracion para guardar el semaforo cutaneo.',
+        message: 'No se encontro la valoración para guardar el semaforo cutáneo.',
       }
     }
 
     return {
       ok: false,
-      message: 'No se pudo guardar el semaforo cutaneo. Intenta de nuevo.',
+      message: 'No se pudo guardar el semaforo cutáneo. Intenta de nuevo.',
     }
   }
 }

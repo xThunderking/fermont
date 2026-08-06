@@ -6,7 +6,17 @@ service firebase.storage {
     }
 
     match /valoraciones/{valuationId}/fotografias-clinicas/{allPaths=**} {
-      allow read, write: if isSignedIn();
+      allow read, delete: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.resource.size < 12 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    match /valoraciones/{valuationId}/consentimiento-firmas/{signatureId} {
+      allow read, delete: if isSignedIn();
+      allow create, update: if isSignedIn()
+        && request.resource.size < 300 * 1024
+        && request.resource.contentType == 'image/png';
     }
 
     match /{allPaths=**} {

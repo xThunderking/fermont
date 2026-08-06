@@ -77,7 +77,7 @@ function UsersView() {
     <section className="module-screen">
       <div className="module-screen-head">
         <button type="button" className="main-button secondary" onClick={() => navigate('/app')}>
-          Regresar al menu principal
+          Regresar al menú principal
         </button>
 
         <div>
@@ -109,7 +109,7 @@ function UsersView() {
             </label>
 
             <label>
-              Contrasena
+              Contraseña
               <input
                 required
                 type="password"

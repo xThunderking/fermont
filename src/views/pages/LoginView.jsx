@@ -81,12 +81,12 @@ function LoginView() {
               </label>
 
               <label>
-                Contrasena
+                Contraseña
                 <input
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Ingresa tu contrasena"
+                  placeholder="Ingresa tu contraseña"
                   autoComplete="current-password"
                   required
                   disabled={isBusy}

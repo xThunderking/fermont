@@ -468,6 +468,43 @@ textarea {
   text-align: left;
 }
 
+.pending-action-content span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.completion-requirements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.completion-requirements span {
+  border-radius: 999px;
+  padding: 0.24rem 0.5rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.requirement-ready {
+  border: 1px solid #80a789;
+  background: #e4f1e7;
+  color: #315b3a;
+}
+
+.requirement-pending {
+  border: 1px solid #c69b72;
+  background: #fff0dc;
+  color: #7a4b24;
+}
+
+.load-more-button {
+  display: block;
+  width: min(100%, 360px);
+  margin: 0.85rem auto 0;
+}
+
 .pending-action-icon {
   width: 1rem;
   height: 1rem;
@@ -1607,6 +1644,170 @@ textarea {
     linear-gradient(180deg, rgba(241, 229, 213, 0.96) 0%, rgba(247, 239, 228, 0.96) 100%);
 }
 
+.consent-modal {
+  width: min(760px, 100%);
+  max-height: min(94dvh, 820px);
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.consent-menu-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.consent-menu-actions .main-button {
+  width: 100%;
+  min-height: 52px;
+  white-space: normal;
+  line-height: 1.2;
+}
+
+.consent-signature-editor {
+  display: grid;
+  grid-template-rows: auto minmax(120px, 1fr) auto;
+  gap: 0.65rem;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.consent-signature-instruction {
+  margin: 0;
+  color: #4a3426;
+  font-weight: 700;
+  text-align: center;
+}
+
+.consent-signature-canvas {
+  display: block;
+  width: 100%;
+  height: min(34vh, 260px);
+  border: 2px dashed #b99674;
+  border-radius: 12px;
+  background: #fff;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.consent-signature-actions {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+@media (max-width: 1024px) {
+  .consent-modal-backdrop {
+    place-items: end stretch;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .consent-modal {
+    width: min(760px, 100%);
+    max-height: calc(100dvh - env(safe-area-inset-top));
+    margin-inline: auto;
+    border-radius: 18px 18px 0 0;
+    padding: 1rem;
+    padding-right: max(1rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+  }
+
+  .consent-modal .selection-modal-head {
+    align-items: flex-start;
+  }
+
+  .consent-modal .selection-modal-head > div {
+    min-width: 0;
+  }
+
+  .consent-modal .selection-modal-head .subtitle {
+    overflow-wrap: anywhere;
+  }
+
+  .consent-menu-actions {
+    grid-template-columns: 1fr;
+    align-content: start;
+    padding-bottom: 0.15rem;
+  }
+
+  .consent-menu-actions .main-button {
+    min-height: 56px;
+    font-size: 0.94rem;
+  }
+
+  .consent-signature-canvas {
+    height: min(38vh, 240px);
+  }
+
+  .consent-signature-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .consent-signature-actions .main-button {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+@media (max-width: 699px) {
+  .consent-modal {
+    height: 100dvh;
+    max-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+
+  .consent-modal .selection-modal-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding-bottom: 0.55rem;
+    background: #f8f1e8;
+  }
+
+  .consent-menu-actions .main-button {
+    flex-shrink: 0;
+  }
+
+  .consent-menu-actions .main-button:last-child {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    box-shadow: 0 -8px 18px rgba(248, 241, 232, 0.96);
+  }
+}
+
+@media (max-height: 560px) and (max-width: 1024px) {
+  .consent-modal {
+    padding-top: 0.55rem;
+    gap: 0.4rem;
+  }
+
+  .consent-modal .selection-modal-head .subtitle {
+    display: none;
+  }
+
+  .consent-menu-actions {
+    gap: 0.4rem;
+  }
+
+  .consent-menu-actions .main-button {
+    min-height: 44px;
+  }
+
+  .consent-signature-canvas {
+    height: min(30dvh, 150px);
+  }
+}
+
 .login-panel {
   width: min(960px, 100%);
   border: 1px solid #d8c2ab;
@@ -1789,6 +1990,26 @@ textarea {
 
   .topbar-user {
     font-size: 0.86rem;
+  }
+
+  .pending-valuation-actions {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: none;
+  }
+
+  .pending-valuation-actions .main-button {
+    min-width: 0;
+    min-height: 52px;
+  }
+
+  .pending-action-content {
+    min-width: 0;
+  }
+
+  .pending-action-content span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: normal;
   }
 
   .client-mode-toggle {

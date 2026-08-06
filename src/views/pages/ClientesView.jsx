@@ -26,6 +26,10 @@ function ClientesView() {
   const [deleteClientId, setDeleteClientId] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [clientsCursor, setClientsCursor] = useState(null)
+  const [clientsHasMore, setClientsHasMore] = useState(false)
+  const [historyCursor, setHistoryCursor] = useState(null)
+  const [historyHasMore, setHistoryHasMore] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -47,6 +51,8 @@ function ClientesView() {
 
       setError('')
       setClients(result.clients)
+      setClientsCursor(result.cursor)
+      setClientsHasMore(result.hasMore)
       setIsLoading(false)
     }
 
@@ -97,6 +103,36 @@ function ClientesView() {
 
     setError('')
     setClientHistory(result.history)
+    setHistoryCursor(result.cursor)
+    setHistoryHasMore(result.hasMore)
+    setHistoryLoading(false)
+  }
+
+  const loadMoreClients = async () => {
+    if (!clientsCursor || isLoading) return
+    setIsLoading(true)
+    const result = await listClients(clientsCursor)
+    if (result.ok) {
+      setClients((current) => [...current, ...result.clients])
+      setClientsCursor(result.cursor)
+      setClientsHasMore(result.hasMore)
+    } else {
+      setError(result.message)
+    }
+    setIsLoading(false)
+  }
+
+  const loadMoreHistory = async () => {
+    if (!historyModalClient?.id || !historyCursor || historyLoading) return
+    setHistoryLoading(true)
+    const result = await listClientClinicalHistory(historyModalClient.id, historyCursor)
+    if (result.ok) {
+      setClientHistory((current) => [...current, ...result.history])
+      setHistoryCursor(result.cursor)
+      setHistoryHasMore(result.hasMore)
+    } else {
+      setError(result.message)
+    }
     setHistoryLoading(false)
   }
 
@@ -137,12 +173,12 @@ function ClientesView() {
     <section className="module-screen">
       <div className="module-screen-head">
         <button type="button" className="main-button secondary" onClick={() => navigate('/app')}>
-          Regresar al menu principal
+          Regresar al menú principal
         </button>
 
         <div>
           <h1>Clientes</h1>
-          <p className="subtitle">Clientes guardados desde el paso 1 de valoracion.</p>
+          <p className="subtitle">Clientes guardados desde el paso 1 de valoración.</p>
         </div>
       </div>
 
@@ -162,7 +198,7 @@ function ClientesView() {
       {isLoading ? <p className="subtitle">Cargando clientes...</p> : null}
 
       {!isLoading && filteredClients.length === 0 ? (
-        <p className="subtitle">No hay clientes registrados todavia.</p>
+        <p className="subtitle">No hay clientes registrados todavía.</p>
       ) : null}
 
       {!isLoading && filteredClients.length > 0 ? (
@@ -175,7 +211,7 @@ function ClientesView() {
               >
                 <strong>{client.nombreCompleto || 'Cliente sin nombre'}</strong>
                 <small className="small-tag">{client.correoElectronico || 'Sin correo'}</small>
-                <small>{client.telefono || 'Sin telefono'}</small>
+                <small>{client.teléfono || 'Sin teléfono'}</small>
               </button>
 
               <button
@@ -198,6 +234,12 @@ function ClientesView() {
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {clientsHasMore ? (
+        <button type="button" className="main-button secondary load-more-button" onClick={loadMoreClients} disabled={isLoading}>
+          {isLoading ? 'Cargando...' : 'Cargar más clientes'}
+        </button>
       ) : null}
 
       {historyModalOpen ? (
@@ -228,7 +270,7 @@ function ClientesView() {
                 <div className="history-modal-client-info">
                   <p className="history-modal-client-name">{historyModalClient.nombreCompleto || '-'}</p>
                   <div className="history-modal-meta-row">
-                    <p className="history-modal-client-meta">Telefono: {historyModalClient.telefono || 'Sin registro'}</p>
+                    <p className="history-modal-client-meta">Teléfono: {historyModalClient.teléfono || 'Sin registro'}</p>
                     <span className="history-modal-count-pill">
                       {clientHistory.length} {clientHistory.length === 1 ? 'entrada' : 'entradas'}
                     </span>
@@ -271,8 +313,8 @@ function ClientesView() {
                             {entry.step1?.edad || 'Sin registro'}
                           </div>
                           <div>
-                            <span className="font-medium">Telefono:</span>{' '}
-                            {entry.step1?.telefono || 'Sin registro'}
+                            <span className="font-medium">Teléfono:</span>{' '}
+                            {entry.step1?.teléfono || 'Sin registro'}
                           </div>
                           <div>
                             <span className="font-medium">Correo:</span>{' '}
@@ -288,12 +330,12 @@ function ClientesView() {
                       {[
                         ['step3', 'Expectativas y prioridades'],
                         ['step4', 'Antecedentes de salud'],
-                        ['step5', 'Habitos y estilo de vida'],
-                        ['step6', 'Exposicion solar'],
+                        ['step5', 'Hábitos y estilo de vida'],
+                        ['step6', 'Exposición solar'],
                         ['step7', 'Historial estetico'],
                         ['step8', 'Rutina actual'],
-                        ['step9', 'Evaluacion cutanea'],
-                        ['step10', 'Diagnostico profesional'],
+                        ['step9', 'Evaluación cutanea'],
+                        ['step10', 'Diagnóstico profesional'],
                         ['step11', 'Preguntas corporales'],
                       ].map(([stepKey, title]) => {
                         const values = Object.entries(entry[stepKey] || {})
@@ -318,13 +360,18 @@ function ClientesView() {
                       })}
 
                       <section className="history-modal-section">
-                        <h4>Semaforo cutaneo</h4>
+                        <h4>Semaforo cutáneo</h4>
                         <div className="text-sm">{entry.semaforoCutaneo || 'Sin registro'}</div>
                       </section>
                     </div>
                   </details>
                 ))}
               </div>
+            ) : null}
+            {historyHasMore ? (
+              <button type="button" className="main-button secondary load-more-button" onClick={loadMoreHistory} disabled={historyLoading}>
+                {historyLoading ? 'Cargando...' : 'Cargar más registros'}
+              </button>
             ) : null}
           </div>
         </div>

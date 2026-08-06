@@ -1,8 +1,7 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 import { deleteValuationById, getValuationForEdition, listCompletedValuations } from '../../models/valuationModel.js'
-import { exportValuationToPDF } from '../../services/pdfExporter.js'
 
 function ExpedientesView() {
   const navigate = useNavigate()
@@ -14,6 +13,8 @@ function ExpedientesView() {
   const [error, setError] = useState('')
   const [isExporting, setIsExporting] = useState(false)
   const [deleteValuationId, setDeleteValuationId] = useState('')
+  const [valuationsCursor, setValuationsCursor] = useState(null)
+  const [valuationsHasMore, setValuationsHasMore] = useState(false)
 
   useEffect(() => {
     let isMounted = true
@@ -56,6 +57,8 @@ function ExpedientesView() {
       }
 
       setCompletedValuations(result.valuations)
+      setValuationsCursor(result.cursor)
+      setValuationsHasMore(result.hasMore)
       setValuation(null)
       setIsLoading(false)
     }
@@ -76,9 +79,10 @@ function ExpedientesView() {
   const handleExportPDF = async () => {
     setIsExporting(true)
     try {
+      const { exportValuationToPDF } = await import('../../services/pdfExporter.js')
       await exportValuationToPDF(valuation)
       setError('')
-    } catch (err) {
+    } catch {
       setError('No se pudo exportar el informe. Intenta de nuevo.')
     } finally {
       setIsExporting(false)
@@ -110,13 +114,54 @@ function ExpedientesView() {
         setError(res.message || 'No se pudo obtener la valoración')
         return
       }
+      const { exportValuationToPDF } = await import('../../services/pdfExporter.js')
       await exportValuationToPDF(res.valuation)
       setError('')
-    } catch (err) {
+    } catch {
       setError('No se pudo exportar el informe. Intenta de nuevo.')
     } finally {
       setIsExporting(false)
     }
+  }
+
+  const hasSignedConsent = (item) => Boolean(
+    item?.consentimientoFirmado?.clienteFirma?.url
+    && item?.consentimientoFirmado?.cosmetologaFirma?.url,
+  )
+
+  const handleDownloadSignedConsent = async (item) => {
+    if (!hasSignedConsent(item)) {
+      setError('Este expediente no cuenta con las dos firmas del consentimiento.')
+      return
+    }
+
+    try {
+      const { downloadInformedConsent } = await import('../../services/consentExporter.js')
+      await downloadInformedConsent({
+        clientName: item.clienteNombre,
+        valuationDate: item.step1?.fechaValoracion,
+        clientSignature: item.consentimientoFirmado.clienteFirma.url,
+        cosmetologistSignature: item.consentimientoFirmado.cosmetologaFirma.url,
+      })
+      setError('')
+    } catch {
+      setError('No se pudo descargar el consentimiento firmado.')
+    }
+  }
+
+  const loadMoreCompletedValuations = async () => {
+    if (!valuationsCursor || isLoading) return
+    setIsLoading(true)
+    const result = await listCompletedValuations(valuationsCursor)
+    if (result.ok) {
+      setCompletedValuations((current) => [...current, ...result.valuations])
+      setValuationsCursor(result.cursor)
+      setValuationsHasMore(result.hasMore)
+      setError('')
+    } else {
+      setError(result.message)
+    }
+    setIsLoading(false)
   }
 
   const handleDeleteValuation = async (nextValuationId) => {
@@ -156,7 +201,7 @@ function ExpedientesView() {
     <section className="module-screen">
       <div className="module-screen-head">
         <button type="button" className="main-button secondary" onClick={() => navigate('/app')}>
-          Regresar al menu principal
+          Regresar al menú principal
         </button>
         <div>
           <h1>Expedientes</h1>
@@ -192,6 +237,15 @@ function ExpedientesView() {
                     >
                       {isExporting ? 'Exportando...' : '📄 Imprimir informe'}
                     </button>
+                    <button
+                      type="button"
+                      className="main-button secondary"
+                      onClick={() => handleDownloadSignedConsent(item)}
+                      disabled={!hasSignedConsent(item)}
+                      title={!hasSignedConsent(item) ? 'Este expediente no tiene ambas firmas' : ''}
+                    >
+                      Consentimiento firmado
+                    </button>
                     {isAdmin ? (
                       <button
                         type="button"
@@ -207,6 +261,12 @@ function ExpedientesView() {
             </ul>
           </div>
         </div>
+      ) : null}
+
+      {!valuationId && valuationsHasMore ? (
+        <button type="button" className="main-button secondary load-more-button" onClick={loadMoreCompletedValuations} disabled={isLoading}>
+          {isLoading ? 'Cargando...' : 'Cargar más expedientes'}
+        </button>
       ) : null}
 
       {!isLoading && valuation ? (
@@ -227,6 +287,15 @@ function ExpedientesView() {
                 }}
               >
                 {isExporting ? 'Exportando...' : '📄 Exportar Informe'}
+              </button>
+              <button
+                type="button"
+                className="main-button secondary"
+                onClick={() => handleDownloadSignedConsent(valuation)}
+                disabled={!hasSignedConsent(valuation)}
+                title={!hasSignedConsent(valuation) ? 'Este expediente no tiene ambas firmas' : ''}
+              >
+                Consentimiento firmado
               </button>
               {isAdmin ? (
                 <button
@@ -252,7 +321,7 @@ function ExpedientesView() {
             <p><strong>Nombre completo:</strong> {renderClientFullName()}</p>
             <p><strong>Edad:</strong> {valuation.step1?.edad || 'No especificado'}</p>
             <p><strong>Fecha de nacimiento:</strong> {valuation.step1?.fechaNacimiento || 'No especificado'}</p>
-            <p><strong>Teléfono:</strong> {valuation.step1?.telefono || 'No especificado'}</p>
+            <p><strong>Teléfono:</strong> {valuation.step1?.teléfono || 'No especificado'}</p>
             <p><strong>Correo electrónico:</strong> {valuation.step1?.correoElectronico || 'No especificado'}</p>
             <p><strong>Ocupación:</strong> {valuation.step1?.ocupacion || 'No especificado'}</p>
             <p><strong>Contacto de emergencia:</strong> {valuation.step1?.contactoEmergencia || 'No especificado'}</p>

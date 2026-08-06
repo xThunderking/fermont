@@ -11,8 +11,8 @@ function MenuView() {
         <button
           type="button"
           className="module-card module-card-nueva-valoracion"
-          aria-label="Nueva Valoracion"
-          title="Nueva Valoracion"
+          aria-label="Nueva Valoración"
+          title="Nueva Valoración"
           onClick={() => navigate('/app/nueva-valoracion')}
         />
 

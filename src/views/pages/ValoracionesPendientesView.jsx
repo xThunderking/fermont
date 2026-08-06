@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 import {
   CLINICAL_PHOTO_PARTS,
   completeValuationById,
+  deleteStoredValuationFile,
   deleteValuationById,
   getValuationProgressLabel,
   listPendingValuations,
   saveClinicalPhotosData,
+  saveInformedConsentSignature,
   saveInteractiveMapData,
   uploadClinicalPhoto,
 } from '../../models/valuationModel.js'
@@ -154,6 +157,17 @@ const hasClinicalPhotoData = (photosByType) =>
       CLINICAL_PHOTO_MOMENTS.some((moment) => Boolean(photosByType?.[photoType]?.[part]?.[moment]?.url))),
   )
 
+const countClinicalPhotos = (photosByType) =>
+  CLINICAL_PHOTO_TYPES.reduce(
+    (total, photoType) => total + CLINICAL_PHOTO_PARTS[photoType].reduce(
+      (partTotal, part) => partTotal + CLINICAL_PHOTO_MOMENTS.filter(
+        (moment) => Boolean(photosByType?.[photoType]?.[part]?.[moment]?.url),
+      ).length,
+      0,
+    ),
+    0,
+  )
+
 const formatFieldLabel = (key) => {
   if (!key) return '-'
 
@@ -252,6 +266,8 @@ function ValoracionesPendientesView() {
   const [pendingValuations, setPendingValuations] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [valuationsCursor, setValuationsCursor] = useState(null)
+  const [valuationsHasMore, setValuationsHasMore] = useState(false)
   const [mapaSavedByValuation, setMapaSavedByValuation] = useState({})
   const [clinicalPhotosSavedByValuation, setClinicalPhotosSavedByValuation] = useState({})
   const [historyModalOpen, setHistoryModalOpen] = useState(false)
@@ -259,6 +275,13 @@ function ValoracionesPendientesView() {
   const [historyModalEntries, setHistoryModalEntries] = useState([])
   const [historyModalLoading, setHistoryModalLoading] = useState(false)
   const [deleteValuationId, setDeleteValuationId] = useState('')
+  const [consentModal, setConsentModal] = useState({
+    open: false,
+    valuation: null,
+    signing: '',
+    clientSignature: '',
+    cosmetologistSignature: '',
+  })
   const [mapaModal, setMapaModal] = useState({
     open: false,
     valuationId: '',
@@ -285,6 +308,8 @@ function ValoracionesPendientesView() {
   })
 
   const mapaImageRef = useRef(null)
+  const signatureCanvasRef = useRef(null)
+  const signatureDrawingRef = useRef({ drawing: false, hasInk: false })
   const mapaCanvasRef = useRef(null)
   const mapaCanvasMetaRef = useRef({
     cssWidth: 0,
@@ -329,6 +354,8 @@ function ValoracionesPendientesView() {
 
       setError('')
       setPendingValuations(result.valuations)
+      setValuationsCursor(result.cursor)
+      setValuationsHasMore(result.hasMore)
       setIsLoading(false)
     }
 
@@ -340,6 +367,21 @@ function ValoracionesPendientesView() {
   }, [currentUser?.id])
 
   const emptyMessage = useMemo(() => 'No hay valoraciones pendientes por el momento.', [])
+
+  const loadMoreValuations = async () => {
+    if (!valuationsCursor || isLoading) return
+    setIsLoading(true)
+    const result = await listPendingValuations(valuationsCursor)
+    if (result.ok) {
+      setPendingValuations((current) => [...current, ...result.valuations])
+      setValuationsCursor(result.cursor)
+      setValuationsHasMore(result.hasMore)
+      setError('')
+    } else {
+      setError(result.message)
+    }
+    setIsLoading(false)
+  }
 
   const resetMapaDrawingState = () => {
     mapaDrawingRef.current = {
@@ -533,6 +575,7 @@ function ValoracionesPendientesView() {
     }))
 
     const nextPhotosByType = cloneClinicalPhotosByType(fotosModal.photosByType)
+    const replacedPhotoPaths = []
 
     for (const photoType of CLINICAL_PHOTO_TYPES) {
       for (const part of CLINICAL_PHOTO_PARTS[photoType]) {
@@ -560,6 +603,10 @@ function ValoracionesPendientesView() {
             return
           }
 
+          const previousPath = nextPhotosByType[photoType][part][moment]?.path
+          if (previousPath && previousPath !== uploadResult.photo.path) {
+            replacedPhotoPaths.push(previousPath)
+          }
           nextPhotosByType[photoType][part][moment] = uploadResult.photo
         }
       }
@@ -578,6 +625,8 @@ function ValoracionesPendientesView() {
       }))
       return
     }
+
+    await Promise.allSettled(replacedPhotoPaths.map(deleteStoredValuationFile))
 
     setClinicalPhotosSavedByValuation((previous) => ({
       ...previous,
@@ -1007,7 +1056,7 @@ function ValoracionesPendientesView() {
 
   const openClientHistoryModal = async (valuation) => {
     if (!valuation?.clienteId) {
-      setError('Esta valoracion no tiene cliente asociado.')
+      setError('Esta valoración no tiene cliente asociado.')
       return
     }
 
@@ -1035,7 +1084,7 @@ function ValoracionesPendientesView() {
 
   const handleFinishValuation = async (valuation) => {
     if (!valuation?.id) {
-      setError('No se encontro la valoracion para finalizar.')
+      setError('No se encontro la valoración para finalizar.')
       return
     }
 
@@ -1057,16 +1106,141 @@ function ValoracionesPendientesView() {
     setHistoryModalLoading(false)
   }
 
+  const openConsentModal = (valuation) => {
+    signatureDrawingRef.current = { drawing: false, hasInk: false }
+    setConsentModal({
+      open: true,
+      valuation,
+      signing: '',
+      clientSignature: valuation.consentimientoFirmado?.clienteFirma?.url || '',
+      cosmetologistSignature: valuation.consentimientoFirmado?.cosmetologaFirma?.url || '',
+    })
+  }
+
+  const closeConsentModal = () => {
+    signatureDrawingRef.current = { drawing: false, hasInk: false }
+    setConsentModal({
+      open: false,
+      valuation: null,
+      signing: '',
+      clientSignature: '',
+      cosmetologistSignature: '',
+    })
+  }
+
+  const beginConsentSignature = (signing) => {
+    signatureDrawingRef.current = { drawing: false, hasInk: false }
+    setConsentModal((current) => ({ ...current, signing }))
+    window.requestAnimationFrame(() => {
+      const canvas = signatureCanvasRef.current
+      canvas?.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
+    })
+  }
+
+  const getSignaturePoint = (event) => {
+    const canvas = signatureCanvasRef.current
+    const bounds = canvas.getBoundingClientRect()
+    return {
+      x: (event.clientX - bounds.left) * (canvas.width / bounds.width),
+      y: (event.clientY - bounds.top) * (canvas.height / bounds.height),
+    }
+  }
+
+  const startSignatureStroke = (event) => {
+    const canvas = signatureCanvasRef.current
+    const context = canvas.getContext('2d')
+    const point = getSignaturePoint(event)
+    event.currentTarget.setPointerCapture(event.pointerId)
+    context.beginPath()
+    context.moveTo(point.x, point.y)
+    context.strokeStyle = '#352219'
+    context.lineWidth = 4
+    context.lineCap = 'round'
+    context.lineJoin = 'round'
+    context.lineTo(point.x + 0.01, point.y + 0.01)
+    context.stroke()
+    signatureDrawingRef.current = { drawing: true, hasInk: true }
+  }
+
+  const drawSignatureStroke = (event) => {
+    if (!signatureDrawingRef.current.drawing) return
+    const context = signatureCanvasRef.current.getContext('2d')
+    const point = getSignaturePoint(event)
+    context.lineTo(point.x, point.y)
+    context.stroke()
+  }
+
+  const stopSignatureStroke = () => {
+    signatureDrawingRef.current.drawing = false
+  }
+
+  const clearSignatureCanvas = () => {
+    const canvas = signatureCanvasRef.current
+    canvas?.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
+    signatureDrawingRef.current = { drawing: false, hasInk: false }
+  }
+
+  const saveConsentSignature = async () => {
+    if (!signatureDrawingRef.current.hasInk) {
+      setError('Realiza la firma antes de guardarla.')
+      return
+    }
+
+    const signatureDataUrl = signatureCanvasRef.current.toDataURL('image/png')
+    const signatureField = consentModal.signing === 'client' ? 'clientSignature' : 'cosmetologistSignature'
+    const signatureType = consentModal.signing === 'client' ? 'cliente' : 'cosmetologa'
+    const result = await saveInformedConsentSignature({
+      valuationId: consentModal.valuation.id,
+      signatureType,
+      signature: signatureDataUrl,
+    })
+
+    if (!result.ok) {
+      setError(result.message)
+      return
+    }
+
+    setConsentModal((current) => ({ ...current, signing: '', [signatureField]: result.signature.url }))
+    setPendingValuations((current) => current.map((valuation) => (
+      valuation.id === consentModal.valuation.id
+        ? {
+            ...valuation,
+            consentimientoFirmado: {
+              ...valuation.consentimientoFirmado,
+              [signatureType === 'cliente' ? 'clienteFirma' : 'cosmetologaFirma']: result.signature,
+            },
+          }
+        : valuation
+    )))
+    setError('')
+  }
+
+  const handleDownloadConsent = async () => {
+    const valuation = consentModal.valuation
+    try {
+      const { downloadInformedConsent } = await import('../../services/consentExporter.js')
+      await downloadInformedConsent({
+        clientName: valuation.clienteNombre,
+        valuationDate: valuation.step1?.fechaValoracion,
+        clientSignature: consentModal.clientSignature,
+        cosmetologistSignature: consentModal.cosmetologistSignature,
+      })
+      setError('')
+    } catch (consentError) {
+      setError(consentError instanceof Error ? consentError.message : 'No se pudo generar el consentimiento.')
+    }
+  }
+
   return (
     <section className="module-screen">
       <div className="module-screen-head">
         <button type="button" className="main-button secondary" onClick={() => navigate('/app')}>
-          Regresar al menu principal
+          Regresar al menú principal
         </button>
 
         <div>
           <h1>Valoraciones Pendientes</h1>
-          <p className="subtitle">Continua una valoracion guardada por pasos.</p>
+          <p className="subtitle">Continua una valoración guardada por pasos.</p>
         </div>
       </div>
 
@@ -1091,12 +1265,29 @@ function ValoracionesPendientesView() {
               clinicalPhotosSavedByValuation[valuation.id],
             )
             const hasClinicalPhotos = hasClinicalPhotoData(valuationClinicalPhotos)
+            const clinicalPhotoCount = countClinicalPhotos(valuationClinicalPhotos)
+            const signatureCount = Number(Boolean(valuation.consentimientoFirmado?.clienteFirma?.url))
+              + Number(Boolean(valuation.consentimientoFirmado?.cosmetologaFirma?.url))
+            const protocolProductCount = Array.isArray(valuation.protocolProducts)
+              ? valuation.protocolProducts.filter((product) => product.name).length
+              : 0
 
             return (
               <li className="user-row valuation-row" key={valuation.id}>
                 <div>
                   <strong>{valuation.clienteNombre || 'Cliente sin nombre'}</strong>
                   <small className="small-tag">{getValuationProgressLabel(valuation)}</small>
+                  <div className="completion-requirements" aria-label="Requisitos para terminar la valoración">
+                    <span className={signatureCount === 2 ? 'requirement-ready' : 'requirement-pending'}>
+                      Firmas {signatureCount}/2
+                    </span>
+                    <span className={clinicalPhotoCount >= 2 ? 'requirement-ready' : 'requirement-pending'}>
+                      Fotografías {clinicalPhotoCount}/2 mínimo
+                    </span>
+                    <span className={protocolProductCount >= 1 ? 'requirement-ready' : 'requirement-pending'}>
+                      Protocolo {protocolProductCount}/1 mínimo
+                    </span>
+                  </div>
                 </div>
 
                 <div className="row-actions pending-valuation-actions">
@@ -1155,6 +1346,33 @@ function ValoracionesPendientesView() {
 
                   <button
                     type="button"
+                    className="main-button secondary pending-action-button"
+                    onClick={() => openConsentModal(valuation)}
+                  >
+                    <span className="pending-action-content">
+                      <svg className="pending-action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path
+                          d="M6 3h9l3 3v15H6V3z"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinejoin="round"
+                        />
+                        <path
+                          d="M15 3v4h4M9 12h6M9 16h6"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      <span>CONSENTIMIENTO INFORMADO</span>
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
                     className="main-button pending-action-button"
                     onClick={() => handleFinishValuation(valuation)}
                   >
@@ -1169,7 +1387,7 @@ function ValoracionesPendientesView() {
                           strokeLinejoin="round"
                         />
                       </svg>
-                      <span>TERMINAR VALORACION</span>
+                      <span>TERMINAR VALORACIÓN</span>
                     </span>
                   </button>
 
@@ -1245,7 +1463,7 @@ function ValoracionesPendientesView() {
                         />
                         <circle cx="12" cy="13.5" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.8" />
                       </svg>
-                      <span>{hasClinicalPhotos ? 'FOTOGRAFIAS (EDITADO)' : 'FOTOGRAFIAS'}</span>
+                      <span>{hasClinicalPhotos ? 'FOTOGRAFÍAS (EDITADO)' : 'FOTOGRAFÍAS'}</span>
                     </span>
                   </button>
                 </div>
@@ -1254,6 +1472,74 @@ function ValoracionesPendientesView() {
           })}
         </ul>
       ) : null}
+
+      {valuationsHasMore ? (
+        <button type="button" className="main-button secondary load-more-button" onClick={loadMoreValuations} disabled={isLoading}>
+          {isLoading ? 'Cargando...' : 'Cargar más valoraciones'}
+        </button>
+      ) : null}
+
+      {consentModal.open ? createPortal((
+        <div className="selection-modal-backdrop consent-modal-backdrop" onClick={closeConsentModal}>
+          <div
+            className="selection-modal consent-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Consentimiento informado"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="selection-modal-head">
+              <div>
+                <h3 className="consultation-block-title">Consentimiento informado</h3>
+                <p className="subtitle">{consentModal.valuation?.clienteNombre}</p>
+              </div>
+              <button type="button" className="main-button secondary" onClick={closeConsentModal}>Cerrar</button>
+            </div>
+
+            {consentModal.signing ? (
+              <div className="consent-signature-editor">
+                <p className="consent-signature-instruction">
+                  Firma de {consentModal.signing === 'client' ? 'cliente' : 'cosmetóloga'}
+                </p>
+                <canvas
+                  ref={signatureCanvasRef}
+                  className="consent-signature-canvas"
+                  width="700"
+                  height="260"
+                  onPointerDown={startSignatureStroke}
+                  onPointerMove={drawSignatureStroke}
+                  onPointerUp={stopSignatureStroke}
+                  onPointerCancel={stopSignatureStroke}
+                  onPointerLeave={stopSignatureStroke}
+                />
+                <div className="consent-signature-actions">
+                  <button type="button" className="main-button secondary" onClick={clearSignatureCanvas}>Limpiar</button>
+                  <button type="button" className="main-button" onClick={saveConsentSignature}>Guardar firma</button>
+                  <button
+                    type="button"
+                    className="main-button secondary"
+                    onClick={() => setConsentModal((current) => ({ ...current, signing: '' }))}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="consent-menu-actions">
+                <button type="button" className="main-button" onClick={() => beginConsentSignature('client')}>
+                  FIRMAR CLIENTE{consentModal.clientSignature ? ' ✓' : ''}
+                </button>
+                <button type="button" className="main-button" onClick={() => beginConsentSignature('cosmetologist')}>
+                  FIRMAR COSMETÓLOGA{consentModal.cosmetologistSignature ? ' ✓' : ''}
+                </button>
+                <button type="button" className="main-button secondary" onClick={handleDownloadConsent}>
+                  DESCARGAR
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ), document.body) : null}
 
       {historyModalOpen ? (
         <div className="selection-modal-backdrop history-modal-backdrop" onClick={closeClientHistoryModal}>
@@ -1340,7 +1626,7 @@ function ValoracionesPendientesView() {
 
                           <div>
                             <span className="font-medium">Teléfono:</span>{' '}
-                            {entry.step1?.telefono}
+                            {entry.step1?.teléfono}
                           </div>
 
                           <div>
@@ -1512,12 +1798,12 @@ function ValoracionesPendientesView() {
         <div className="selection-modal-backdrop" onClick={() => setDeleteValuationId('')}>
           <div className="selection-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
             <div className="selection-modal-head">
-              <h3 className="consultation-block-title">Eliminar valoracion</h3>
+              <h3 className="consultation-block-title">Eliminar valoración</h3>
               <button type="button" className="main-button secondary" onClick={() => setDeleteValuationId('')}>
                 Cerrar
               </button>
             </div>
-            <p className="subtitle">Seguro que deseas eliminar esta valoracion pendiente? Esta accion no se puede deshacer.</p>
+            <p className="subtitle">Seguro que deseas eliminar esta valoración pendiente? Esta accion no se puede deshacer.</p>
             <div className="valuation-actions">
               <button type="button" className="main-button secondary" onClick={() => setDeleteValuationId('')}>
                 Cancelar
@@ -1536,17 +1822,17 @@ function ValoracionesPendientesView() {
             className="selection-modal fotos-clinicas-modal"
             role="dialog"
             aria-modal="true"
-            aria-label="Fotografias clinicas"
+            aria-label="Fotografías clinicas"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="selection-modal-head">
-              <h3 className="consultation-block-title">Fotografias clinicas</h3>
+              <h3 className="consultation-block-title">Fotografías clinicas</h3>
               <div className="fotos-modal-head-actions">
                 <button
                   type="button"
                   className="fotos-close-icon-button"
                   onClick={closeFotosModal}
-                  aria-label="Cerrar modal de fotografias"
+                  aria-label="Cerrar modal de fotografías"
                   title="Cerrar"
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -1559,7 +1845,7 @@ function ValoracionesPendientesView() {
               </div>
             </div>
 
-            <p className="fotos-step-pill">Carga de fotografias {CLINICAL_PHOTO_TYPE_OPTIONS[fotosModal.selectedType].label}</p>
+            <p className="fotos-step-pill">Carga de fotografías {CLINICAL_PHOTO_TYPE_OPTIONS[fotosModal.selectedType].label}</p>
 
             <div className="fotos-tipo-toggle">
               {CLINICAL_PHOTO_TYPES.map((photoType) => (
@@ -1670,7 +1956,7 @@ function ValoracionesPendientesView() {
                 onClick={saveClinicalPhotos}
                 disabled={fotosModal.isSaving}
               >
-                {fotosModal.isSaving ? 'Guardando...' : 'Guardar fotografias'}
+                {fotosModal.isSaving ? 'Guardando...' : 'Guardar fotografías'}
               </button>
             </div>
           </div>

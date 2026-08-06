@@ -23,7 +23,7 @@ function SystemLayout() {
           <div className="brand-block brand-block-with-logo">
             <img className="brand-logo" src={logoFermont} alt="Fermont" />
             <p className="brand-kicker">FERMONT</p>
-            <p className="brand-title">Sistema de cosmetologia</p>
+            <p className="brand-title">Sistema de cosmetología</p>
           </div>
           <p className="topbar-user">{currentUser?.username}</p>
         </header>
@@ -38,7 +38,7 @@ function SystemLayout() {
       {!isValuationFlow ? (
         <footer className="app-footer">
           <button type="button" className="main-button secondary footer-logout" onClick={handleLogout}>
-            Cerrar sesion
+            Cerrar sesión
           </button>
         </footer>
       ) : null}

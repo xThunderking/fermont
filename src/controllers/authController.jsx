@@ -150,7 +150,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     if (currentUser?.id === userId && role !== 'admin') {
-      return { ok: false, message: 'No puedes quitarte el rol admin desde tu sesion activa.' }
+      return { ok: false, message: 'No puedes quitarte el rol admin desde tu sesión activa.' }
     }
 
     const result = await updateUserRole({ userId, role })

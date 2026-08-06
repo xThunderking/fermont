@@ -58,7 +58,7 @@ const mapAuthErrorToMessage = (code) => {
     case 'auth/email-already-in-use':
       return 'Ese correo ya existe.'
     case 'auth/weak-password':
-      return 'La contrasena debe tener al menos 6 caracteres.'
+      return 'La contraseña debe tener al menos 6 caracteres.'
     case 'auth/popup-closed-by-user':
       return 'Cerraste la ventana de Google antes de completar el acceso.'
     case 'auth/popup-blocked':
@@ -74,7 +74,7 @@ const mapAuthErrorToMessage = (code) => {
     case 'auth/network-request-failed':
       return 'Error de red al conectar con Firebase. Revisa tu conexion.'
     case 'auth/web-storage-unsupported':
-      return 'Tu navegador bloqueo el almacenamiento necesario para iniciar sesion.'
+      return 'Tu navegador bloqueo el almacenamiento necesario para iniciar sesión.'
     case 'permission-denied':
       return 'No tienes permisos para crear o leer tu perfil en Firestore.'
     case 'auth/email-not-allowed':
@@ -84,7 +84,7 @@ const mapAuthErrorToMessage = (code) => {
     case 'profile/disabled':
       return 'Tu usuario esta desactivado en el sistema.'
     default:
-      return 'No fue posible completar la operacion. Intenta de nuevo.'
+      return 'No fue posible completar la operación. Intenta de nuevo.'
   }
 }
 
@@ -265,7 +265,7 @@ export const loginWithCredentials = async (email, password) => {
   const cleanPassword = String(password ?? '')
 
   if (!cleanEmail || !cleanPassword) {
-    return { ok: false, message: 'Correo y contrasena son obligatorios.' }
+    return { ok: false, message: 'Correo y contraseña son obligatorios.' }
   }
 
   try {
@@ -277,7 +277,7 @@ export const loginWithCredentials = async (email, password) => {
     if (error?.code === 'auth/operation-not-allowed') {
       return {
         ok: false,
-        message: 'El acceso por correo y contrasena no esta habilitado en Firebase Authentication.',
+        message: 'El acceso por correo y contraseña no esta habilitado en Firebase Authentication.',
       }
     }
 
@@ -354,7 +354,7 @@ export const createUserAccount = async ({ username, email, password, role }) => 
   const normalizedRole = normalizeRole(role)
 
   if (!cleanEmail || !cleanPassword) {
-    return { ok: false, message: 'Correo y contrasena son obligatorios.' }
+    return { ok: false, message: 'Correo y contraseña son obligatorios.' }
   }
 
   if (!isEmailAllowed(cleanEmail)) {

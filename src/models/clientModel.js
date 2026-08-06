@@ -5,17 +5,22 @@ import {
   getDoc,
   getDocs,
   limit,
+  orderBy,
   query,
   deleteDoc,
   setDoc,
   serverTimestamp,
   updateDoc,
   where,
+  startAfter,
+  startAt,
+  endAt,
 } from 'firebase/firestore'
 import { db } from '../services/firebase'
 
 const CLIENTS_COLLECTION = 'clientes'
 const CLIENT_HISTORY_COLLECTION = 'historiaClinica'
+const LIST_PAGE_SIZE = 25
 
 const normalizeText = (value) => String(value ?? '').trim()
 
@@ -37,7 +42,7 @@ const normalizeClientData = (data) => {
       : '',
     edad: normalizeText(data.edad),
     fechaNacimiento: normalizeText(data.fechaNacimiento),
-    telefono: normalizeText(data.telefono),
+    teléfono: normalizeText(data.teléfono),
     correoElectronico,
     correoElectronicoLower: correoElectronico,
     ocupacion: normalizeText(data.ocupacion),
@@ -58,7 +63,7 @@ const mapClientSnapshot = (snapshot) => {
     sexo: String(data.sexo ?? ''),
     edad: String(data.edad ?? ''),
     fechaNacimiento: String(data.fechaNacimiento ?? ''),
-    telefono: String(data.telefono ?? ''),
+    teléfono: String(data.teléfono ?? ''),
     correoElectronico: String(data.correoElectronico ?? ''),
     correoElectronicoLower: String(data.correoElectronicoLower ?? ''),
     ocupacion: String(data.ocupacion ?? ''),
@@ -143,22 +148,55 @@ export const saveClientFromStepOne = async ({ userId, stepOneData, clientId }) =
   }
 }
 
-export const listClients = async () => {
+export const listClients = async (cursor = null) => {
   try {
-    const snapshots = await getDocs(collection(db, CLIENTS_COLLECTION))
+    const snapshots = await getDocs(query(
+      collection(db, CLIENTS_COLLECTION),
+      orderBy('nombreCompletoLower'),
+      ...(cursor ? [startAfter(cursor)] : []),
+      limit(LIST_PAGE_SIZE),
+    ))
 
     const clients = snapshots.docs
       .map(mapClientSnapshot)
       .filter((client) => client.status !== 'deleted')
       .sort((left, right) => left.nombreCompleto.localeCompare(right.nombreCompleto, 'es'))
 
-    return { ok: true, clients }
+    return {
+      ok: true,
+      clients,
+      cursor: snapshots.docs.at(-1) || null,
+      hasMore: snapshots.size === LIST_PAGE_SIZE,
+    }
   } catch {
     return {
       ok: false,
       message: 'No se pudieron cargar los clientes.',
       clients: [],
+      cursor: null,
+      hasMore: false,
     }
+  }
+}
+
+export const searchClientsByName = async (searchText) => {
+  const normalizedSearch = normalizeText(searchText).toLowerCase()
+  if (!normalizedSearch) return { ok: true, clients: [] }
+
+  try {
+    const snapshots = await getDocs(query(
+      collection(db, CLIENTS_COLLECTION),
+      orderBy('nombreCompletoLower'),
+      startAt(normalizedSearch),
+      endAt(`${normalizedSearch}\uf8ff`),
+      limit(20),
+    ))
+    return {
+      ok: true,
+      clients: snapshots.docs.map(mapClientSnapshot).filter((client) => client.status !== 'deleted'),
+    }
+  } catch {
+    return { ok: false, clients: [], message: 'No se pudo buscar clientes.' }
   }
 }
 
@@ -171,11 +209,22 @@ export const deleteClientById = async (clientId) => {
   }
 
   try {
-    await updateDoc(doc(db, CLIENTS_COLLECTION, clientId), {
-      status: 'deleted',
-      deletedAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    })
+    const linkedValuations = await getDocs(query(
+      collection(db, 'valoraciones'),
+      where('clienteId', '==', clientId),
+      limit(1),
+    ))
+
+    if (!linkedValuations.empty) {
+      return {
+        ok: false,
+        message: 'El cliente tiene valoraciones asociadas. Elimina primero sus valoraciones para conservar la integridad del expediente.',
+      }
+    }
+
+    const historySnapshots = await getDocs(collection(db, CLIENTS_COLLECTION, clientId, CLIENT_HISTORY_COLLECTION))
+    await Promise.all(historySnapshots.docs.map((snapshot) => deleteDoc(snapshot.ref)))
+    await deleteDoc(doc(db, CLIENTS_COLLECTION, clientId))
     return {
       ok: true,
       message: 'Cliente eliminado correctamente.',
@@ -197,20 +246,6 @@ export const deleteClientById = async (clientId) => {
   }
 }
 
-const cloneStepData = (value) => {
-  if (Array.isArray(value)) {
-    return value.map((item) => cloneStepData(item))
-  }
-
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, item]) => [key, cloneStepData(item)]),
-    )
-  }
-
-  return value ?? null
-}
-
 export const saveClientClinicalHistoryFromValuation = async ({
   clientId,
   valuationId,
@@ -228,19 +263,7 @@ export const saveClientClinicalHistoryFromValuation = async ({
     valuationId,
     clientId,
     clienteNombre: String(valuationSnapshot?.clienteNombre || clientSnapshot?.nombreCompleto || ''),
-    step1: cloneStepData(valuationSnapshot?.step1),
-    step3: cloneStepData(valuationSnapshot?.step3),
-    step4: cloneStepData(valuationSnapshot?.step4),
-    step5: cloneStepData(valuationSnapshot?.step5),
-    step6: cloneStepData(valuationSnapshot?.step6),
-    step7: cloneStepData(valuationSnapshot?.step7),
-    step8: cloneStepData(valuationSnapshot?.step8),
-    step9: cloneStepData(valuationSnapshot?.step9),
-    step10: cloneStepData(valuationSnapshot?.step10),
-    step11: cloneStepData(valuationSnapshot?.step11),
-    semaforoCutaneo: String(valuationSnapshot?.semaforoCutaneo ?? ''),
-    mapaInteractivo: cloneStepData(valuationSnapshot?.mapaInteractivo),
-    fotografiasClinicas: cloneStepData(valuationSnapshot?.fotografiasClinicas),
+    schemaVersion: 2,
     createdAt: serverTimestamp(),
   }
 
@@ -268,7 +291,7 @@ export const saveClientClinicalHistoryFromValuation = async ({
   }
 }
 
-export const listClientClinicalHistory = async (clientId) => {
+export const listClientClinicalHistory = async (clientId, cursor = null) => {
   if (!clientId) {
     return {
       ok: false,
@@ -278,36 +301,52 @@ export const listClientClinicalHistory = async (clientId) => {
   }
 
   try {
-    const snapshots = await getDocs(collection(db, CLIENTS_COLLECTION, clientId, CLIENT_HISTORY_COLLECTION))
-    const history = snapshots.docs
-      .map((snapshot) => {
+    const snapshots = await getDocs(query(
+      collection(db, CLIENTS_COLLECTION, clientId, CLIENT_HISTORY_COLLECTION),
+      orderBy('createdAt', 'desc'),
+      ...(cursor ? [startAfter(cursor)] : []),
+      limit(LIST_PAGE_SIZE),
+    ))
+    const history = await Promise.all(snapshots.docs.map(async (snapshot) => {
         const data = snapshot.data() || {}
+        const valuationId = String(data.valuationId ?? snapshot.id)
+        const valuationDocument = valuationId
+          ? await getDoc(doc(db, 'valoraciones', valuationId))
+          : null
+        const valuation = valuationDocument?.exists() ? valuationDocument.data() : data
         return {
           id: snapshot.id,
-          valuationId: String(data.valuationId ?? ''),
-          clienteNombre: String(data.clienteNombre ?? ''),
-          step1: data.step1 ?? null,
-          step3: data.step3 ?? null,
-          step4: data.step4 ?? null,
-          step5: data.step5 ?? null,
-          step6: data.step6 ?? null,
-          step7: data.step7 ?? null,
-          step8: data.step8 ?? null,
-          step9: data.step9 ?? null,
-          step10: data.step10 ?? null,
-          step11: data.step11 ?? null,
-          semaforoCutaneo: String(data.semaforoCutaneo ?? ''),
+          valuationId,
+          clienteNombre: String(valuation.clienteNombre ?? data.clienteNombre ?? ''),
+          step1: valuation.step1 ?? null,
+          step3: valuation.step3 ?? null,
+          step4: valuation.step4 ?? null,
+          step5: valuation.step5 ?? null,
+          step6: valuation.step6 ?? null,
+          step7: valuation.step7 ?? null,
+          step8: valuation.step8 ?? null,
+          step9: valuation.step9 ?? null,
+          step10: valuation.step10 ?? null,
+          step11: valuation.step11 ?? null,
+          semaforoCutaneo: String(valuation.semaforoCutaneo ?? ''),
           createdAtMs: data.createdAt?.toMillis?.() ?? 0,
         }
-      })
-      .sort((left, right) => right.createdAtMs - left.createdAtMs)
+      }))
+    history.sort((left, right) => right.createdAtMs - left.createdAtMs)
 
-    return { ok: true, history }
+    return {
+      ok: true,
+      history,
+      cursor: snapshots.docs.at(-1) || null,
+      hasMore: snapshots.size === LIST_PAGE_SIZE,
+    }
   } catch {
     return {
       ok: true,
       message: 'Aún no hay registros en el expediente cosmetológico de este cliente.',
       history: [],
+      cursor: null,
+      hasMore: false,
     }
   }
 }
