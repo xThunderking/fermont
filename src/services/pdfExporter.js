@@ -1,7 +1,7 @@
 import html2pdf from 'html2pdf.js'
 import mapaFacialImage from '../img/mapainteractivo/mapafacial.jpeg'
 import mapaCorporalImage from '../img/mapainteractivo/mapacorporal.jpeg'
-import logoFermontImage from '../img/LOGOFERMONT2.png'
+import logoFermontImage from '../img/LOGOFERMONT3.png'
 
 const formatDate = (dateString) => {
   if (!dateString) return 'No especificado'
@@ -252,7 +252,7 @@ export const exportValuationToPDF = async (valuation) => {
       <div style="font-family: Arial, sans-serif; padding: 10px; max-width: 780px; margin:0 auto;">
         <!-- Portada -->
         <div style="page-break-after:always; width:100%; max-width:760px; margin:0 auto; padding:120px 20px 80px; text-align:center; box-sizing:border-box;">
-          <img src="${logoFermontImage}" alt="Fermont" style="display:block; width:140px; max-width:100%; margin:0 auto 24px auto;" />
+          <img src="${logoFermontImage}" alt="Fermont" style="display:block; width:300px; max-width:75%; margin:0 auto 16px auto;" />
           <h1 style="margin:0; font-size:40px; color:#333; letter-spacing:4px;">FERMONT</h1>
           <h2 style="margin:24px 0 8px 0; font-size:22px; color:#333;">Informe de valoración</h2>
           <p style="margin:12px 0; font-size:16px; color:#555;">Paciente: ${valuation.clienteNombre || 'Sin nombre'}</p>
@@ -268,7 +268,7 @@ export const exportValuationToPDF = async (valuation) => {
             <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Sexo:</td><td style="padding: 8px;">${formatPdfValue(valuation.step1?.sexo)}</td></tr>
             <tr><td style="padding: 8px; font-weight: bold;">Edad:</td><td style="padding: 8px;">${valuation.step1?.edad || 'No especificado'}</td></tr>
             <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Fecha de nacimiento:</td><td style="padding: 8px;">${valuation.step1?.fechaNacimiento || 'No especificado'}</td></tr>
-            <tr><td style="padding: 8px; font-weight: bold;">Teléfono:</td><td style="padding: 8px;">${valuation.step1?.teléfono || 'No especificado'}</td></tr>
+            <tr><td style="padding: 8px; font-weight: bold;">Teléfono:</td><td style="padding: 8px;">${valuation.step1?.telefono || 'No especificado'}</td></tr>
             <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Email:</td><td style="padding: 8px;">${valuation.step1?.correoElectronico || 'No especificado'}</td></tr>
             <tr><td style="padding: 8px; font-weight: bold;">Ocupación:</td><td style="padding: 8px;">${valuation.step1?.ocupacion || 'No especificado'}</td></tr>
             <tr style="background: #f9f9f9;"><td style="padding: 8px; font-weight: bold;">Contacto emergencia:</td><td style="padding: 8px;">${valuation.step1?.contactoEmergencia || 'No especificado'}</td></tr>

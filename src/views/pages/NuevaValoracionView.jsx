@@ -68,7 +68,7 @@ const createStepOneInitialData = () => ({
   sexo: '',
   edad: '',
   fechaNacimiento: '',
-  teléfono: '',
+  telefono: '',
   correoElectronico: '',
   ocupacion: '',
   contactoEmergencia: '',
@@ -1399,7 +1399,7 @@ function NuevaValoracionView() {
       sexo: client.sexo || '',
       edad: client.edad,
       fechaNacimiento: client.fechaNacimiento,
-      teléfono: client.teléfono,
+      telefono: client.telefono,
       correoElectronico: client.correoElectronico,
       ocupacion: client.ocupacion,
       contactoEmergencia: client.contactoEmergencia,
@@ -1497,7 +1497,7 @@ function NuevaValoracionView() {
         stepOneData.sexo,
         stepOneData.edad,
         stepOneData.fechaNacimiento,
-        stepOneData.teléfono,
+        stepOneData.telefono,
         stepOneData.correoElectronico,
         stepOneData.ocupacion,
         stepOneData.contactoEmergencia,
@@ -2664,7 +2664,7 @@ function NuevaValoracionView() {
                         onClick={() => selectRecurrentClient(client)}
                       >
                         <strong>{client.nombreCompleto}</strong>
-                        <small>{client.teléfono || client.correoElectronico || 'Sin contacto'}</small>
+                        <small>{client.telefono || client.correoElectronico || 'Sin contacto'}</small>
                       </button>
                     ))
                   )}
@@ -2761,8 +2761,8 @@ function NuevaValoracionView() {
                   <input
                     required
                     type="tel"
-                    value={stepOneData.teléfono}
-                    onChange={(event) => setFieldValue('teléfono', event.target.value)}
+                    value={stepOneData.telefono}
+                    onChange={(event) => setFieldValue('telefono', event.target.value)}
                   />
                 </label>
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
-import logoFermont from '../../img/LOGOFERMONT2.png'
+import logoFermont from '../../img/LOGOFERMONT3.png'
 
 function LoginView() {
   const { isAuthenticated, authError, loginWithCredentials, loginWithGoogle } = useAuthController()

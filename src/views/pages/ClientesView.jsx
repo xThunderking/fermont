@@ -211,7 +211,7 @@ function ClientesView() {
               >
                 <strong>{client.nombreCompleto || 'Cliente sin nombre'}</strong>
                 <small className="small-tag">{client.correoElectronico || 'Sin correo'}</small>
-                <small>{client.teléfono || 'Sin teléfono'}</small>
+                <small>{client.telefono || 'Sin teléfono'}</small>
               </button>
 
               <button
@@ -270,7 +270,7 @@ function ClientesView() {
                 <div className="history-modal-client-info">
                   <p className="history-modal-client-name">{historyModalClient.nombreCompleto || '-'}</p>
                   <div className="history-modal-meta-row">
-                    <p className="history-modal-client-meta">Teléfono: {historyModalClient.teléfono || 'Sin registro'}</p>
+                    <p className="history-modal-client-meta">Teléfono: {historyModalClient.telefono || 'Sin registro'}</p>
                     <span className="history-modal-count-pill">
                       {clientHistory.length} {clientHistory.length === 1 ? 'entrada' : 'entradas'}
                     </span>
@@ -314,7 +314,7 @@ function ClientesView() {
                           </div>
                           <div>
                             <span className="font-medium">Teléfono:</span>{' '}
-                            {entry.step1?.teléfono || 'Sin registro'}
+                            {entry.step1?.telefono || 'Sin registro'}
                           </div>
                           <div>
                             <span className="font-medium">Correo:</span>{' '}

@@ -321,7 +321,7 @@ function ExpedientesView() {
             <p><strong>Nombre completo:</strong> {renderClientFullName()}</p>
             <p><strong>Edad:</strong> {valuation.step1?.edad || 'No especificado'}</p>
             <p><strong>Fecha de nacimiento:</strong> {valuation.step1?.fechaNacimiento || 'No especificado'}</p>
-            <p><strong>Teléfono:</strong> {valuation.step1?.teléfono || 'No especificado'}</p>
+            <p><strong>Teléfono:</strong> {valuation.step1?.telefono || 'No especificado'}</p>
             <p><strong>Correo electrónico:</strong> {valuation.step1?.correoElectronico || 'No especificado'}</p>
             <p><strong>Ocupación:</strong> {valuation.step1?.ocupacion || 'No especificado'}</p>
             <p><strong>Contacto de emergencia:</strong> {valuation.step1?.contactoEmergencia || 'No especificado'}</p>

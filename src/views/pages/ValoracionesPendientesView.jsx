@@ -1626,7 +1626,7 @@ function ValoracionesPendientesView() {
 
                           <div>
                             <span className="font-medium">Teléfono:</span>{' '}
-                            {entry.step1?.teléfono}
+                            {entry.step1?.telefono}
                           </div>
 
                           <div>

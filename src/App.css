@@ -6,7 +6,7 @@
 }
 
 .app-layout-fixed {
-  --topbar-height: 156px;
+  --topbar-height: 196px;
   --footer-height: 78px;
   min-height: 100dvh;
 }
@@ -79,7 +79,9 @@
 }
 
 .brand-logo {
-  width: clamp(58px, 10vw, 82px);
+  width: clamp(130px, 18vw, 180px);
+  max-height: 128px;
+  object-fit: contain;
   height: auto;
   display: block;
 }
@@ -1839,7 +1841,7 @@ textarea {
 }
 
 .login-logo-image {
-  width: clamp(140px, 34vw, 220px);
+  width: clamp(260px, 55vw, 420px);
   max-width: 100%;
   height: auto;
   display: block;
@@ -1967,7 +1969,7 @@ textarea {
 
 @media (max-width: 680px) {
   .app-layout-fixed {
-    --topbar-height: 148px;
+    --topbar-height: 188px;
     --footer-height: 74px;
   }
 
@@ -1986,6 +1988,15 @@ textarea {
 
   .brand-title {
     font-size: 1rem;
+  }
+
+  .brand-logo {
+    width: clamp(138px, 40vw, 170px);
+    max-height: 116px;
+  }
+
+  .login-logo-image {
+    width: min(78vw, 330px);
   }
 
   .topbar-user {

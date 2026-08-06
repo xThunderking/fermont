@@ -276,7 +276,7 @@ const normalizeStepOneData = (data) => ({
     : '',
   edad: normalizeText(data.edad),
   fechaNacimiento: normalizeText(data.fechaNacimiento),
-  teléfono: normalizeText(data.teléfono),
+  telefono: normalizeText(data.telefono),
   correoElectronico: normalizeText(data.correoElectronico).toLowerCase(),
   ocupacion: normalizeText(data.ocupacion),
   contactoEmergencia: normalizeText(data.contactoEmergencia),
