@@ -1918,6 +1918,25 @@ textarea {
   display: block;
 }
 
+.login-home-link {
+  min-height: 44px;
+  border: 1px solid #d8c7b4;
+  border-radius: 10px;
+  color: #694a35;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+
+.login-home-link:hover {
+  background: #f4e8da;
+  transform: translateY(-1px);
+}
+
 @media (min-width: 768px) {
   .login-panel {
     padding: 1.2rem;

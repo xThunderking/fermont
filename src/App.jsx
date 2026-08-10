@@ -11,11 +11,12 @@ import NuevaValoracionView from './views/pages/NuevaValoracionView.jsx'
 import UsersView from './views/pages/UsersView.jsx'
 import ValoracionesPendientesView from './views/pages/ValoracionesPendientesView.jsx'
 import ExpedientesView from './views/pages/ExpedientesView.jsx'
+import PublicHome from './publicSite/PublicHome.jsx'
 
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/app" replace />} />
+      <Route path="/" element={<PublicHome />} />
       <Route path="/login" element={<LoginView />} />
 
       <Route element={<ProtectedRoute />}>

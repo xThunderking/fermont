@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Navigate, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 import logoFermont from '../../img/LOGOFERMONT3.png'
 
@@ -130,6 +130,11 @@ function LoginView() {
               </svg>
               <span>{isGoogleSubmitting ? 'Conectando con Google...' : 'Iniciar con Google'}</span>
             </button>
+
+            <Link className="login-home-link" to="/">
+              <span aria-hidden="true">←</span>
+              Volver a la página principal
+            </Link>
           </div>
         </div>
       </section>
