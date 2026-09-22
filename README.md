@@ -9,7 +9,7 @@ Sistema web para administrar clientes, valoraciones cosmetológicas, expedientes
 - Cloud Firestore
 - Firebase Storage
 - Firebase Hosting
-- Cloud Functions para el envío seguro de prerregistros públicos
+- Cloud Functions para crear, consultar, finalizar y eliminar prerregistros de forma segura
 - jsPDF y html2pdf para documentos
 
 ## Módulos
@@ -23,6 +23,7 @@ Sistema web para administrar clientes, valoraciones cosmetológicas, expedientes
 - Protocolo de productos
 - Fotografías clínicas y mapas interactivos
 - Expedientes finalizados e informes PDF
+- Invitaciones de prerregistro con estados pendiente y finalizado
 
 ## Desarrollo local
 
@@ -46,7 +47,7 @@ npx firebase-tools deploy --only firestore:rules,firestore:indexes,storage
 npm run deploy
 ```
 
-El prerregistro público utiliza una Cloud Function. Antes del primer despliegue instala sus dependencias con `npm install --prefix functions` y confirma que el proyecto de Firebase permita desplegar Functions.
+El flujo de prerregistro utiliza Cloud Functions. El personal genera una invitación con nombre y teléfono; el cliente la selecciona en la página pública y, al finalizarla, deja de estar disponible públicamente. Solo los administradores pueden eliminar invitaciones. Antes del primer despliegue instala las dependencias con `npm install --prefix functions` y confirma que el proyecto de Firebase permita desplegar Functions.
 
 ## Almacenamiento
 

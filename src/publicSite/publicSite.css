@@ -2039,13 +2039,68 @@
   font-weight: 700;
 }
 
-.public-preregistration-form input {
+.public-preregistration-form input,
+.public-preregistration-form select {
   width: 100%;
   border: 1px solid rgba(104, 70, 52, 0.25);
   border-radius: 14px;
   padding: 0.9rem 1rem;
   background: #fff;
   color: var(--public-ink);
+}
+
+.public-preregistration-form-heading {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.public-preregistration-form-heading h2,
+.public-preregistration-form-heading p,
+.public-preregistration-empty h2,
+.public-preregistration-empty p {
+  margin: 0;
+}
+
+.public-preregistration-form-heading h2,
+.public-preregistration-empty h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  color: var(--public-ink);
+}
+
+.public-preregistration-form-heading p,
+.public-preregistration-empty p {
+  color: var(--public-muted);
+  line-height: 1.55;
+}
+
+.public-preregistration-empty {
+  display: grid;
+  gap: 0.4rem;
+  border: 1px dashed rgba(104, 70, 52, 0.25);
+  border-radius: 16px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.public-preregistration-selected {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid rgba(104, 70, 52, 0.18);
+  border-radius: 16px;
+  padding: 1rem;
+  background: #f5e9df;
+  color: var(--public-ink);
+}
+
+.public-preregistration-selected > span,
+.public-preregistration-selected > small {
+  color: var(--public-muted);
+}
+
+.public-preregistration-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+  gap: 0.7rem;
 }
 
 .public-preregistration-form .public-button {
@@ -2100,6 +2155,10 @@
   .public-preregistration-card {
     grid-template-columns: 1fr;
     border-radius: 24px;
+  }
+
+  .public-preregistration-actions {
+    grid-template-columns: 1fr;
   }
 }
 

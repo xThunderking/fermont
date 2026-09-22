@@ -148,7 +148,9 @@ service cloud.firestore {
           'updatedAt'
         ]);
 
-      allow delete: if isAdmin();
+      // La eliminación pasa por Cloud Functions para validar el rol y liberar
+      // de forma atómica los identificadores de nombre y teléfono.
+      allow delete: if false;
     }
 
     // Estos identificadores solo son administrados por Cloud Functions.

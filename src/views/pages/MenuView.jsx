@@ -46,9 +46,7 @@ function MenuView() {
           aria-label="Prerregistros"
           title="Prerregistros"
           onClick={() => navigate('/app/preregistros')}
-        >
-          <span className="module-card-text">Prerregistros</span>
-        </button>
+        />
 
         {isAdmin ? (
           <button

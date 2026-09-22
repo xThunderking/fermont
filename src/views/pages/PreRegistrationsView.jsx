@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { listCompletedPreRegistrations } from '../../models/preRegistrationModel.js'
+import { useAuthController } from '../../controllers/authController.jsx'
+import {
+  createPreRegistrationInvitation,
+  deletePreRegistration,
+  listManagedPreRegistrations,
+} from '../../models/preRegistrationModel.js'
 
 const formatDateTime = (timestamp) => {
   if (!timestamp) return 'Sin fecha'
@@ -10,19 +15,38 @@ const formatDateTime = (timestamp) => {
   })
 }
 
+const normalizePhone = (value) => String(value ?? '').replace(/\D/g, '').slice(0, 10)
+
 function PreRegistrationsView() {
   const navigate = useNavigate()
+  const { isAdmin } = useAuthController()
   const [preRegistrations, setPreRegistrations] = useState([])
   const [search, setSearch] = useState('')
+  const [nombreCompleto, setNombreCompleto] = useState('')
+  const [telefono, setTelefono] = useState('')
   const [isLoading, setIsLoading] = useState(true)
+  const [isCreating, setIsCreating] = useState(false)
+  const [deletingId, setDeletingId] = useState('')
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
+
+  const loadPreRegistrations = useCallback(async () => {
+    const result = await listManagedPreRegistrations()
+
+    if (!result.ok) {
+      setError(result.message)
+      setPreRegistrations([])
+    } else {
+      setError('')
+      setPreRegistrations(result.preRegistrations)
+    }
+    setIsLoading(false)
+  }, [])
 
   useEffect(() => {
     let isMounted = true
 
-    const loadPreRegistrations = async () => {
-      setIsLoading(true)
-      const result = await listCompletedPreRegistrations()
+    listManagedPreRegistrations().then((result) => {
       if (!isMounted) return
 
       if (!result.ok) {
@@ -33,9 +57,8 @@ function PreRegistrationsView() {
         setPreRegistrations(result.preRegistrations)
       }
       setIsLoading(false)
-    }
+    })
 
-    loadPreRegistrations()
     return () => {
       isMounted = false
     }
@@ -51,6 +74,116 @@ function PreRegistrationsView() {
     ))
   }, [preRegistrations, search])
 
+  const pendingPreRegistrations = filteredPreRegistrations.filter(({ status }) => status === 'pending')
+  const completedPreRegistrations = filteredPreRegistrations.filter(({ status }) => status === 'completed')
+
+  const handleCreate = async (event) => {
+    event.preventDefault()
+    setError('')
+    setMessage('')
+
+    if (nombreCompleto.trim().length < 3) {
+      setError('Escribe el nombre completo.')
+      return
+    }
+
+    if (normalizePhone(telefono).length !== 10) {
+      setError('El número de teléfono debe tener 10 dígitos.')
+      return
+    }
+
+    setIsCreating(true)
+    const result = await createPreRegistrationInvitation({ nombreCompleto, telefono })
+    setIsCreating(false)
+
+    if (!result.ok) {
+      setError(result.message)
+      return
+    }
+
+    setNombreCompleto('')
+    setTelefono('')
+    setMessage(result.message)
+    await loadPreRegistrations()
+  }
+
+  const handleDelete = async (preRegistration) => {
+    const confirmed = window.confirm(
+      `¿Eliminar el prerregistro de ${preRegistration.nombreCompleto}? Esta acción no se puede deshacer.`,
+    )
+    if (!confirmed) return
+
+    setError('')
+    setMessage('')
+    setDeletingId(preRegistration.id)
+    const result = await deletePreRegistration(preRegistration.id)
+    setDeletingId('')
+
+    if (!result.ok) {
+      setError(result.message)
+      return
+    }
+
+    setMessage(result.message)
+    await loadPreRegistrations()
+  }
+
+  const renderPreRegistrationList = (items, status) => {
+    if (items.length === 0) {
+      return (
+        <div className="empty-state-card preregistration-empty-state">
+          <p className="subtitle">
+            {status === 'pending'
+              ? 'No hay prerregistros pendientes disponibles en la página web.'
+              : 'No hay prerregistros finalizados pendientes de valoración.'}
+          </p>
+        </div>
+      )
+    }
+
+    return (
+      <ul className="users-list valuations-list preregistration-list">
+        {items.map((preRegistration) => (
+          <li className="user-row valuation-row" key={preRegistration.id}>
+            <div className="client-row-button preregistration-row-summary">
+              <strong>{preRegistration.nombreCompleto || 'Sin nombre'}</strong>
+              <small>{preRegistration.telefono || 'Sin teléfono'}</small>
+              <small className="small-tag">
+                {status === 'pending' ? 'Creado' : 'Finalizado'}:{' '}
+                {formatDateTime(status === 'pending'
+                  ? preRegistration.createdAtMs
+                  : preRegistration.completedAtMs)}
+              </small>
+            </div>
+
+            <div className="row-actions preregistration-row-actions">
+              {status === 'completed' ? (
+                <button
+                  type="button"
+                  className="main-button"
+                  onClick={() => navigate(`/app/nueva-valoracion?preregistro=${preRegistration.id}`)}
+                >
+                  Iniciar valoración
+                </button>
+              ) : null}
+
+              {isAdmin ? (
+                <button
+                  type="button"
+                  className="main-button danger"
+                  disabled={Boolean(deletingId)}
+                  onClick={() => handleDelete(preRegistration)}
+                >
+                  {deletingId === preRegistration.id ? 'Eliminando...' : 'Eliminar'}
+                </button>
+              ) : null}
+            </div>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
   return (
     <section className="module-screen">
       <div className="module-screen-head">
@@ -60,9 +193,47 @@ function PreRegistrationsView() {
 
         <div>
           <h1>Prerregistros</h1>
-          <p className="subtitle">Formularios finalizados que todavía no se han utilizado en una valoración.</p>
+          <p className="subtitle">
+            Genera invitaciones para clientes y consulta cuáles siguen pendientes o ya fueron finalizadas.
+          </p>
         </div>
       </div>
+
+      <form className="simple-form preregistration-create-form" onSubmit={handleCreate}>
+        <label>
+          Nombre completo
+          <input
+            required
+            type="text"
+            autoComplete="name"
+            maxLength="120"
+            value={nombreCompleto}
+            onChange={(event) => setNombreCompleto(event.target.value)}
+            placeholder="Nombre del cliente"
+          />
+        </label>
+
+        <label>
+          Número telefónico
+          <input
+            required
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel"
+            maxLength="10"
+            value={telefono}
+            onChange={(event) => setTelefono(normalizePhone(event.target.value))}
+            placeholder="10 dígitos"
+          />
+        </label>
+
+        <button type="submit" className="main-button" disabled={isCreating}>
+          {isCreating ? 'Generando...' : 'Generar prerregistro'}
+        </button>
+      </form>
+
+      {error ? <p className="error-text preregistration-feedback">{error}</p> : null}
+      {message ? <p className="success-text preregistration-feedback">{message}</p> : null}
 
       <div className="client-search-box clients-search-box">
         <label>
@@ -76,35 +247,26 @@ function PreRegistrationsView() {
         </label>
       </div>
 
-      {error ? <p className="error-text">{error}</p> : null}
-      {isLoading ? <p className="subtitle">Cargando prerregistros...</p> : null}
+      {isLoading ? <p className="subtitle preregistration-feedback">Cargando prerregistros...</p> : null}
 
-      {!isLoading && filteredPreRegistrations.length === 0 ? (
-        <div className="empty-state-card">
-          <h2>No hay prerregistros finalizados</h2>
-          <p className="subtitle">Los formularios enviados desde la página pública aparecerán aquí.</p>
+      {!isLoading ? (
+        <div className="preregistration-groups">
+          <section className="preregistration-group" aria-labelledby="pending-preregistrations-title">
+            <div className="preregistration-group-heading">
+              <h2 id="pending-preregistrations-title">Pendientes en la página web</h2>
+              <span>{pendingPreRegistrations.length}</span>
+            </div>
+            {renderPreRegistrationList(pendingPreRegistrations, 'pending')}
+          </section>
+
+          <section className="preregistration-group" aria-labelledby="completed-preregistrations-title">
+            <div className="preregistration-group-heading">
+              <h2 id="completed-preregistrations-title">Finalizados</h2>
+              <span>{completedPreRegistrations.length}</span>
+            </div>
+            {renderPreRegistrationList(completedPreRegistrations, 'completed')}
+          </section>
         </div>
-      ) : null}
-
-      {!isLoading && filteredPreRegistrations.length > 0 ? (
-        <ul className="users-list valuations-list preregistration-list">
-          {filteredPreRegistrations.map((preRegistration) => (
-            <li className="user-row valuation-row" key={preRegistration.id}>
-              <div className="client-row-button preregistration-row-summary">
-                <strong>{preRegistration.nombreCompleto || 'Sin nombre'}</strong>
-                <small>{preRegistration.telefono || 'Teléfono pendiente'}</small>
-                <small className="small-tag">Finalizado: {formatDateTime(preRegistration.completedAtMs)}</small>
-              </div>
-              <button
-                type="button"
-                className="main-button"
-                onClick={() => navigate(`/app/nueva-valoracion?preregistro=${preRegistration.id}`)}
-              >
-                Iniciar valoración
-              </button>
-            </li>
-          ))}
-        </ul>
       ) : null}
     </section>
   )

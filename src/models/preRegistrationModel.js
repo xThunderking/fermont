@@ -16,6 +16,24 @@ const functions = getFunctions(app, 'us-central1')
 
 const normalizeText = (value) => String(value ?? '').trim().replace(/\s+/g, ' ')
 
+const callPreRegistrationFunction = async (name, data, fallbackMessage) => {
+  try {
+    const callable = httpsCallable(functions, name)
+    const response = await callable(data)
+    return {
+      ok: Boolean(response.data?.ok),
+      ...response.data,
+      message: String(response.data?.message ?? fallbackMessage),
+    }
+  } catch (error) {
+    return {
+      ok: false,
+      reason: String(error?.details?.reason ?? ''),
+      message: String(error?.message ?? fallbackMessage),
+    }
+  }
+}
+
 const mapPreRegistrationSnapshot = (snapshot) => {
   const data = snapshot.data() || {}
 
@@ -32,30 +50,78 @@ const mapPreRegistrationSnapshot = (snapshot) => {
     createdAtMs: data.createdAt?.toMillis?.() ?? 0,
     completedAtMs: data.completedAt?.toMillis?.() ?? 0,
     usedAtMs: data.usedAt?.toMillis?.() ?? 0,
+    updatedAtMs: data.updatedAt?.toMillis?.() ?? 0,
+    createdBy: String(data.createdBy ?? ''),
     clientId: String(data.clientId ?? ''),
     valuationId: String(data.valuationId ?? ''),
   }
 }
 
-export const submitPublicPreRegistration = async ({ nombreCompleto, telefono = '', website = '' }) => {
-  try {
-    const submitPreRegistration = httpsCallable(functions, 'submitPreRegistration')
-    const response = await submitPreRegistration({
-      nombreCompleto: normalizeText(nombreCompleto),
-      telefono: normalizeText(telefono),
-      website: normalizeText(website),
-    })
+export const createPreRegistrationInvitation = async ({ nombreCompleto, telefono }) => (
+  callPreRegistrationFunction('createPreRegistrationInvitation', {
+    nombreCompleto: normalizeText(nombreCompleto),
+    telefono: normalizeText(telefono),
+  }, 'No se pudo generar el prerregistro. Intenta nuevamente.')
+)
 
-    return {
-      ok: Boolean(response.data?.ok),
-      id: String(response.data?.preRegistrationId ?? ''),
-      message: String(response.data?.message ?? 'Prerregistro guardado correctamente.'),
-    }
-  } catch (error) {
+export const listPublicPendingPreRegistrations = async () => {
+  const result = await callPreRegistrationFunction(
+    'listPendingPreRegistrations',
+    {},
+    'No se pudieron cargar los prerregistros disponibles.',
+  )
+
+  return {
+    ...result,
+    preRegistrations: Array.isArray(result.preRegistrations)
+      ? result.preRegistrations.map((preRegistration) => ({
+        id: String(preRegistration?.id ?? ''),
+        nombreCompleto: String(preRegistration?.nombreCompleto ?? ''),
+        telefonoUltimos4: String(preRegistration?.telefonoUltimos4 ?? ''),
+        createdAtMs: Number(preRegistration?.createdAtMs ?? 0),
+      }))
+      : [],
+  }
+}
+
+export const verifyPreRegistrationInvitation = async ({ preRegistrationId, telefono }) => (
+  callPreRegistrationFunction('verifyPreRegistrationInvitation', {
+    preRegistrationId: normalizeText(preRegistrationId),
+    telefono: normalizeText(telefono),
+  }, 'No se pudo verificar el prerregistro.')
+)
+
+export const submitPublicPreRegistration = async ({ preRegistrationId, telefono, website = '' }) => (
+  callPreRegistrationFunction('submitPreRegistration', {
+    preRegistrationId: normalizeText(preRegistrationId),
+    telefono: normalizeText(telefono),
+    website: normalizeText(website),
+  }, 'No se pudo finalizar el prerregistro. Intenta nuevamente.')
+)
+
+export const deletePreRegistration = async (preRegistrationId) => (
+  callPreRegistrationFunction('deletePreRegistration', {
+    preRegistrationId: normalizeText(preRegistrationId),
+  }, 'No se pudo eliminar el prerregistro.')
+)
+
+export const listManagedPreRegistrations = async () => {
+  try {
+    const snapshots = await getDocs(query(
+      collection(db, PRE_REGISTRATIONS_COLLECTION),
+      where('status', 'in', ['pending', 'completed']),
+      limit(200),
+    ))
+    const preRegistrations = snapshots.docs
+      .map(mapPreRegistrationSnapshot)
+      .sort((left, right) => right.createdAtMs - left.createdAtMs)
+
+    return { ok: true, preRegistrations }
+  } catch {
     return {
       ok: false,
-      reason: String(error?.details?.reason ?? ''),
-      message: String(error?.message ?? 'No se pudo guardar el prerregistro. Intenta nuevamente.'),
+      preRegistrations: [],
+      message: 'No se pudieron cargar los prerregistros.',
     }
   }
 }
