@@ -9,6 +9,7 @@ Sistema web para administrar clientes, valoraciones cosmetológicas, expedientes
 - Cloud Firestore
 - Firebase Storage
 - Firebase Hosting
+- Cloud Functions para el envío seguro de prerregistros públicos
 - jsPDF y html2pdf para documentos
 
 ## Módulos
@@ -44,6 +45,8 @@ Los cambios en consultas paginadas requieren desplegar índices, reglas de Fires
 npx firebase-tools deploy --only firestore:rules,firestore:indexes,storage
 npm run deploy
 ```
+
+El prerregistro público utiliza una Cloud Function. Antes del primer despliegue instala sus dependencias con `npm install --prefix functions` y confirma que el proyecto de Firebase permita desplegar Functions.
 
 ## Almacenamiento
 

@@ -268,6 +268,7 @@ const resolveClinicalPhotoUploadErrorMessage = (error) => {
 const normalizeStepOneData = (data) => ({
   tipoCliente: data?.tipoCliente === 'recurrente' ? 'recurrente' : 'nuevo',
   clienteId: normalizeText(data?.clienteId),
+  preregistroId: normalizeText(data?.preregistroId),
   apellidoPaterno: normalizeText(data.apellidoPaterno),
   apellidoMaterno: normalizeText(data.apellidoMaterno),
   nombre: normalizeText(data.nombre),

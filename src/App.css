@@ -207,6 +207,54 @@ h2 {
   background-image: url('./img/expedientes.jpeg');
 }
 
+.module-card-preregistros {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 72% 24%, rgba(255, 255, 255, 0.65), transparent 24%),
+    linear-gradient(145deg, #ead8ca 0%, #cfae9f 48%, #9b7482 100%);
+}
+
+.module-card-preregistros::before {
+  content: '';
+  position: absolute;
+  inset: 12%;
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  border-radius: 50% 50% 18px 18px;
+}
+
+.module-card-text {
+  position: relative;
+  z-index: 1;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  background: rgba(255, 250, 247, 0.88);
+  color: #604250;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  box-shadow: 0 10px 26px rgba(75, 47, 58, 0.18);
+}
+
+.preregistration-list {
+  margin-top: 1rem;
+}
+
+.preregistration-row-summary {
+  cursor: default;
+}
+
+.empty-state-card {
+  margin-top: 1rem;
+  padding: 1.2rem;
+  border: 1px dashed #cbb299;
+  border-radius: 16px;
+  background: rgba(255, 250, 243, 0.78);
+  display: grid;
+  gap: 0.45rem;
+  text-align: center;
+}
+
 .module-kicker {
   margin: 0;
   font-size: 0.74rem;
@@ -583,7 +631,7 @@ textarea {
 
 .client-mode-toggle {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.55rem;
 }
 
@@ -691,6 +739,18 @@ textarea {
 .history-modal-client-info {
   display: grid;
   gap: 0.25rem;
+}
+
+.preregistration-picker-results {
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 0.15rem;
+}
+
+@media (max-width: 720px) {
+  .client-mode-toggle {
+    grid-template-columns: 1fr;
+  }
 }
 
 .history-modal-section {

@@ -31,7 +31,7 @@ if (missingEnvKeys.length > 0) {
 
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
 
-export { firebaseConfig }
+export { app, firebaseConfig }
 export const auth = getAuth(app)
 export const db = getFirestore(app)
 export const storage = getStorage(app)

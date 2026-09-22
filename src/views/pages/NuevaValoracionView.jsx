@@ -8,6 +8,10 @@ import {
   saveClientFromStepOne,
 } from '../../models/clientModel.js'
 import {
+  listCompletedPreRegistrations,
+  markPreRegistrationUsed,
+} from '../../models/preRegistrationModel.js'
+import {
   STEP_EIGHT_OPTIONS,
   STEP_FOUR_OPTIONS,
   STEP_NINE_OPTIONS,
@@ -62,6 +66,7 @@ const RECURRENT_TOTAL_STEPS = 4
 const getTodayDate = () => new Date().toISOString().split('T')[0]
 
 const createStepOneInitialData = () => ({
+  preregistroId: '',
   apellidoPaterno: '',
   apellidoMaterno: '',
   nombre: '',
@@ -673,6 +678,10 @@ function NuevaValoracionView() {
   const [availableClients, setAvailableClients] = useState([])
   const [clientSearch, setClientSearch] = useState('')
   const [isLoadingClients, setIsLoadingClients] = useState(false)
+  const [availablePreRegistrations, setAvailablePreRegistrations] = useState([])
+  const [preRegistrationSearch, setPreRegistrationSearch] = useState('')
+  const [selectedPreRegistrationId, setSelectedPreRegistrationId] = useState('')
+  const [isLoadingPreRegistrations, setIsLoadingPreRegistrations] = useState(false)
   const [isLoading, setIsLoading] = useState(Boolean(valuationId))
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState('')
@@ -738,6 +747,54 @@ function NuevaValoracionView() {
   }, [currentUser?.id])
 
   useEffect(() => {
+    let isMounted = true
+
+    const loadPreRegistrations = async () => {
+      if (!currentUser?.id || valuationId) {
+        if (isMounted) setAvailablePreRegistrations([])
+        return
+      }
+
+      setIsLoadingPreRegistrations(true)
+      const result = await listCompletedPreRegistrations()
+      if (!isMounted) return
+
+      if (!result.ok) {
+        setAvailablePreRegistrations([])
+        setIsLoadingPreRegistrations(false)
+        return
+      }
+
+      setAvailablePreRegistrations(result.preRegistrations)
+      setIsLoadingPreRegistrations(false)
+
+      const requestedPreRegistrationId = new URLSearchParams(location.search).get('preregistro') || ''
+      const requestedPreRegistration = result.preRegistrations.find(
+        (preRegistration) => preRegistration.id === requestedPreRegistrationId,
+      )
+
+      if (requestedPreRegistration) {
+        const savedStepOne = requestedPreRegistration.answers?.step1 || {}
+        setClientFlowType('preregistro')
+        setSelectedPreRegistrationId(requestedPreRegistration.id)
+        setPreRegistrationSearch(requestedPreRegistration.nombreCompleto)
+        setStepOneData({
+          ...createStepOneInitialData(),
+          ...savedStepOne,
+          preregistroId: requestedPreRegistration.id,
+          nombre: String(savedStepOne.nombre || requestedPreRegistration.nombreCompleto),
+          telefono: String(savedStepOne.telefono || requestedPreRegistration.telefono),
+        })
+      }
+    }
+
+    loadPreRegistrations()
+    return () => {
+      isMounted = false
+    }
+  }, [currentUser?.id, location.search, valuationId])
+
+  useEffect(() => {
     const queryText = clientSearch.trim()
     if (!queryText) return undefined
 
@@ -759,6 +816,8 @@ function NuevaValoracionView() {
         setHighestSavedStep(1)
         setClientFlowType('')
         setSelectedClientId('')
+        setSelectedPreRegistrationId('')
+        setPreRegistrationSearch('')
         setStepOneData(createStepOneInitialData())
         setStepTwoData(createStepTwoInitialData())
         setStepThreeData(createStepThreeInitialData())
@@ -913,6 +972,19 @@ function NuevaValoracionView() {
       .slice(0, 20)
   }, [availableClients, clientSearch])
 
+  const filteredPreRegistrations = useMemo(() => {
+    const queryText = preRegistrationSearch.trim().toLocaleLowerCase('es-MX')
+
+    if (!queryText) {
+      return availablePreRegistrations
+    }
+
+    return availablePreRegistrations.filter((preRegistration) => (
+      preRegistration.nombreCompleto.toLocaleLowerCase('es-MX').includes(queryText)
+      || preRegistration.telefono.includes(queryText)
+    ))
+  }, [availablePreRegistrations, preRegistrationSearch])
+
   const titleText = useMemo(() => {
     if (isProtocolMode) {
       return 'Protocolo'
@@ -925,7 +997,11 @@ function NuevaValoracionView() {
     return 'Nueva Valoración'
   }, [isProtocolMode, valuationDocId])
 
-  const isFlowSelected = !isProtocolMode && (clientFlowType === 'nuevo' || clientFlowType === 'recurrente')
+  const isFlowSelected = !isProtocolMode && (
+    clientFlowType === 'nuevo'
+    || clientFlowType === 'recurrente'
+    || clientFlowType === 'preregistro'
+  )
   const normalizedActiveStep = Number.isFinite(Number(activeStep))
     ? Math.max(1, Math.min(TOTAL_STEPS, Math.trunc(Number(activeStep))))
     : 1
@@ -1406,6 +1482,22 @@ function NuevaValoracionView() {
     }))
   }
 
+  const applyPreRegistrationToStepOne = (preRegistration) => {
+    const savedStepOne = preRegistration.answers?.step1 || {}
+    setClientFlowType('preregistro')
+    setSelectedClientId('')
+    setSelectedPreRegistrationId(preRegistration.id)
+    setPreRegistrationSearch(preRegistration.nombreCompleto)
+    setStepOneData({
+      ...createStepOneInitialData(),
+      ...savedStepOne,
+      preregistroId: preRegistration.id,
+      nombre: String(savedStepOne.nombre || preRegistration.nombreCompleto),
+      telefono: String(savedStepOne.telefono || preRegistration.telefono),
+    })
+    setError('')
+  }
+
   const selectClientFlowType = (flowType) => {
     setClientFlowType(flowType)
     setActiveStep(1)
@@ -1413,10 +1505,20 @@ function NuevaValoracionView() {
 
     if (flowType === 'nuevo') {
       setSelectedClientId('')
+      setSelectedPreRegistrationId('')
       setStepOneData(createStepOneInitialData())
       return
     }
 
+    if (flowType === 'preregistro') {
+      setSelectedClientId('')
+      setSelectedPreRegistrationId('')
+      setStepOneData(createStepOneInitialData())
+      setPreRegistrationSearch('')
+      return
+    }
+
+    setSelectedPreRegistrationId('')
     setStepOneData(createStepOneInitialData())
     setClientSearch('')
   }
@@ -1490,6 +1592,10 @@ function NuevaValoracionView() {
     }
 
     if (step === 1) {
+      if (clientFlowType === 'preregistro' && !selectedPreRegistrationId) {
+        return 'Selecciona un prerregistro finalizado para continuar.'
+      }
+
       const requiredFields = [
         stepOneData.apellidoPaterno,
         stepOneData.apellidoMaterno,
@@ -1713,14 +1819,16 @@ function NuevaValoracionView() {
       knownCurrentStep: highestSavedStep,
       stepOneData: {
         ...stepOneData,
-        tipoCliente: clientFlowType,
+        tipoCliente: clientFlowType === 'recurrente' ? 'recurrente' : 'nuevo',
         clienteId: linkedClientId,
+        preregistroId: clientFlowType === 'preregistro'
+          ? selectedPreRegistrationId
+          : String(stepOneData.preregistroId || ''),
       },
     })
 
-    setIsSaving(false)
-
     if (!valuationResult.ok) {
+      setIsSaving(false)
       setError(valuationResult.message)
       setSuccessMessage('')
       return null
@@ -1737,6 +1845,25 @@ function NuevaValoracionView() {
 
     const nextValuationId = valuationResult.valuation?.id || valuationDocId
     setValuationDocId(nextValuationId)
+
+    if (clientFlowType === 'preregistro' && selectedPreRegistrationId && nextValuationId) {
+      const usedResult = await markPreRegistrationUsed({
+        preRegistrationId: selectedPreRegistrationId,
+        userId: currentUser.id,
+        clientId: linkedClientId,
+        valuationId: nextValuationId,
+      })
+
+      if (!usedResult.ok) {
+        setError(usedResult.message)
+      } else {
+        setAvailablePreRegistrations((current) => (
+          current.filter((preRegistration) => preRegistration.id !== selectedPreRegistrationId)
+        ))
+      }
+    }
+
+    setIsSaving(false)
 
     if (!valuationId && nextValuationId) {
       navigate(`/app/nueva-valoracion/${nextValuationId}`, { replace: true })
@@ -2545,6 +2672,13 @@ function NuevaValoracionView() {
           >
             CLIENTE FRECUENTE
           </button>
+          <button
+            type="button"
+            className="client-mode-button"
+            onClick={() => selectClientFlowType('preregistro')}
+          >
+            CLIENTE CON PRERREGISTRO
+          </button>
         </div>
       ) : null}
 
@@ -2637,6 +2771,54 @@ function NuevaValoracionView() {
 
       {!isLoading && isFlowSelected && activeStep === 1 ? (
         <form className="simple-form valuation-form" onSubmit={handleSaveAndExit}>
+          {clientFlowType === 'preregistro' ? (
+            <div className="client-search-box">
+              <div>
+                <p className="valuation-section-title">Seleccionar prerregistro finalizado</p>
+                <p className="subtitle">Al elegirlo se copiarán aquí las respuestas enviadas por el cliente.</p>
+              </div>
+
+              <label>
+                Buscar por nombre o teléfono
+                <input
+                  type="search"
+                  value={preRegistrationSearch}
+                  onChange={(event) => setPreRegistrationSearch(event.target.value)}
+                  placeholder="Escribe nombre o teléfono"
+                />
+              </label>
+
+              {isLoadingPreRegistrations ? <p className="subtitle">Cargando prerregistros...</p> : null}
+
+              {!isLoadingPreRegistrations ? (
+                <div className="client-search-results preregistration-picker-results">
+                  {filteredPreRegistrations.length === 0 ? (
+                    <p className="subtitle">No hay prerregistros finalizados disponibles.</p>
+                  ) : (
+                    filteredPreRegistrations.map((preRegistration) => (
+                      <button
+                        key={preRegistration.id}
+                        type="button"
+                        className={`client-search-row ${selectedPreRegistrationId === preRegistration.id ? 'selected' : ''}`}
+                        onClick={() => applyPreRegistrationToStepOne(preRegistration)}
+                      >
+                        <strong>{preRegistration.nombreCompleto}</strong>
+                        <small>{preRegistration.telefono || 'Teléfono pendiente'}</small>
+                      </button>
+                    ))
+                  )}
+                </div>
+              ) : null}
+
+              {selectedPreRegistrationId ? (
+                <div className="client-detail-grid">
+                  <p><strong>Prerregistro seleccionado:</strong> {stepOneData.nombre || 'Sin nombre'}</p>
+                  <p><strong>Teléfono:</strong> {stepOneData.telefono || 'Pendiente de captura'}</p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {clientFlowType === 'recurrente' ? (
             <div className="client-search-box">
               <label>
@@ -2692,7 +2874,7 @@ function NuevaValoracionView() {
             </div>
           ) : null}
 
-          {clientFlowType === 'nuevo' ? (
+          {clientFlowType === 'nuevo' || clientFlowType === 'preregistro' ? (
             <>
               <div className="valuation-grid">
                 <label>

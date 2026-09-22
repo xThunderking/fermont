@@ -130,5 +130,30 @@ service cloud.firestore {
 
       allow delete: if isAdmin();
     }
+
+    match /preregistros/{preRegistrationId} {
+      allow get, list: if isSignedIn();
+      allow create: if false;
+
+      allow update: if isSignedIn()
+        && resource.data.status == 'completed'
+        && request.resource.data.status == 'used'
+        && request.resource.data.usedBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'status',
+          'usedBy',
+          'clientId',
+          'valuationId',
+          'usedAt',
+          'updatedAt'
+        ]);
+
+      allow delete: if isAdmin();
+    }
+
+    // Estos identificadores solo son administrados por Cloud Functions.
+    match /preregistroIdentidades/{identityId} {
+      allow read, write: if false;
+    }
   }
 }

@@ -24,6 +24,17 @@ const LIST_PAGE_SIZE = 25
 
 const normalizeText = (value) => String(value ?? '').trim()
 
+const normalizeIdentityName = (value) => normalizeText(value)
+  .replace(/\s+/g, ' ')
+  .toLocaleLowerCase('es-MX')
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+
+const normalizePhone = (value) => {
+  const digits = String(value ?? '').replace(/\D/g, '')
+  return digits.length > 10 ? digits.slice(-10) : digits
+}
+
 const normalizeClientData = (data) => {
   const nombre = normalizeText(data.nombre)
   const apellidoPaterno = normalizeText(data.apellidoPaterno)
@@ -37,12 +48,14 @@ const normalizeClientData = (data) => {
     nombre,
     nombreCompleto,
     nombreCompletoLower: nombreCompleto.toLowerCase(),
+    nombreNormalizado: normalizeIdentityName(nombreCompleto),
     sexo: ['masculino', 'femenino'].includes(normalizeText(data?.sexo).toLowerCase())
       ? normalizeText(data?.sexo).toLowerCase()
       : '',
     edad: normalizeText(data.edad),
     fechaNacimiento: normalizeText(data.fechaNacimiento),
     telefono: normalizeText(data.telefono),
+    telefonoNormalizado: normalizePhone(data.telefono),
     correoElectronico,
     correoElectronicoLower: correoElectronico,
     ocupacion: normalizeText(data.ocupacion),
@@ -60,10 +73,12 @@ const mapClientSnapshot = (snapshot) => {
     nombre: String(data.nombre ?? ''),
     nombreCompleto: String(data.nombreCompleto ?? ''),
     nombreCompletoLower: String(data.nombreCompletoLower ?? ''),
+    nombreNormalizado: String(data.nombreNormalizado ?? ''),
     sexo: String(data.sexo ?? ''),
     edad: String(data.edad ?? ''),
     fechaNacimiento: String(data.fechaNacimiento ?? ''),
     telefono: String(data.telefono ?? ''),
+    telefonoNormalizado: String(data.telefonoNormalizado ?? ''),
     correoElectronico: String(data.correoElectronico ?? ''),
     correoElectronicoLower: String(data.correoElectronicoLower ?? ''),
     ocupacion: String(data.ocupacion ?? ''),

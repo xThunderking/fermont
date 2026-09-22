@@ -11,12 +11,15 @@ import NuevaValoracionView from './views/pages/NuevaValoracionView.jsx'
 import UsersView from './views/pages/UsersView.jsx'
 import ValoracionesPendientesView from './views/pages/ValoracionesPendientesView.jsx'
 import ExpedientesView from './views/pages/ExpedientesView.jsx'
+import PreRegistrationsView from './views/pages/PreRegistrationsView.jsx'
 import PublicHome from './publicSite/PublicHome.jsx'
+import PreRegistrationView from './publicSite/PreRegistrationView.jsx'
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<PublicHome />} />
+      <Route path="/preregistro" element={<PreRegistrationView />} />
       <Route path="/login" element={<LoginView />} />
 
       <Route element={<ProtectedRoute />}>
@@ -28,6 +31,7 @@ function AppRoutes() {
           <Route path="valoraciones-pendientes" element={<ValoracionesPendientesView />} />
           <Route path="expedientes" element={<ExpedientesView />} />
           <Route path="expedientes/:valuationId" element={<ExpedientesView />} />
+          <Route path="preregistros" element={<PreRegistrationsView />} />
           <Route
             path="usuarios"
             element={

@@ -48,6 +48,9 @@ function PublicHome() {
                   <PublicIcon name="arrow" />
                 </span>
               </a>
+              <Link className="public-text-link" to="/preregistro">
+                Hacer mi prerregistro <PublicIcon name="arrow" />
+              </Link>
             </div>
 
             <div className="public-hero-proof" aria-label="Características de la atención">

@@ -40,6 +40,16 @@ function MenuView() {
           onClick={() => navigate('/app/clientes')}
         />
 
+        <button
+          type="button"
+          className="module-card module-card-preregistros"
+          aria-label="Prerregistros"
+          title="Prerregistros"
+          onClick={() => navigate('/app/preregistros')}
+        >
+          <span className="module-card-text">Prerregistros</span>
+        </button>
+
         {isAdmin ? (
           <button
             type="button"
