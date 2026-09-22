@@ -8,7 +8,7 @@ import {
   experienceValues,
   frequentlyAskedQuestions,
   publicSiteConfig,
-  services,
+  serviceCategories,
 } from './siteConfig.js'
 import './publicSite.css'
 
@@ -16,6 +16,7 @@ const trustMessages = ['Imagen', 'Cuidado', 'Confianza', 'Atención personalizad
 
 function PublicHome() {
   useScrollReveal()
+  const totalServices = serviceCategories.reduce((total, category) => total + category.items.length, 0)
 
   return (
     <div className="public-site">
@@ -41,8 +42,11 @@ function PublicHome() {
                 Agendar mi cita
                 <PublicIcon name="arrow" className="public-button-arrow" />
               </a>
-              <a className="public-text-link" href="#servicios">
-                Explorar tratamientos <PublicIcon name="arrow" />
+              <a className="public-button public-button-secondary public-treatments-button" href="#servicios">
+                Explorar tratamientos
+                <span className="public-treatments-button-icon" aria-hidden="true">
+                  <PublicIcon name="arrow" />
+                </span>
               </a>
             </div>
 
@@ -108,27 +112,79 @@ function PublicHome() {
             <p>Antes de recomendar, escuchamos. Cada experiencia comienza conociéndote y se adapta a lo que tú necesitas.</p>
           </div>
 
-          <div className="public-service-grid">
-            {services.map((service, index) => (
-              <article
-                className="public-service-card"
-                key={service.title}
-                data-reveal="up"
-                style={{ '--reveal-delay': `${index * 100}ms` }}
-              >
-                <div className="public-card-shine" aria-hidden="true" />
-                <div className="public-service-topline">
-                  <span className="public-service-icon"><PublicIcon name={service.icon} /></span>
-                  <span className="public-service-number">{service.number}</span>
-                </div>
-                <p className="public-service-detail">{service.detail}</p>
-                <h3>{service.title}</h3>
-                <p>{service.description}</p>
-                <a href={publicSiteConfig.whatsapp} target="_blank" rel="noreferrer" aria-label={`Preguntar por ${service.title}`}>
-                  Preguntar por este servicio <PublicIcon name="arrow" />
+          <div className="public-services-intro" data-reveal="up">
+            <article className="public-service-menu-card">
+              <span className="public-service-menu-label">Menú de servicios</span>
+              <strong>{totalServices}</strong>
+              <p>Opciones faciales y corporales organizadas para que encuentres rápido lo que tu piel o tu cuerpo necesita.</p>
+              <a href={publicSiteConfig.recommendationWhatsapp} target="_blank" rel="noreferrer">
+                Pedir recomendación <PublicIcon name="arrow" />
+              </a>
+            </article>
+
+            <div className="public-service-pills" aria-label="Categorías de servicios">
+              {serviceCategories.map((category) => (
+                <a
+                  className="public-service-pill"
+                  href={`#${category.id}`}
+                  key={category.id}
+                  style={{ '--category-accent': category.accent, '--category-soft': category.soft }}
+                >
+                  <span><PublicIcon name={category.icon} /></span>
+                  <div>
+                    <small>{category.kicker}</small>
+                    <strong>{category.items.length} opciones</strong>
+                  </div>
                 </a>
-              </article>
+              ))}
+            </div>
+          </div>
+
+          <div className="public-service-catalog">
+            {serviceCategories.map((category, categoryIndex) => (
+              <section
+                className="public-service-category"
+                id={category.id}
+                key={category.id}
+                style={{ '--category-accent': category.accent, '--category-soft': category.soft }}
+                aria-labelledby={`${category.id}-title`}
+              >
+                <div className="public-service-category-header" data-reveal="left">
+                  <span className="public-service-category-index">{String(categoryIndex + 1).padStart(2, '0')}</span>
+                  <p>{category.kicker}</p>
+                  <h3 id={`${category.id}-title`}>{category.title}</h3>
+                  <p>{category.description}</p>
+                </div>
+
+                <div className="public-service-list">
+                  {category.items.map((service, index) => (
+                    <article
+                      className="public-service-item"
+                      key={service.title}
+                      data-reveal="up"
+                      style={{ '--reveal-delay': `${Math.min(index * 45, 360)}ms` }}
+                    >
+                      <div className="public-card-shine" aria-hidden="true" />
+                      <div className="public-service-item-header">
+                        <span className="public-service-symbol"><PublicIcon name={service.icon} /></span>
+                        <span className="public-service-item-number">{String(index + 1).padStart(2, '0')}</span>
+                      </div>
+                      <p className="public-service-tag">{service.tag}</p>
+                      <h4>{service.title}</h4>
+                      <p>{service.description}</p>
+                    </article>
+                  ))}
+                </div>
+              </section>
             ))}
+          </div>
+
+          <div className="public-services-note" data-reveal="up">
+            <span><PublicIcon name="heart" /></span>
+            <p>Cada servicio se personaliza de acuerdo con las características y necesidades de tu piel. Productos y aparatología pueden variar después de la valoración.</p>
+            <a href={publicSiteConfig.whatsapp} target="_blank" rel="noreferrer">
+              Agendar valoración <PublicIcon name="arrow" />
+            </a>
           </div>
         </section>
 
@@ -218,7 +274,17 @@ function PublicHome() {
 
             <div className="public-contact-details">
               <div><span><PublicIcon name="clock" /></span><p><small>Horario</small>{publicSiteConfig.schedule}</p></div>
-              <div><span><PublicIcon name="pin" /></span><p><small>Ubicación</small>{publicSiteConfig.address}</p></div>
+              <a
+                className="public-contact-location"
+                href={publicSiteConfig.location}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Abrir la ubicación de Fermont en Google Maps"
+              >
+                <span><PublicIcon name="pin" /></span>
+                <p><small>Ubicación</small>Abrir en Google Maps</p>
+                <PublicIcon name="arrow" />
+              </a>
             </div>
 
             <a className="public-button public-button-light public-contact-button" href={publicSiteConfig.whatsapp} target="_blank" rel="noreferrer">
@@ -228,7 +294,7 @@ function PublicHome() {
             <div className="public-socials">
               <span>Síguenos</span>
               <a href={publicSiteConfig.instagram} target="_blank" rel="noreferrer" aria-label="Fermont en Instagram"><PublicIcon name="instagram" /></a>
-              <a href={publicSiteConfig.facebook} target="_blank" rel="noreferrer" aria-label="Fermont en Facebook"><PublicIcon name="facebook" /></a>
+              <a href={publicSiteConfig.tiktok} target="_blank" rel="noreferrer" aria-label="Fermont en TikTok"><PublicIcon name="tiktok" /></a>
             </div>
           </aside>
         </section>

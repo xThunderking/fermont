@@ -49,6 +49,12 @@ function PublicIcon({ name, className = '' }) {
         <circle cx="17.5" cy="6.5" r=".7" fill="currentColor" stroke="none" />
       </>
     ),
+    tiktok: (
+      <>
+        <path d="M15 3v11.2a4.2 4.2 0 1 1-3.1-4.1" />
+        <path d="M15 5.3c1 1.7 2.4 2.7 4.2 2.9" />
+      </>
+    ),
     facebook: <path d="M14 21v-8h2.8l.4-3H14V8.1c0-.9.3-1.5 1.6-1.5h1.7V3.9c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3V10H8v3h2.6v8H14Z" />,
     pin: (
       <>
