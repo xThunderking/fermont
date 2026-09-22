@@ -313,7 +313,10 @@ export const loginWithGoogle = async () => {
 
     return { ok: true, user }
   } catch (error) {
-    if (error?.code === 'auth/popup-blocked') {
+    const shouldUseRedirect = error?.code === 'auth/popup-blocked'
+      || error?.code === 'auth/operation-not-supported-in-this-environment'
+
+    if (shouldUseRedirect) {
       try {
         setGoogleRedirectPending()
         await signInWithRedirect(auth, googleProvider)

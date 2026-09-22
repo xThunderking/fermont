@@ -5,6 +5,13 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    // La eliminación de una valoración recorre primero su carpeta raíz para
+    // localizar fotografías y firmas. El comodín v2 también cubre la carpeta
+    // raíz e intermedias, pero únicamente concede la operación de listado.
+    match /valoraciones/{valuationId}/{allPaths=**} {
+      allow list: if isSignedIn();
+    }
+
     match /valoraciones/{valuationId}/fotografias-clinicas/{allPaths=**} {
       allow read, delete: if isSignedIn();
       allow create, update: if isSignedIn()

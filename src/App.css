@@ -1928,39 +1928,19 @@ textarea {
 
 .login-form-shell {
   display: grid;
+  align-content: center;
   gap: 0.9rem;
 }
 
-.login-form {
-  gap: 0.85rem;
-}
-
-.login-form label {
-  font-weight: 600;
-}
-
-.login-form input {
-  min-height: 48px;
-}
-
-.login-submit {
-  min-height: 48px;
-}
-
-.login-divider {
-  margin: 0;
+.login-google-copy {
   display: grid;
-  place-items: center;
-  color: #7e6652;
-  font-weight: 600;
+  gap: 0.45rem;
+  text-align: center;
 }
 
-.login-divider span {
-  background: #fbf7f2;
-  border: 1px solid #e7d8c8;
-  border-radius: 999px;
-  padding: 0.18rem 0.7rem;
-  line-height: 1.3;
+.login-google-copy h2,
+.login-google-copy p {
+  margin: 0;
 }
 
 .google-button {
@@ -1970,7 +1950,8 @@ textarea {
   background: #fff;
   color: #3f2c20;
   font-weight: 700;
-  padding: 0.58rem 0.86rem;
+  min-height: 50px;
+  padding: 0.7rem 0.9rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;

@@ -4,33 +4,12 @@ import { useAuthController } from '../../controllers/authController.jsx'
 import logoFermont from '../../img/LOGOFERMONT3.png'
 
 function LoginView() {
-  const { isAuthenticated, authError, loginWithCredentials, loginWithGoogle } = useAuthController()
+  const { isAuthenticated, authError, loginWithGoogle } = useAuthController()
   const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [isCredentialsSubmitting, setIsCredentialsSubmitting] = useState(false)
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false)
 
-  const isBusy = isGoogleSubmitting || isCredentialsSubmitting
   const visibleError = error || authError
-
-  const handleCredentialsSubmit = async (event) => {
-    event.preventDefault()
-    setError('')
-    setIsCredentialsSubmitting(true)
-
-    const result = await loginWithCredentials({ email, password })
-
-    if (!result.ok) {
-      setError(result.message)
-      setIsCredentialsSubmitting(false)
-      return
-    }
-
-    setIsCredentialsSubmitting(false)
-    navigate('/app', { replace: true })
-  }
 
   const handleGoogleLogin = async () => {
     setError('')
@@ -66,49 +45,18 @@ function LoginView() {
           </div>
 
           <div className="login-form-shell">
-            <form className="simple-form login-form" onSubmit={handleCredentialsSubmit}>
-              <label>
-                Usuario o correo
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="nombre@correo.com"
-                  autoComplete="username"
-                  required
-                  disabled={isBusy}
-                />
-              </label>
-
-              <label>
-                Contraseña
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Ingresa tu contraseña"
-                  autoComplete="current-password"
-                  required
-                  disabled={isBusy}
-                />
-              </label>
-
-              {visibleError ? <p className="error-text">{visibleError}</p> : null}
-
-              <button type="submit" className="main-button login-submit" disabled={isBusy}>
-                {isCredentialsSubmitting ? 'Entrando...' : 'Entrar al sistema'}
-              </button>
-            </form>
-
-            <div className="login-divider" aria-hidden="true">
-              <span>o continua con</span>
+            <div className="login-google-copy">
+              <h2>Acceso al sistema</h2>
+              <p className="subtitle">Ingresa con la cuenta de Google autorizada para Fermont.</p>
             </div>
+
+            {visibleError ? <p className="error-text">{visibleError}</p> : null}
 
             <button
               type="button"
               className="google-button"
               onClick={handleGoogleLogin}
-              disabled={isBusy}
+              disabled={isGoogleSubmitting}
             >
               <svg className="google-logo" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                 <path
