@@ -91,11 +91,17 @@ export const verifyPreRegistrationInvitation = async ({ preRegistrationId, telef
   }, 'No se pudo verificar el prerregistro.')
 )
 
-export const submitPublicPreRegistration = async ({ preRegistrationId, telefono, website = '' }) => (
+export const submitPublicPreRegistration = async ({
+  preRegistrationId,
+  telefono,
+  website = '',
+  answers = {},
+}) => (
   callPreRegistrationFunction('submitPreRegistration', {
     preRegistrationId: normalizeText(preRegistrationId),
     telefono: normalizeText(telefono),
     website: normalizeText(website),
+    answers,
   }, 'No se pudo finalizar el prerregistro. Intenta nuevamente.')
 )
 

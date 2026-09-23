@@ -21,6 +21,391 @@ const normalizePhone = (value) => {
   return digits.length > 10 ? digits.slice(-10) : digits
 }
 
+const HEALTH_OPTIONS = {
+  enfermedades: new Set([
+    'Ninguna',
+    'Diabetes',
+    'Hipertension',
+    'Problemas hormonales',
+    'SOP',
+    'Enfermedades dermatologicas',
+    'Enfermedades autoinmunes',
+    'Problemas circulatorios',
+    'Varices',
+    'Epilepsia',
+    'Cancer',
+    'Marcapasos',
+    'Otro',
+  ]),
+  medicamentos: new Set([
+    'Ninguno',
+    'Isotretinoina',
+    'Anticoagulantes',
+    'Antibioticos',
+    'Retinoides',
+    'Hormonas',
+    'Anticonceptivos',
+    'Otros medicamentos',
+  ]),
+  alergias: new Set([
+    'Ninguna',
+    'Cosmeticos',
+    'Medicamentos',
+    'Fragancias',
+    'Activos especificos',
+    'Contraindicaciones',
+    'Heridas activas',
+    'Infecciones',
+    'Herpes activo',
+    'Cirugias recientes',
+    'Quemaduras solares',
+    'Irritacion severa',
+    'Otras alergias',
+  ]),
+}
+
+const PROCEDURE_OPTIONS = new Set([
+  'Peelings',
+  'Microneedling',
+  'Laser',
+  'Botox',
+  'Rellenos',
+  'Otro',
+  'Ninguno',
+])
+
+const ROUTINE_OPTIONS = {
+  manana: new Set(['No tengo rutina', 'Limpiador', 'Serum', 'Hidratante', 'Protector solar', 'Otro']),
+  noche: new Set(['No tengo rutina', 'Desmaquillante', 'Activos', 'Cremas', 'Exfoliantes', 'Otro']),
+}
+
+const FOOD_QUALITY_OPTIONS = new Set(['muy buena', 'buena', 'regular', 'mala', 'muy mala'])
+
+const invalidAnswers = (message) => {
+  throw new HttpsError('invalid-argument', message)
+}
+
+const normalizeLimitedText = (value, label, { required = false, maxLength = 180 } = {}) => {
+  const normalized = normalizeText(value)
+  if (required && !normalized) invalidAnswers(`Completa el campo “${label}”.`)
+  if (normalized.length > maxLength) invalidAnswers(`El campo “${label}” es demasiado largo.`)
+  return normalized
+}
+
+const normalizeBinaryAnswer = (value, label, required = true) => {
+  const normalized = normalizeText(value).toLowerCase()
+  if (normalized === 'si' || normalized === 'no') return normalized
+  if (required) invalidAnswers(`Selecciona una respuesta en “${label}”.`)
+  return ''
+}
+
+const normalizeSelection = (value, allowed, label, exclusiveOption = '') => {
+  if (!Array.isArray(value)) invalidAnswers(`Selecciona una respuesta en “${label}”.`)
+
+  const normalized = Array.from(new Set(value.map(normalizeText).filter(Boolean)))
+  if (normalized.length === 0 || normalized.some((item) => !allowed.has(item))) {
+    invalidAnswers(`Selecciona una respuesta válida en “${label}”.`)
+  }
+
+  if (exclusiveOption && normalized.includes(exclusiveOption) && normalized.length > 1) {
+    invalidAnswers(`“${exclusiveOption}” no puede combinarse con otras respuestas en “${label}”.`)
+  }
+
+  return normalized
+}
+
+const splitFullName = (fullName) => {
+  const parts = normalizeText(fullName).split(' ').filter(Boolean)
+  if (parts.length >= 3) {
+    return {
+      nombre: parts.slice(0, -2).join(' '),
+      apellidoPaterno: parts.at(-2),
+      apellidoMaterno: parts.at(-1),
+    }
+  }
+  if (parts.length === 2) {
+    return { nombre: parts[0], apellidoPaterno: parts[1], apellidoMaterno: '' }
+  }
+  return { nombre: parts[0] || '', apellidoPaterno: '', apellidoMaterno: '' }
+}
+
+const normalizeBirthDate = (value) => {
+  const normalized = normalizeText(value)
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized)
+  if (!match) invalidAnswers('Selecciona una fecha de nacimiento válida.')
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const date = new Date(Date.UTC(year, month - 1, day))
+  const now = new Date()
+
+  if (
+    date.getUTCFullYear() !== year
+    || date.getUTCMonth() !== month - 1
+    || date.getUTCDate() !== day
+    || date > now
+  ) {
+    invalidAnswers('Selecciona una fecha de nacimiento válida.')
+  }
+
+  let age = now.getUTCFullYear() - year
+  if (now.getUTCMonth() + 1 < month || (now.getUTCMonth() + 1 === month && now.getUTCDate() < day)) {
+    age -= 1
+  }
+  if (age < 0 || age > 120) invalidAnswers('La fecha de nacimiento está fuera del rango permitido.')
+
+  return { fechaNacimiento: normalized, edad: String(age) }
+}
+
+const normalizePastDate = (value, label) => {
+  const normalized = normalizeLimitedText(value, label, { required: true, maxLength: 10 })
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalized)
+  if (!match) invalidAnswers(`Selecciona una fecha válida en “${label}”.`)
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const date = new Date(Date.UTC(year, month - 1, day))
+  const now = new Date()
+  if (
+    date.getUTCFullYear() !== year
+    || date.getUTCMonth() !== month - 1
+    || date.getUTCDate() !== day
+    || date > now
+  ) {
+    invalidAnswers(`Selecciona una fecha válida en “${label}”.`)
+  }
+
+  return normalized
+}
+
+const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
+  if (!rawAnswers || typeof rawAnswers !== 'object' || Array.isArray(rawAnswers)) {
+    invalidAnswers('Completa el cuestionario antes de finalizar el prerregistro.')
+  }
+
+  const rawStepOne = rawAnswers.step1 || {}
+  const rawStepFour = rawAnswers.step4 || {}
+  const rawStepFive = rawAnswers.step5 || {}
+  const rawStepSix = rawAnswers.step6 || {}
+  const rawStepSeven = rawAnswers.step7 || {}
+  const rawStepEight = rawAnswers.step8 || {}
+  const sexo = normalizeLimitedText(rawStepOne.sexo, 'Sexo', { required: true, maxLength: 10 }).toLowerCase()
+  if (sexo !== 'masculino' && sexo !== 'femenino') invalidAnswers('Selecciona un sexo válido.')
+
+  const birthData = normalizeBirthDate(rawStepOne.fechaNacimiento)
+  const correoElectronico = normalizeLimitedText(rawStepOne.correoElectronico, 'Correo electrónico', {
+    required: true,
+    maxLength: 160,
+  }).toLowerCase()
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoElectronico)) {
+    invalidAnswers('Escribe un correo electrónico válido.')
+  }
+
+  const enfermedades = normalizeSelection(
+    rawStepFour.enfermedades,
+    HEALTH_OPTIONS.enfermedades,
+    'Enfermedades',
+    'Ninguna',
+  )
+  const medicamentosActuales = normalizeSelection(
+    rawStepFour.medicamentosActuales,
+    HEALTH_OPTIONS.medicamentos,
+    'Medicamentos actuales',
+    'Ninguno',
+  )
+  const alergias = normalizeSelection(
+    rawStepFour.alergias,
+    HEALTH_OPTIONS.alergias,
+    'Alergias y contraindicaciones',
+    'Ninguna',
+  )
+
+  const calidadAlimentacion = normalizeLimitedText(
+    rawStepFive.calidadAlimentacion,
+    'Calidad de alimentación',
+    { required: true, maxLength: 20 },
+  ).toLowerCase()
+  if (!FOOD_QUALITY_OPTIONS.has(calidadAlimentacion)) {
+    invalidAnswers('Selecciona una calidad de alimentación válida.')
+  }
+
+  const realizaEjercicio = normalizeBinaryAnswer(rawStepFive.realizaEjercicio, 'Ejercicio')
+  const usaProtectorDiario = normalizeBinaryAnswer(rawStepSix.usaProtectorDiario, 'Uso diario de protector solar')
+  const procedimientosSeleccionados = normalizeSelection(
+    rawStepSeven.procedimientosPrevios,
+    PROCEDURE_OPTIONS,
+    'Procedimientos previos',
+    'Ninguno',
+  )
+  const procedimientosPrevios = procedimientosSeleccionados.filter((item) => item !== 'Ninguno')
+  const facialesPrevios = normalizeBinaryAnswer(rawStepSeven.facialesPrevios, 'Faciales previos')
+  const aparatologiaCorporal = normalizeBinaryAnswer(
+    rawStepSeven.aparatologiaCorporal,
+    'Aparatología corporal',
+  )
+  const hasPreviousProcedure = procedimientosPrevios.length > 0
+    || facialesPrevios === 'si'
+    || aparatologiaCorporal === 'si'
+  const tratamientoIrrito = hasPreviousProcedure
+    ? normalizeBinaryAnswer(rawStepSeven.tratamientoIrrito, 'Tratamiento que irritó')
+    : ''
+
+  const mananaProductos = normalizeSelection(
+    rawStepEight.mananaProductos,
+    ROUTINE_OPTIONS.manana,
+    'Rutina de mañana',
+    'No tengo rutina',
+  )
+  const nocheProductos = normalizeSelection(
+    rawStepEight.nocheProductos,
+    ROUTINE_OPTIONS.noche,
+    'Rutina de noche',
+    'No tengo rutina',
+  )
+  const fallbackIdentity = splitFullName(preRegistration.nombreCompleto)
+  const identity = {
+    nombre: normalizeLimitedText(rawStepOne.nombre || fallbackIdentity.nombre, 'Nombre', {
+      required: true,
+      maxLength: 100,
+    }),
+    apellidoPaterno: normalizeLimitedText(
+      rawStepOne.apellidoPaterno || fallbackIdentity.apellidoPaterno,
+      'Apellido paterno',
+      { required: true, maxLength: 80 },
+    ),
+    apellidoMaterno: normalizeLimitedText(
+      rawStepOne.apellidoMaterno || fallbackIdentity.apellidoMaterno,
+      'Apellido materno',
+      { required: true, maxLength: 80 },
+    ),
+  }
+
+  return {
+    step1: {
+      ...identity,
+      sexo,
+      ...birthData,
+      telefono: normalizePhone(preRegistration.telefonoNormalizado || preRegistration.telefono),
+      correoElectronico,
+      ocupacion: normalizeLimitedText(rawStepOne.ocupacion, 'Ocupación', { required: true, maxLength: 120 }),
+      contactoEmergencia: normalizeLimitedText(rawStepOne.contactoEmergencia, 'Contacto de emergencia', {
+        required: true,
+        maxLength: 180,
+      }),
+    },
+    step4: {
+      enfermedades,
+      enfermedadesOtro: enfermedades.includes('Otro')
+        ? normalizeLimitedText(rawStepFour.enfermedadesOtro, 'Otra enfermedad', { required: true })
+        : '',
+      medicamentosActuales,
+      medicamentosActualesOtro: medicamentosActuales.includes('Otros medicamentos')
+        ? normalizeLimitedText(rawStepFour.medicamentosActualesOtro, 'Otros medicamentos', { required: true })
+        : '',
+      alergias,
+      alergiasOtro: alergias.includes('Otras alergias')
+        ? normalizeLimitedText(rawStepFour.alergiasOtro, 'Otras alergias', { required: true })
+        : '',
+      embarazoActual: sexo === 'femenino'
+        ? normalizeBinaryAnswer(rawStepFour.embarazoActual, 'Embarazo actual')
+        : '',
+      lactanciaActual: sexo === 'femenino'
+        ? normalizeBinaryAnswer(rawStepFour.lactanciaActual, 'Lactancia actual')
+        : '',
+      embarazoProximo: sexo === 'femenino'
+        ? normalizeBinaryAnswer(rawStepFour.embarazoProximo, 'Embarazo próximo')
+        : '',
+    },
+    step5: {
+      aguaDiaria: normalizeLimitedText(rawStepFive.aguaDiaria, 'Agua diaria', { required: true, maxLength: 80 }),
+      calidadAlimentacion,
+      consumeAzucarLacteos: normalizeBinaryAnswer(rawStepFive.consumeAzucarLacteos, 'Consumo de azúcar o lácteos'),
+      fuma: normalizeBinaryAnswer(rawStepFive.fuma, 'Consumo de tabaco'),
+      consumeAlcohol: normalizeBinaryAnswer(rawStepFive.consumeAlcohol, 'Consumo de alcohol'),
+      realizaEjercicio,
+      ejercicioFrecuenciaSemanal: realizaEjercicio === 'si'
+        ? normalizeLimitedText(rawStepFive.ejercicioFrecuenciaSemanal, 'Frecuencia de ejercicio', {
+          required: true,
+          maxLength: 80,
+        })
+        : '',
+      horasSueno: normalizeLimitedText(rawStepFive.horasSueno, 'Horas de sueño', { required: true, maxLength: 80 }),
+      estresAlto: normalizeBinaryAnswer(rawStepFive.estresAlto, 'Nivel de estrés'),
+      desvelosFrecuentes: normalizeBinaryAnswer(rawStepFive.desvelosFrecuentes, 'Desvelos frecuentes'),
+    },
+    step6: {
+      usaProtectorDiario,
+      spfUtilizado: usaProtectorDiario === 'si'
+        ? normalizeLimitedText(rawStepSix.spfUtilizado, 'SPF utilizado', { required: true, maxLength: 80 })
+        : '',
+      frecuenciaReaplicacion: usaProtectorDiario === 'si'
+        ? normalizeLimitedText(rawStepSix.frecuenciaReaplicacion, 'Frecuencia de reaplicación', {
+          required: true,
+          maxLength: 80,
+        })
+        : '',
+      tiempoProlongadoSol: normalizeBinaryAnswer(rawStepSix.tiempoProlongadoSol, 'Exposición prolongada al sol'),
+      quemadurasSolaresRecientes: normalizeBinaryAnswer(
+        rawStepSix.quemadurasSolaresRecientes,
+        'Quemaduras solares recientes',
+      ),
+    },
+    step7: {
+      procedimientosPrevios,
+      procedimientosPreviosOtro: procedimientosPrevios.includes('Otro')
+        ? normalizeLimitedText(rawStepSeven.procedimientosPreviosOtro, 'Otro procedimiento', { required: true })
+        : '',
+      facialesPrevios,
+      facialesPreviosCuales: facialesPrevios === 'si'
+        ? normalizeLimitedText(rawStepSeven.facialesPreviosCuales, 'Faciales previos', { required: true })
+        : '',
+      aparatologiaCorporal,
+      aparatologiaCorporalCuales: aparatologiaCorporal === 'si'
+        ? normalizeLimitedText(rawStepSeven.aparatologiaCorporalCuales, 'Aparatología corporal', { required: true })
+        : '',
+      fechaUltimoProcedimiento: hasPreviousProcedure
+        ? normalizePastDate(rawStepSeven.fechaUltimoProcedimiento, 'Fecha del último procedimiento')
+        : '',
+      tratamientoIrrito,
+      tratamientoIrritoDetalle: hasPreviousProcedure && tratamientoIrrito === 'si'
+        ? normalizeLimitedText(rawStepSeven.tratamientoIrritoDetalle, 'Tratamiento que irritó', {
+          required: true,
+          maxLength: 300,
+        })
+        : '',
+      quemadurasOMalasExperiencias: hasPreviousProcedure
+        ? normalizeBinaryAnswer(rawStepSeven.quemadurasOMalasExperiencias, 'Quemaduras o malas experiencias')
+        : '',
+      pielReaccionaFacilmente: hasPreviousProcedure
+        ? normalizeBinaryAnswer(rawStepSeven.pielReaccionaFacilmente, 'Reacción de la piel')
+        : '',
+      toleraBienDolor: hasPreviousProcedure
+        ? normalizeBinaryAnswer(rawStepSeven.toleraBienDolor, 'Tolerancia al dolor')
+        : '',
+    },
+    step8: {
+      mananaProductos,
+      mananaOtro: mananaProductos.includes('Otro')
+        ? normalizeLimitedText(rawStepEight.mananaOtro, 'Otro producto de mañana', { required: true })
+        : '',
+      nocheProductos,
+      nocheOtro: nocheProductos.includes('Otro')
+        ? normalizeLimitedText(rawStepEight.nocheOtro, 'Otro producto de noche', { required: true })
+        : '',
+      usaRetinol: normalizeBinaryAnswer(rawStepEight.usaRetinol, 'Uso de retinol'),
+      usaAcidos: normalizeBinaryAnswer(rawStepEight.usaAcidos, 'Uso de ácidos'),
+      productosIrritaron: normalizeLimitedText(rawStepEight.productosIrritaron, 'Productos que han irritado', {
+        required: true,
+        maxLength: 300,
+      }),
+      brotesPorProducto: normalizeBinaryAnswer(rawStepEight.brotesPorProducto, 'Brotes por producto'),
+      constanteRutina: normalizeBinaryAnswer(rawStepEight.constanteRutina, 'Constancia de rutina'),
+    },
+  }
+}
+
 const buildIdentityKey = (type, value) => createHash('sha256')
   .update(`${type}:${value}`)
   .digest('hex')
@@ -227,6 +612,7 @@ exports.submitPreRegistration = onCall(async (request) => {
   const preRegistrationId = normalizeText(request.data?.preRegistrationId)
   const telefonoNormalizado = normalizePhone(request.data?.telefono)
   const website = normalizeText(request.data?.website)
+  const rawAnswers = request.data?.answers
 
   if (website) {
     throw new HttpsError('invalid-argument', 'No se pudo procesar el prerregistro.')
@@ -265,9 +651,12 @@ exports.submitPreRegistration = onCall(async (request) => {
         )
       }
 
+      const answers = normalizePreRegistrationAnswers(rawAnswers, preRegistration)
+
       transaction.update(preRegistrationReference, {
         status: 'completed',
-        answers: {},
+        schemaVersion: 2,
+        answers,
         completedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       })

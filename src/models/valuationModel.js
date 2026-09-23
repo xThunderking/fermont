@@ -65,6 +65,7 @@ export const STEP_TWO_OPTIONS = {
 
 export const STEP_FOUR_OPTIONS = {
   enfermedades: [
+    'Ninguna',
     'Diabetes',
     'Hipertension',
     'Problemas hormonales',
@@ -79,6 +80,7 @@ export const STEP_FOUR_OPTIONS = {
     'Otro',
   ],
   medicamentos: [
+    'Ninguno',
     'Isotretinoina',
     'Anticoagulantes',
     'Antibioticos',
@@ -88,6 +90,7 @@ export const STEP_FOUR_OPTIONS = {
     'Otros medicamentos',
   ],
   alergias: [
+    'Ninguna',
     'Cosmeticos',
     'Medicamentos',
     'Fragancias',
@@ -116,6 +119,7 @@ export const STEP_SEVEN_OPTIONS = {
 
 export const STEP_EIGHT_OPTIONS = {
   manana: [
+    'No tengo rutina',
     'Limpiador',
     'Serum',
     'Hidratante',
@@ -123,6 +127,7 @@ export const STEP_EIGHT_OPTIONS = {
     'Otro',
   ],
   noche: [
+    'No tengo rutina',
     'Desmaquillante',
     'Activos',
     'Cremas',
@@ -682,9 +687,32 @@ const saveExistingValuationStep = async ({
   }
 }
 
-export const saveStepOneValuation = async ({ valuationId, userId, stepOneData, knownCurrentStep }) => {
+export const saveStepOneValuation = async ({
+  valuationId,
+  userId,
+  stepOneData,
+  knownCurrentStep,
+  preRegistrationAnswers = null,
+}) => {
   const normalizedStepOneData = normalizeStepOneData(stepOneData)
   const clienteNombre = buildClienteNombre(normalizedStepOneData)
+  const hasPreRegistrationAnswers = Boolean(
+    normalizedStepOneData.preregistroId
+    && preRegistrationAnswers
+    && typeof preRegistrationAnswers === 'object',
+  )
+  const preRegistrationPayload = hasPreRegistrationAnswers
+    ? {
+        step4: normalizeStepFourData({
+          ...(preRegistrationAnswers.step4 ?? {}),
+          sexo: normalizedStepOneData.sexo,
+        }),
+        step5: normalizeStepFiveData(preRegistrationAnswers.step5 ?? {}),
+        step6: normalizeStepSixData(preRegistrationAnswers.step6 ?? {}),
+        step7: normalizeStepSevenData(preRegistrationAnswers.step7 ?? {}),
+        step8: normalizeStepEightData(preRegistrationAnswers.step8 ?? {}),
+      }
+    : {}
 
   if (!clienteNombre) {
     return { ok: false, message: 'Completa nombre y apellidos para guardar la valoración.' }
@@ -701,6 +729,7 @@ export const saveStepOneValuation = async ({ valuationId, userId, stepOneData, k
         clienteId: normalizedStepOneData.clienteId,
         clienteNombre,
         step1: normalizedStepOneData,
+        ...preRegistrationPayload,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       })
@@ -720,6 +749,7 @@ export const saveStepOneValuation = async ({ valuationId, userId, stepOneData, k
         clienteId: normalizedStepOneData.clienteId,
         clienteNombre,
         step1: normalizedStepOneData,
+        ...preRegistrationPayload,
       },
       successMessage: 'Paso 1 actualizado correctamente.',
       notFoundMessage: 'No se encontro la valoración para actualizar el paso 1.',

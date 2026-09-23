@@ -775,6 +775,7 @@ function NuevaValoracionView() {
 
       if (requestedPreRegistration) {
         const savedStepOne = requestedPreRegistration.answers?.step1 || {}
+        const savedAnswers = requestedPreRegistration.answers || {}
         setClientFlowType('preregistro')
         setSelectedPreRegistrationId(requestedPreRegistration.id)
         setPreRegistrationSearch(requestedPreRegistration.nombreCompleto)
@@ -785,6 +786,11 @@ function NuevaValoracionView() {
           nombre: String(savedStepOne.nombre || requestedPreRegistration.nombreCompleto),
           telefono: String(savedStepOne.telefono || requestedPreRegistration.telefono),
         })
+        setStepFourData(normalizeExistingStepFourData(savedAnswers.step4))
+        setStepFiveData(normalizeExistingStepFiveData(savedAnswers.step5))
+        setStepSixData(normalizeExistingStepSixData(savedAnswers.step6))
+        setStepSevenData(normalizeExistingStepSevenData(savedAnswers.step7))
+        setStepEightData(normalizeExistingStepEightData(savedAnswers.step8))
       }
     }
 
@@ -1159,6 +1165,7 @@ function NuevaValoracionView() {
       const currentValues = Array.isArray(previous[field]) ? previous[field] : []
       const exists = currentValues.includes(option)
       const otherConfig = STEP_FOUR_OTHER_CONFIG[field]
+      const emptyOption = field === 'medicamentosActuales' ? 'Ninguno' : 'Ninguna'
 
       if (exists) {
         const nextValues = currentValues.filter((value) => value !== option)
@@ -1176,9 +1183,17 @@ function NuevaValoracionView() {
         }
       }
 
+      if (option === emptyOption) {
+        return {
+          ...previous,
+          [field]: [option],
+          ...(otherConfig ? { [otherConfig.textField]: '' } : {}),
+        }
+      }
+
       return {
         ...previous,
-        [field]: [...currentValues, option],
+        [field]: [...currentValues.filter((value) => value !== emptyOption), option],
       }
     })
   }
@@ -1304,6 +1319,7 @@ function NuevaValoracionView() {
       const currentValues = Array.isArray(previous[field]) ? previous[field] : []
       const exists = currentValues.includes(option)
       const otherConfig = STEP_EIGHT_OTHER_CONFIG[field]
+      const emptyOption = 'No tengo rutina'
 
       if (exists) {
         const nextValues = currentValues.filter((value) => value !== option)
@@ -1321,9 +1337,17 @@ function NuevaValoracionView() {
         }
       }
 
+      if (option === emptyOption) {
+        return {
+          ...previous,
+          [field]: [option],
+          ...(otherConfig ? { [otherConfig.textField]: '' } : {}),
+        }
+      }
+
       return {
         ...previous,
-        [field]: [...currentValues, option],
+        [field]: [...currentValues.filter((value) => value !== emptyOption), option],
       }
     })
   }
@@ -1484,6 +1508,7 @@ function NuevaValoracionView() {
 
   const applyPreRegistrationToStepOne = (preRegistration) => {
     const savedStepOne = preRegistration.answers?.step1 || {}
+    const savedAnswers = preRegistration.answers || {}
     setClientFlowType('preregistro')
     setSelectedClientId('')
     setSelectedPreRegistrationId(preRegistration.id)
@@ -1495,6 +1520,11 @@ function NuevaValoracionView() {
       nombre: String(savedStepOne.nombre || preRegistration.nombreCompleto),
       telefono: String(savedStepOne.telefono || preRegistration.telefono),
     })
+    setStepFourData(normalizeExistingStepFourData(savedAnswers.step4))
+    setStepFiveData(normalizeExistingStepFiveData(savedAnswers.step5))
+    setStepSixData(normalizeExistingStepSixData(savedAnswers.step6))
+    setStepSevenData(normalizeExistingStepSevenData(savedAnswers.step7))
+    setStepEightData(normalizeExistingStepEightData(savedAnswers.step8))
     setError('')
   }
 
@@ -1825,6 +1855,9 @@ function NuevaValoracionView() {
           ? selectedPreRegistrationId
           : String(stepOneData.preregistroId || ''),
       },
+      preRegistrationAnswers: clientFlowType === 'preregistro'
+        ? availablePreRegistrations.find(({ id }) => id === selectedPreRegistrationId)?.answers
+        : null,
     })
 
     if (!valuationResult.ok) {
@@ -1847,6 +1880,27 @@ function NuevaValoracionView() {
     setValuationDocId(nextValuationId)
 
     if (clientFlowType === 'preregistro' && selectedPreRegistrationId && nextValuationId) {
+      let preRegistrationWarning = ''
+      const refreshedValuationResult = await getValuationForEdition({ valuationId: nextValuationId })
+      const historyResult = await saveClientClinicalHistoryFromValuation({
+        clientId: linkedClientId,
+        valuationId: nextValuationId,
+        clientSnapshot: clientResult.client,
+        valuationSnapshot: refreshedValuationResult.ok
+          ? refreshedValuationResult.valuation
+          : {
+              step1: stepOneData,
+              step4: stepFourData,
+              step5: stepFiveData,
+              step6: stepSixData,
+              step7: stepSevenData,
+              step8: stepEightData,
+              clienteNombre: `${stepOneData.nombre} ${stepOneData.apellidoPaterno} ${stepOneData.apellidoMaterno}`.replace(/\s+/g, ' ').trim(),
+            },
+      })
+
+      if (!historyResult.ok) preRegistrationWarning = historyResult.message
+
       const usedResult = await markPreRegistrationUsed({
         preRegistrationId: selectedPreRegistrationId,
         userId: currentUser.id,
@@ -1855,11 +1909,12 @@ function NuevaValoracionView() {
       })
 
       if (!usedResult.ok) {
-        setError(usedResult.message)
+        setError([preRegistrationWarning, usedResult.message].filter(Boolean).join(' '))
       } else {
         setAvailablePreRegistrations((current) => (
           current.filter((preRegistration) => preRegistration.id !== selectedPreRegistrationId)
         ))
+        if (preRegistrationWarning) setError(preRegistrationWarning)
       }
     }
 

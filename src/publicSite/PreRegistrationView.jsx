@@ -7,6 +7,7 @@ import {
 } from '../models/preRegistrationModel.js'
 import PublicHeader from './components/PublicHeader.jsx'
 import PublicIcon from './components/PublicIcon.jsx'
+import PreRegistrationQuestionnaire from './components/PreRegistrationQuestionnaire.jsx'
 import { publicSiteConfig } from './siteConfig.js'
 import './publicSite.css'
 
@@ -79,8 +80,7 @@ function PreRegistrationView() {
     setIsStarted(true)
   }
 
-  const handleSubmit = async (event) => {
-    event.preventDefault()
+  const handleSubmit = async (answers) => {
     setError('')
     setSuccessMessage('')
 
@@ -95,6 +95,7 @@ function PreRegistrationView() {
       preRegistrationId: selectedPreRegistration.id,
       telefono,
       website,
+      answers,
     })
     setIsSaving(false)
 
@@ -115,7 +116,10 @@ function PreRegistrationView() {
       <PublicHeader whatsapp={publicSiteConfig.whatsapp} />
 
       <main className="public-preregistration-main">
-        <section className="public-preregistration-card" aria-labelledby="preregistration-title">
+        <section
+          className={`public-preregistration-card ${isStarted ? 'is-questionnaire' : ''}`}
+          aria-labelledby="preregistration-title"
+        >
           <div className="public-preregistration-copy">
             <p className="public-eyebrow"><span /> Antes de tu primera visita</p>
             <h1 id="preregistration-title">Prerregistro de <em>cliente nuevo.</em></h1>
@@ -200,13 +204,7 @@ function PreRegistrationView() {
           ) : null}
 
           {!successMessage && isStarted && selectedPreRegistration ? (
-            <form className="public-preregistration-form" onSubmit={handleSubmit}>
-              <div className="public-preregistration-selected">
-                <span>Prerregistro seleccionado</span>
-                <strong>{selectedPreRegistration.nombreCompleto}</strong>
-                <small>Teléfono terminado en {selectedPreRegistration.telefonoUltimos4}</small>
-              </div>
-
+            <>
               <label className="public-preregistration-honeypot" aria-hidden="true">
                 Sitio web
                 <input
@@ -217,31 +215,18 @@ function PreRegistrationView() {
                   onChange={(event) => setWebsite(event.target.value)}
                 />
               </label>
-
-              <p className="public-preregistration-note">
-                Las preguntas del formulario se agregarán en esta sección. Por ahora puedes finalizar para validar el flujo.
-              </p>
-
-              {error ? <p className="public-form-error" role="alert">{error}</p> : null}
-
-              <div className="public-preregistration-actions">
-                <button
-                  className="public-button public-button-secondary"
-                  type="button"
-                  disabled={isSaving}
-                  onClick={() => {
-                    setIsStarted(false)
-                    setError('')
-                  }}
-                >
-                  Elegir otro
-                </button>
-                <button className="public-button public-button-primary" type="submit" disabled={isSaving}>
-                  {isSaving ? 'Finalizando...' : 'Finalizar prerregistro'}
-                  {!isSaving ? <PublicIcon name="arrow" /> : null}
-                </button>
-              </div>
-            </form>
+              <PreRegistrationQuestionnaire
+                key={selectedPreRegistration.id}
+                client={{ ...selectedPreRegistration, telefono }}
+                error={error}
+                isSaving={isSaving}
+                onCancel={() => {
+                  setIsStarted(false)
+                  setError('')
+                }}
+                onSubmit={handleSubmit}
+              />
+            </>
           ) : null}
         </section>
       </main>
