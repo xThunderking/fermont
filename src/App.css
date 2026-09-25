@@ -2319,7 +2319,7 @@ textarea {
   }
 
   .preregistration-create-form {
-    grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.8fr) auto;
+    grid-template-columns: minmax(0, 1.4fr) minmax(220px, 0.8fr) minmax(160px, 0.55fr) auto;
   }
 
   .preregistration-create-form .main-button {

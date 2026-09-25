@@ -123,9 +123,11 @@ function PreRegistrationView() {
           <div className="public-preregistration-copy">
             <p className="public-eyebrow"><span /> Antes de tu primera visita</p>
             <h1 id="preregistration-title">Prerregistro de <em>cliente nuevo.</em></h1>
-            <p>
-              Selecciona la invitación que Fermont preparó para ti y completa tus datos antes de tu valoración.
-            </p>
+            {!isStarted && !successMessage ? (
+              <p>
+                Selecciona la invitación que Fermont preparó para ti y completa tus datos antes de tu valoración.
+              </p>
+            ) : null}
           </div>
 
           {successMessage ? (

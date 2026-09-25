@@ -3,15 +3,18 @@ import {
   STEP_EIGHT_OPTIONS,
   STEP_FOUR_OPTIONS,
   STEP_SEVEN_OPTIONS,
+  STEP_TEN_OPTIONS,
 } from '../../models/valuationModel.js'
 
 const SECTIONS = [
   { number: '01', title: 'Datos del cliente', shortTitle: 'Datos' },
+  { number: '03', title: 'Expectativas y prioridades', shortTitle: 'Expectativas' },
   { number: '04', title: 'Antecedentes de salud', shortTitle: 'Salud' },
   { number: '05', title: 'Hábitos y estilo de vida', shortTitle: 'Hábitos' },
   { number: '06', title: 'Exposición solar', shortTitle: 'Sol' },
   { number: '07', title: 'Historial estético', shortTitle: 'Historial' },
   { number: '08', title: 'Rutina actual', shortTitle: 'Rutina' },
+  { number: '10', title: 'Evaluación facial 2', shortTitle: 'Evaluación' },
 ]
 
 const BINARY_OPTIONS = [
@@ -54,17 +57,26 @@ const calculateAge = (birthDate) => {
   return age >= 0 && age <= 120 ? String(age) : ''
 }
 
-const createInitialAnswers = ({ nombreCompleto, telefono }) => ({
+const createInitialAnswers = ({ nombreCompleto, telefono, sexo }) => ({
   step1: {
     ...splitFullName(nombreCompleto),
     nombreCompleto: String(nombreCompleto ?? ''),
-    sexo: '',
+    sexo: ['femenino', 'masculino'].includes(String(sexo ?? '').toLowerCase())
+      ? String(sexo).toLowerCase()
+      : '',
     edad: '',
     fechaNacimiento: '',
     telefono: String(telefono ?? ''),
     correoElectronico: '',
     ocupacion: '',
     contactoEmergencia: '',
+    objetivoPrincipal: '',
+    inconformidadPrincipal: '',
+  },
+  step3: {
+    mejoraPrincipal: '',
+    resultadoEsperado: '',
+    tiempoEsperado: '',
   },
   step4: {
     enfermedades: [],
@@ -73,6 +85,8 @@ const createInitialAnswers = ({ nombreCompleto, telefono }) => ({
     medicamentosActualesOtro: '',
     alergias: [],
     alergiasOtro: '',
+    contraindicaciones: [],
+    contraindicacionesOtro: '',
     embarazoActual: '',
     lactanciaActual: '',
     embarazoProximo: '',
@@ -117,13 +131,35 @@ const createInitialAnswers = ({ nombreCompleto, telefono }) => ({
     nocheOtro: '',
     usaRetinol: '',
     usaAcidos: '',
+    productosIrritaronRespuesta: '',
     productosIrritaron: '',
     brotesPorProducto: '',
     constanteRutina: '',
+    seguiriaCuidadosCasa: '',
+    tiempoDedicadoPiel: '',
+  },
+  step10: {
+    acneEmpeoraPeriodo: '',
+    cambiosHormonalesRecientes: '',
+    usaAnticonceptivos: '',
+    desdeCuandoBrotes: '',
+    manipulaGranitos: '',
+    acneDoloroso: '',
+    manchasOrigenes: [],
+    pielEnrojeceFacilmente: '',
+    pielArdeIrritaFacil: '',
   },
 })
 
-function BinaryChoice({ label, name, value, onChange, required = true }) {
+function BinaryChoice({
+  label,
+  name,
+  value,
+  onChange,
+  required = true,
+  yesLabel = 'Sí',
+  noLabel = 'No',
+}) {
   return (
     <fieldset className="public-question-fieldset">
       <legend>{label}{required ? <span aria-hidden="true"> *</span> : null}</legend>
@@ -138,7 +174,7 @@ function BinaryChoice({ label, name, value, onChange, required = true }) {
               checked={value === option.value}
               onChange={() => onChange(option.value)}
             />
-            <span>{option.label}</span>
+            <span>{option.value === 'si' ? yesLabel : noLabel}</span>
           </label>
         ))}
       </div>
@@ -218,13 +254,16 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
   }
 
   const validateCurrentSection = () => {
-    if (sectionIndex === 1) {
+    const currentSectionNumber = SECTIONS[sectionIndex].number
+
+    if (currentSectionNumber === '04') {
       if (
         answers.step4.enfermedades.length === 0
         || answers.step4.medicamentosActuales.length === 0
         || answers.step4.alergias.length === 0
+        || answers.step4.contraindicaciones.length === 0
       ) {
-        return 'Selecciona una respuesta en enfermedades, medicamentos y alergias o contraindicaciones.'
+        return 'Selecciona una respuesta en enfermedades, medicamentos, alergias y contraindicaciones.'
       }
 
       if (answers.step4.enfermedades.includes('Otro') && !answers.step4.enfermedadesOtro.trim()) {
@@ -239,9 +278,15 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
       if (answers.step4.alergias.includes('Otras alergias') && !answers.step4.alergiasOtro.trim()) {
         return 'Especifica las otras alergias.'
       }
+      if (
+        answers.step4.contraindicaciones.includes('Otra contraindicacion')
+        && !answers.step4.contraindicacionesOtro.trim()
+      ) {
+        return 'Especifica la otra contraindicación.'
+      }
     }
 
-    if (sectionIndex === 4) {
+    if (currentSectionNumber === '07') {
       if (answers.step7.procedimientosPrevios.length === 0) {
         return 'Indica si has tenido procedimientos previos o selecciona “Ninguno”.'
       }
@@ -250,7 +295,7 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
       }
     }
 
-    if (sectionIndex === 5) {
+    if (currentSectionNumber === '08') {
       if (answers.step8.mananaProductos.length === 0 || answers.step8.nocheProductos.length === 0) {
         return 'Selecciona tu rutina de mañana y de noche. Si no tienes una, elige “No tengo rutina”.'
       }
@@ -260,6 +305,10 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
       if (answers.step8.nocheProductos.includes('Otro') && !answers.step8.nocheOtro.trim()) {
         return 'Especifica el otro producto de tu rutina de noche.'
       }
+    }
+
+    if (currentSectionNumber === '10' && answers.step10.manchasOrigenes.length === 0) {
+      return 'Selecciona al menos un origen de las manchas.'
     }
 
     return ''
@@ -290,69 +339,21 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
         <small>Teléfono terminado en {client.telefonoUltimos4}</small>
       </div>
 
-      <p className="public-question-helper public-question-field-wide">
-        Confirma cómo se divide tu nombre para que tu expediente quede registrado correctamente.
-      </p>
-
-      <label>
-        Nombre(s) <span aria-hidden="true">*</span>
-        <input
-          required
-          autoComplete="given-name"
-          maxLength="100"
-          value={answers.step1.nombre}
-          onChange={(event) => setStepField('step1', 'nombre', event.target.value)}
-        />
-      </label>
-
-      <label>
-        Apellido paterno <span aria-hidden="true">*</span>
-        <input
-          required
-          autoComplete="family-name"
-          maxLength="80"
-          value={answers.step1.apellidoPaterno}
-          onChange={(event) => setStepField('step1', 'apellidoPaterno', event.target.value)}
-        />
-      </label>
-
-      <label>
-        Apellido materno <span aria-hidden="true">*</span>
-        <input
-          required
-          maxLength="80"
-          value={answers.step1.apellidoMaterno}
-          onChange={(event) => setStepField('step1', 'apellidoMaterno', event.target.value)}
-        />
-      </label>
-
-      <label>
-        Sexo <span aria-hidden="true">*</span>
-        <select
-          required
-          value={answers.step1.sexo}
-          onChange={(event) => {
-            const sexo = event.target.value
-            setStepField('step1', 'sexo', sexo)
-            if (sexo === 'masculino') {
-              setAnswers((current) => ({
-                ...current,
-                step1: { ...current.step1, sexo },
-                step4: {
-                  ...current.step4,
-                  embarazoActual: '',
-                  lactanciaActual: '',
-                  embarazoProximo: '',
-                },
-              }))
-            }
-          }}
-        >
-          <option value="">Selecciona una opción</option>
-          <option value="femenino">Femenino</option>
-          <option value="masculino">Masculino</option>
-        </select>
-      </label>
+      {client.sexo ? (
+        <label>
+          Sexo
+          <input readOnly value={client.sexo === 'femenino' ? 'Mujer' : 'Hombre'} />
+        </label>
+      ) : (
+        <label>
+          Sexo <span aria-hidden="true">*</span>
+          <select required value={answers.step1.sexo} onChange={(event) => setStepField('step1', 'sexo', event.target.value)}>
+            <option value="">Selecciona una opción</option>
+            <option value="femenino">Mujer</option>
+            <option value="masculino">Hombre</option>
+          </select>
+        </label>
+      )}
 
       <label>
         Fecha de nacimiento <span aria-hidden="true">*</span>
@@ -404,13 +405,78 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
       </label>
 
       <label className="public-question-field-wide">
-        Contacto de emergencia <span aria-hidden="true">*</span>
+        Teléfono de contacto de emergencia <span aria-hidden="true">*</span>
         <input
           required
-          maxLength="180"
+          type="tel"
+          inputMode="numeric"
+          autoComplete="tel"
+          minLength="10"
+          maxLength="10"
           value={answers.step1.contactoEmergencia}
-          onChange={(event) => setStepField('step1', 'contactoEmergencia', event.target.value)}
-          placeholder="Nombre, parentesco y teléfono"
+          onChange={(event) => setStepField(
+            'step1',
+            'contactoEmergencia',
+            event.target.value.replace(/\D/g, '').slice(0, 10),
+          )}
+          placeholder="10 dígitos"
+        />
+      </label>
+
+      <label className="public-question-field-wide">
+        Objetivo principal <span aria-hidden="true">*</span>
+        <textarea
+          required
+          rows="3"
+          maxLength="300"
+          value={answers.step1.objetivoPrincipal}
+          onChange={(event) => setStepField('step1', 'objetivoPrincipal', event.target.value)}
+        />
+      </label>
+
+      <label className="public-question-field-wide">
+        Inconformidad principal <span aria-hidden="true">*</span>
+        <textarea
+          required
+          rows="3"
+          maxLength="300"
+          value={answers.step1.inconformidadPrincipal}
+          onChange={(event) => setStepField('step1', 'inconformidadPrincipal', event.target.value)}
+        />
+      </label>
+    </div>
+  )
+
+  const renderExpectations = () => (
+    <div className="public-question-grid">
+      <label className="public-question-field-wide">
+        ¿Qué es lo que más te gustaría mejorar? <span aria-hidden="true">*</span>
+        <textarea
+          required
+          rows="3"
+          maxLength="300"
+          value={answers.step3.mejoraPrincipal}
+          onChange={(event) => setStepField('step3', 'mejoraPrincipal', event.target.value)}
+        />
+      </label>
+      <label className="public-question-field-wide">
+        ¿Qué resultado esperas obtener? <span aria-hidden="true">*</span>
+        <textarea
+          required
+          rows="3"
+          maxLength="300"
+          value={answers.step3.resultadoEsperado}
+          onChange={(event) => setStepField('step3', 'resultadoEsperado', event.target.value)}
+        />
+      </label>
+      <label className="public-question-field-wide">
+        ¿En cuánto tiempo esperas verlo? <span aria-hidden="true">*</span>
+        <input
+          required
+          maxLength="120"
+          value={answers.step3.tiempoEsperado}
+          onChange={(event) => setStepField('step3', 'tiempoEsperado', event.target.value)}
+          placeholder="Ej. 3 meses"
         />
       </label>
     </div>
@@ -461,8 +527,8 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
       ) : null}
 
       <MultipleChoice
-        label="Alergias y contraindicaciones"
-        hint="Selecciona cualquier condición que debamos considerar durante tu valoración."
+        label="Alergias"
+        hint="Selecciona todas las alergias que debamos considerar."
         name="alergias"
         options={STEP_FOUR_OPTIONS.alergias}
         values={answers.step4.alergias}
@@ -477,6 +543,27 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
             maxLength="180"
             value={answers.step4.alergiasOtro}
             onChange={(event) => setStepField('step4', 'alergiasOtro', event.target.value)}
+          />
+        </label>
+      ) : null}
+
+      <MultipleChoice
+        label="Contraindicaciones"
+        hint="Selecciona cualquier condición que pueda limitar o impedir un tratamiento."
+        name="contraindicaciones"
+        options={STEP_FOUR_OPTIONS.contraindicaciones}
+        values={answers.step4.contraindicaciones}
+        exclusiveOption="Ninguna"
+        onChange={(value) => setStepField('step4', 'contraindicaciones', value)}
+      />
+      {answers.step4.contraindicaciones.includes('Otra contraindicacion') ? (
+        <label className="public-question-field-wide">
+          ¿Cuál contraindicación? <span aria-hidden="true">*</span>
+          <input
+            required
+            maxLength="180"
+            value={answers.step4.contraindicacionesOtro}
+            onChange={(event) => setStepField('step4', 'contraindicacionesOtro', event.target.value)}
           />
         </label>
       ) : null}
@@ -568,25 +655,31 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
       />
       {answers.step5.realizaEjercicio === 'si' ? (
         <label>
-          Frecuencia semanal <span aria-hidden="true">*</span>
-          <input
+          Veces por semana <span aria-hidden="true">*</span>
+          <select
             required
-            maxLength="80"
             value={answers.step5.ejercicioFrecuenciaSemanal}
             onChange={(event) => setStepField('step5', 'ejercicioFrecuenciaSemanal', event.target.value)}
-            placeholder="Ej. 3 veces por semana"
-          />
+          >
+            <option value="">Selecciona</option>
+            {Array.from({ length: 7 }, (_, index) => index + 1).map((number) => (
+              <option key={`ejercicio-${number}`} value={number}>{number}</option>
+            ))}
+          </select>
         </label>
       ) : null}
       <label>
-        ¿Cuántas horas duermes? <span aria-hidden="true">*</span>
-        <input
+        Horas que duermes por noche <span aria-hidden="true">*</span>
+        <select
           required
-          maxLength="80"
           value={answers.step5.horasSueno}
           onChange={(event) => setStepField('step5', 'horasSueno', event.target.value)}
-          placeholder="Ej. 7 horas"
-        />
+        >
+          <option value="">Selecciona</option>
+          {Array.from({ length: 12 }, (_, index) => index + 1).map((number) => (
+            <option key={`sueno-${number}`} value={number}>{number}</option>
+          ))}
+        </select>
       </label>
       <BinaryChoice
         label="¿Tu nivel de estrés es alto?"
@@ -699,7 +792,7 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
         </label>
       ) : null}
       <BinaryChoice
-        label="¿Has usado aparatología corporal?"
+        label="¿Has usado aparatología?"
         name="aparatologiaCorporal"
         value={answers.step7.aparatologiaCorporal}
         onChange={(value) => {
@@ -784,7 +877,7 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
   const renderRoutine = () => (
     <div className="public-question-grid">
       <MultipleChoice
-        label="Rutina de mañana"
+        label="Rutina de la mañana"
         hint="Selecciona los productos que usas habitualmente."
         name="rutinaManana"
         options={STEP_EIGHT_OPTIONS.manana}
@@ -794,7 +887,7 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
       />
       {answers.step8.mananaProductos.includes('Otro') ? (
         <label className="public-question-field-wide">
-          Otro producto de mañana <span aria-hidden="true">*</span>
+          Otro producto de la mañana <span aria-hidden="true">*</span>
           <input
             required
             maxLength="180"
@@ -804,7 +897,7 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
         </label>
       ) : null}
       <MultipleChoice
-        label="Rutina de noche"
+        label="Rutina de la noche"
         hint="Selecciona los productos que usas habitualmente."
         name="rutinaNoche"
         options={STEP_EIGHT_OPTIONS.noche}
@@ -814,7 +907,7 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
       />
       {answers.step8.nocheProductos.includes('Otro') ? (
         <label className="public-question-field-wide">
-          Otro producto de noche <span aria-hidden="true">*</span>
+          Otro producto de la noche <span aria-hidden="true">*</span>
           <input
             required
             maxLength="180"
@@ -835,17 +928,36 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
         value={answers.step8.usaAcidos}
         onChange={(value) => setStepField('step8', 'usaAcidos', value)}
       />
-      <label className="public-question-field-wide">
-        Productos que te han irritado <span aria-hidden="true">*</span>
-        <textarea
-          required
-          rows="3"
-          maxLength="300"
-          value={answers.step8.productosIrritaron}
-          onChange={(event) => setStepField('step8', 'productosIrritaron', event.target.value)}
-          placeholder="Escribe los productos o indica “Ninguno”"
-        />
-      </label>
+      <BinaryChoice
+        label="¿Algún producto te ha irritado?"
+        name="productosIrritaronRespuesta"
+        value={answers.step8.productosIrritaronRespuesta}
+        yesLabel="Sí, agregar productos"
+        noLabel="Ninguno"
+        onChange={(value) => {
+          setAnswers((current) => ({
+            ...current,
+            step8: {
+              ...current.step8,
+              productosIrritaronRespuesta: value,
+              productosIrritaron: value === 'no' ? 'Ninguno' : '',
+            },
+          }))
+        }}
+      />
+      {answers.step8.productosIrritaronRespuesta === 'si' ? (
+        <label className="public-question-field-wide">
+          ¿Qué productos te han irritado? <span aria-hidden="true">*</span>
+          <textarea
+            required
+            rows="3"
+            maxLength="300"
+            value={answers.step8.productosIrritaron}
+            onChange={(event) => setStepField('step8', 'productosIrritaron', event.target.value)}
+            placeholder="Escribe los productos"
+          />
+        </label>
+      ) : null}
       <BinaryChoice
         label="¿Has tenido brotes por algún producto?"
         name="brotesPorProducto"
@@ -858,16 +970,111 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
         value={answers.step8.constanteRutina}
         onChange={(value) => setStepField('step8', 'constanteRutina', value)}
       />
+      <BinaryChoice
+        label="¿Podrías seguir cuidados en casa?"
+        name="seguiriaCuidadosCasa"
+        value={answers.step8.seguiriaCuidadosCasa}
+        onChange={(value) => setStepField('step8', 'seguiriaCuidadosCasa', value)}
+      />
+      <label className="public-question-field-wide">
+        ¿Cuánto tiempo le dedicas a tu piel? <span aria-hidden="true">*</span>
+        <input
+          required
+          maxLength="120"
+          value={answers.step8.tiempoDedicadoPiel}
+          onChange={(event) => setStepField('step8', 'tiempoDedicadoPiel', event.target.value)}
+          placeholder="Ej. 10 minutos por la mañana y por la noche"
+        />
+      </label>
+    </div>
+  )
+
+  const renderFacialEvaluationTwo = () => (
+    <div className="public-question-grid">
+      {isFemale ? (
+        <div className="public-conditional-block public-question-field-wide">
+          <div className="public-conditional-heading">
+            <span>Información hormonal</span>
+            <p>Estas preguntas se muestran únicamente para mujeres.</p>
+          </div>
+          <div className="public-question-grid">
+            <BinaryChoice
+              label="¿Tu acné empeora en tu periodo?"
+              name="acneEmpeoraPeriodo"
+              value={answers.step10.acneEmpeoraPeriodo}
+              onChange={(value) => setStepField('step10', 'acneEmpeoraPeriodo', value)}
+            />
+            <BinaryChoice
+              label="¿Has tenido cambios hormonales recientes?"
+              name="cambiosHormonalesRecientes"
+              value={answers.step10.cambiosHormonalesRecientes}
+              onChange={(value) => setStepField('step10', 'cambiosHormonalesRecientes', value)}
+            />
+            <BinaryChoice
+              label="¿Usas anticonceptivos?"
+              name="usaAnticonceptivos"
+              value={answers.step10.usaAnticonceptivos}
+              onChange={(value) => setStepField('step10', 'usaAnticonceptivos', value)}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      <label className="public-question-field-wide">
+        Acné: ¿desde cuándo tienes brotes? <span aria-hidden="true">*</span>
+        <input
+          required
+          maxLength="180"
+          value={answers.step10.desdeCuandoBrotes}
+          onChange={(event) => setStepField('step10', 'desdeCuandoBrotes', event.target.value)}
+          placeholder="Ej. Desde hace 2 años"
+        />
+      </label>
+      <BinaryChoice
+        label="¿Manipulas los granitos?"
+        name="manipulaGranitos"
+        value={answers.step10.manipulaGranitos}
+        onChange={(value) => setStepField('step10', 'manipulaGranitos', value)}
+      />
+      <BinaryChoice
+        label="¿El acné es doloroso?"
+        name="acneDoloroso"
+        value={answers.step10.acneDoloroso}
+        onChange={(value) => setStepField('step10', 'acneDoloroso', value)}
+      />
+      <MultipleChoice
+        label="Manchas: selecciona el origen"
+        hint="Selecciona todos los orígenes que correspondan."
+        name="manchasOrigenes"
+        options={STEP_TEN_OPTIONS.manchasOrigenes}
+        values={answers.step10.manchasOrigenes}
+        exclusiveOption="No tengo manchas"
+        onChange={(value) => setStepField('step10', 'manchasOrigenes', value)}
+      />
+      <BinaryChoice
+        label="¿Tu piel se enrojece fácilmente?"
+        name="pielEnrojeceFacilmente"
+        value={answers.step10.pielEnrojeceFacilmente}
+        onChange={(value) => setStepField('step10', 'pielEnrojeceFacilmente', value)}
+      />
+      <BinaryChoice
+        label="¿Tu piel arde o se irrita con facilidad?"
+        name="pielArdeIrritaFacil"
+        value={answers.step10.pielArdeIrritaFacil}
+        onChange={(value) => setStepField('step10', 'pielArdeIrritaFacil', value)}
+      />
     </div>
   )
 
   const sectionContent = [
     renderClientData,
+    renderExpectations,
     renderHealth,
     renderLifestyle,
     renderSunExposure,
     renderAestheticHistory,
     renderRoutine,
+    renderFacialEvaluationTwo,
   ][sectionIndex]
 
   return (

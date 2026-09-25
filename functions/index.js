@@ -53,14 +53,17 @@ const HEALTH_OPTIONS = {
     'Medicamentos',
     'Fragancias',
     'Activos especificos',
-    'Contraindicaciones',
+    'Otras alergias',
+  ]),
+  contraindicaciones: new Set([
+    'Ninguna',
     'Heridas activas',
     'Infecciones',
     'Herpes activo',
     'Cirugias recientes',
     'Quemaduras solares',
     'Irritacion severa',
-    'Otras alergias',
+    'Otra contraindicacion',
   ]),
 }
 
@@ -80,6 +83,13 @@ const ROUTINE_OPTIONS = {
 }
 
 const FOOD_QUALITY_OPTIONS = new Set(['muy buena', 'buena', 'regular', 'mala', 'muy mala'])
+const SPOT_ORIGIN_OPTIONS = new Set([
+  'No tengo manchas',
+  'Por el sol',
+  'Por hormonas',
+  'Por embarazo',
+  'Despues de acne',
+])
 
 const invalidAnswers = (message) => {
   throw new HttpsError('invalid-argument', message)
@@ -90,6 +100,17 @@ const normalizeLimitedText = (value, label, { required = false, maxLength = 180 
   if (required && !normalized) invalidAnswers(`Completa el campo “${label}”.`)
   if (normalized.length > maxLength) invalidAnswers(`El campo “${label}” es demasiado largo.`)
   return normalized
+}
+
+const normalizeIntegerInRange = (value, label, minimum, maximum) => {
+  const normalized = normalizeText(value)
+  const parsed = Number(normalized)
+
+  if (!/^\d+$/.test(normalized) || !Number.isInteger(parsed) || parsed < minimum || parsed > maximum) {
+    invalidAnswers(`Selecciona una respuesta válida en “${label}”.`)
+  }
+
+  return String(parsed)
 }
 
 const normalizeBinaryAnswer = (value, label, required = true) => {
@@ -186,12 +207,19 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
   }
 
   const rawStepOne = rawAnswers.step1 || {}
+  const rawStepThree = rawAnswers.step3 || {}
   const rawStepFour = rawAnswers.step4 || {}
   const rawStepFive = rawAnswers.step5 || {}
   const rawStepSix = rawAnswers.step6 || {}
   const rawStepSeven = rawAnswers.step7 || {}
   const rawStepEight = rawAnswers.step8 || {}
-  const sexo = normalizeLimitedText(rawStepOne.sexo, 'Sexo', { required: true, maxLength: 10 }).toLowerCase()
+  const rawStepTen = rawAnswers.step10 || {}
+  const registeredSex = normalizeText(preRegistration.sexo).toLowerCase()
+  const sexo = normalizeLimitedText(
+    registeredSex || rawStepOne.sexo,
+    'Sexo',
+    { required: true, maxLength: 10 },
+  ).toLowerCase()
   if (sexo !== 'masculino' && sexo !== 'femenino') invalidAnswers('Selecciona un sexo válido.')
 
   const birthData = normalizeBirthDate(rawStepOne.fechaNacimiento)
@@ -201,6 +229,10 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
   }).toLowerCase()
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoElectronico)) {
     invalidAnswers('Escribe un correo electrónico válido.')
+  }
+  const contactoEmergencia = normalizePhone(rawStepOne.contactoEmergencia)
+  if (contactoEmergencia.length !== 10) {
+    invalidAnswers('Escribe un teléfono de contacto de emergencia de 10 dígitos.')
   }
 
   const enfermedades = normalizeSelection(
@@ -218,7 +250,13 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
   const alergias = normalizeSelection(
     rawStepFour.alergias,
     HEALTH_OPTIONS.alergias,
-    'Alergias y contraindicaciones',
+    'Alergias',
+    'Ninguna',
+  )
+  const contraindicaciones = normalizeSelection(
+    rawStepFour.contraindicaciones,
+    HEALTH_OPTIONS.contraindicaciones,
+    'Contraindicaciones',
     'Ninguna',
   )
 
@@ -243,7 +281,7 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
   const facialesPrevios = normalizeBinaryAnswer(rawStepSeven.facialesPrevios, 'Faciales previos')
   const aparatologiaCorporal = normalizeBinaryAnswer(
     rawStepSeven.aparatologiaCorporal,
-    'Aparatología corporal',
+    'Aparatología',
   )
   const hasPreviousProcedure = procedimientosPrevios.length > 0
     || facialesPrevios === 'si'
@@ -255,30 +293,36 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
   const mananaProductos = normalizeSelection(
     rawStepEight.mananaProductos,
     ROUTINE_OPTIONS.manana,
-    'Rutina de mañana',
+    'Rutina de la mañana',
     'No tengo rutina',
   )
   const nocheProductos = normalizeSelection(
     rawStepEight.nocheProductos,
     ROUTINE_OPTIONS.noche,
-    'Rutina de noche',
+    'Rutina de la noche',
     'No tengo rutina',
+  )
+  const manchasOrigenes = normalizeSelection(
+    rawStepTen.manchasOrigenes,
+    SPOT_ORIGIN_OPTIONS,
+    'Origen de las manchas',
+    'No tengo manchas',
   )
   const fallbackIdentity = splitFullName(preRegistration.nombreCompleto)
   const identity = {
-    nombre: normalizeLimitedText(rawStepOne.nombre || fallbackIdentity.nombre, 'Nombre', {
+    nombre: normalizeLimitedText(fallbackIdentity.nombre, 'Nombre', {
       required: true,
       maxLength: 100,
     }),
     apellidoPaterno: normalizeLimitedText(
-      rawStepOne.apellidoPaterno || fallbackIdentity.apellidoPaterno,
+      fallbackIdentity.apellidoPaterno,
       'Apellido paterno',
       { required: true, maxLength: 80 },
     ),
     apellidoMaterno: normalizeLimitedText(
-      rawStepOne.apellidoMaterno || fallbackIdentity.apellidoMaterno,
+      fallbackIdentity.apellidoMaterno,
       'Apellido materno',
-      { required: true, maxLength: 80 },
+      { maxLength: 80 },
     ),
   }
 
@@ -290,9 +334,28 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
       telefono: normalizePhone(preRegistration.telefonoNormalizado || preRegistration.telefono),
       correoElectronico,
       ocupacion: normalizeLimitedText(rawStepOne.ocupacion, 'Ocupación', { required: true, maxLength: 120 }),
-      contactoEmergencia: normalizeLimitedText(rawStepOne.contactoEmergencia, 'Contacto de emergencia', {
+      contactoEmergencia,
+      objetivoPrincipal: normalizeLimitedText(rawStepOne.objetivoPrincipal, 'Objetivo principal', {
         required: true,
-        maxLength: 180,
+        maxLength: 300,
+      }),
+      inconformidadPrincipal: normalizeLimitedText(rawStepOne.inconformidadPrincipal, 'Inconformidad principal', {
+        required: true,
+        maxLength: 300,
+      }),
+    },
+    step3: {
+      mejoraPrincipal: normalizeLimitedText(rawStepThree.mejoraPrincipal, 'Qué te gustaría mejorar', {
+        required: true,
+        maxLength: 300,
+      }),
+      resultadoEsperado: normalizeLimitedText(rawStepThree.resultadoEsperado, 'Resultado esperado', {
+        required: true,
+        maxLength: 300,
+      }),
+      tiempoEsperado: normalizeLimitedText(rawStepThree.tiempoEsperado, 'Tiempo esperado', {
+        required: true,
+        maxLength: 120,
       }),
     },
     step4: {
@@ -307,6 +370,10 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
       alergias,
       alergiasOtro: alergias.includes('Otras alergias')
         ? normalizeLimitedText(rawStepFour.alergiasOtro, 'Otras alergias', { required: true })
+        : '',
+      contraindicaciones,
+      contraindicacionesOtro: contraindicaciones.includes('Otra contraindicacion')
+        ? normalizeLimitedText(rawStepFour.contraindicacionesOtro, 'Otra contraindicación', { required: true })
         : '',
       embarazoActual: sexo === 'femenino'
         ? normalizeBinaryAnswer(rawStepFour.embarazoActual, 'Embarazo actual')
@@ -326,12 +393,9 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
       consumeAlcohol: normalizeBinaryAnswer(rawStepFive.consumeAlcohol, 'Consumo de alcohol'),
       realizaEjercicio,
       ejercicioFrecuenciaSemanal: realizaEjercicio === 'si'
-        ? normalizeLimitedText(rawStepFive.ejercicioFrecuenciaSemanal, 'Frecuencia de ejercicio', {
-          required: true,
-          maxLength: 80,
-        })
+        ? normalizeIntegerInRange(rawStepFive.ejercicioFrecuenciaSemanal, 'Veces por semana', 1, 7)
         : '',
-      horasSueno: normalizeLimitedText(rawStepFive.horasSueno, 'Horas de sueño', { required: true, maxLength: 80 }),
+      horasSueno: normalizeIntegerInRange(rawStepFive.horasSueno, 'Horas de sueño', 1, 12),
       estresAlto: normalizeBinaryAnswer(rawStepFive.estresAlto, 'Nivel de estrés'),
       desvelosFrecuentes: normalizeBinaryAnswer(rawStepFive.desvelosFrecuentes, 'Desvelos frecuentes'),
     },
@@ -388,11 +452,11 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
     step8: {
       mananaProductos,
       mananaOtro: mananaProductos.includes('Otro')
-        ? normalizeLimitedText(rawStepEight.mananaOtro, 'Otro producto de mañana', { required: true })
+        ? normalizeLimitedText(rawStepEight.mananaOtro, 'Otro producto de la mañana', { required: true })
         : '',
       nocheProductos,
       nocheOtro: nocheProductos.includes('Otro')
-        ? normalizeLimitedText(rawStepEight.nocheOtro, 'Otro producto de noche', { required: true })
+        ? normalizeLimitedText(rawStepEight.nocheOtro, 'Otro producto de la noche', { required: true })
         : '',
       usaRetinol: normalizeBinaryAnswer(rawStepEight.usaRetinol, 'Uso de retinol'),
       usaAcidos: normalizeBinaryAnswer(rawStepEight.usaAcidos, 'Uso de ácidos'),
@@ -402,6 +466,37 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
       }),
       brotesPorProducto: normalizeBinaryAnswer(rawStepEight.brotesPorProducto, 'Brotes por producto'),
       constanteRutina: normalizeBinaryAnswer(rawStepEight.constanteRutina, 'Constancia de rutina'),
+      seguiriaCuidadosCasa: normalizeBinaryAnswer(rawStepEight.seguiriaCuidadosCasa, 'Cuidados en casa'),
+      tiempoDedicadoPiel: normalizeLimitedText(rawStepEight.tiempoDedicadoPiel, 'Tiempo dedicado a la piel', {
+        required: true,
+        maxLength: 120,
+      }),
+    },
+    step10: {
+      acneEmpeoraPeriodo: sexo === 'femenino'
+        ? normalizeBinaryAnswer(rawStepTen.acneEmpeoraPeriodo, 'Acné durante el periodo')
+        : '',
+      cambiosHormonalesRecientes: sexo === 'femenino'
+        ? normalizeBinaryAnswer(rawStepTen.cambiosHormonalesRecientes, 'Cambios hormonales recientes')
+        : '',
+      usaAnticonceptivos: sexo === 'femenino'
+        ? normalizeBinaryAnswer(rawStepTen.usaAnticonceptivos, 'Uso de anticonceptivos')
+        : '',
+      desdeCuandoBrotes: normalizeLimitedText(rawStepTen.desdeCuandoBrotes, 'Desde cuándo tienes brotes', {
+        required: true,
+        maxLength: 180,
+      }),
+      manipulaGranitos: normalizeBinaryAnswer(rawStepTen.manipulaGranitos, 'Manipulación de granitos'),
+      acneDoloroso: normalizeBinaryAnswer(rawStepTen.acneDoloroso, 'Acné doloroso'),
+      manchasOrigenes,
+      pielEnrojeceFacilmente: normalizeBinaryAnswer(
+        rawStepTen.pielEnrojeceFacilmente,
+        'Enrojecimiento de la piel',
+      ),
+      pielArdeIrritaFacil: normalizeBinaryAnswer(
+        rawStepTen.pielArdeIrritaFacil,
+        'Ardor o irritación de la piel',
+      ),
     },
   }
 }
@@ -470,6 +565,7 @@ exports.createPreRegistrationInvitation = onCall(async (request) => {
   const { userId } = await assertActiveStaff(request)
   const nombreCompleto = normalizeText(request.data?.nombreCompleto)
   const telefono = normalizeText(request.data?.telefono)
+  const sexo = normalizeText(request.data?.sexo).toLowerCase()
 
   if (nombreCompleto.length < 3 || nombreCompleto.length > 120) {
     throw new HttpsError('invalid-argument', 'Escribe el nombre completo.')
@@ -477,6 +573,18 @@ exports.createPreRegistrationInvitation = onCall(async (request) => {
 
   if (normalizePhone(telefono).length !== 10) {
     throw new HttpsError('invalid-argument', 'El número de teléfono debe tener 10 dígitos.')
+  }
+
+  if (sexo !== 'femenino' && sexo !== 'masculino') {
+    throw new HttpsError('invalid-argument', 'Selecciona el sexo del cliente.')
+  }
+
+  const clientIdentity = splitFullName(nombreCompleto)
+  if (!clientIdentity.nombre || !clientIdentity.apellidoPaterno) {
+    throw new HttpsError(
+      'invalid-argument',
+      'Escribe el nombre completo con nombre y al menos un apellido.',
+    )
   }
 
   const nombreNormalizado = normalizeName(nombreCompleto)
@@ -505,6 +613,7 @@ exports.createPreRegistrationInvitation = onCall(async (request) => {
 
   const { nameReference, phoneReference } = getIdentityReferences(nombreNormalizado, telefonoNormalizado)
   const preRegistrationReference = db.collection('preregistros').doc()
+  const clientReference = db.collection('clientes').doc()
 
   try {
     await db.runTransaction(async (transaction) => {
@@ -525,11 +634,35 @@ exports.createPreRegistrationInvitation = onCall(async (request) => {
         schemaVersion: 1,
         status: 'pending',
         source: 'internal-invitation',
+        clientId: clientReference.id,
         nombreCompleto,
         nombreNormalizado,
         telefono,
         telefonoNormalizado,
+        sexo,
         answers: {},
+        createdBy: userId,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      })
+
+      transaction.create(clientReference, {
+        ...clientIdentity,
+        nombreCompleto,
+        nombreCompletoLower: nombreCompleto.toLocaleLowerCase('es-MX'),
+        nombreNormalizado,
+        sexo,
+        edad: '',
+        fechaNacimiento: '',
+        telefono,
+        telefonoNormalizado,
+        correoElectronico: '',
+        correoElectronicoLower: '',
+        ocupacion: '',
+        contactoEmergencia: '',
+        status: 'active',
+        source: 'preregistration',
+        preRegistrationId: preRegistrationReference.id,
         createdBy: userId,
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
@@ -551,7 +684,8 @@ exports.createPreRegistrationInvitation = onCall(async (request) => {
   return {
     ok: true,
     preRegistrationId: preRegistrationReference.id,
-    message: 'Prerregistro generado correctamente. Ya está disponible en la página web.',
+    clientId: clientReference.id,
+    message: 'Prerregistro generado correctamente. El cliente ya está guardado y la invitación está disponible en la página web.',
   }
 })
 
@@ -570,6 +704,7 @@ exports.listPendingPreRegistrations = onCall(async () => {
           id: document.id,
           nombreCompleto: normalizeText(data.nombreCompleto),
           telefonoUltimos4: phone.slice(-4),
+          sexo: normalizeText(data.sexo).toLowerCase(),
           createdAtMs: data.createdAt?.toMillis?.() || 0,
         }
       })
@@ -661,6 +796,33 @@ exports.submitPreRegistration = onCall(async (request) => {
         updatedAt: FieldValue.serverTimestamp(),
       })
 
+      const clientId = normalizeText(preRegistration.clientId)
+      if (clientId) {
+        transaction.set(db.collection('clientes').doc(clientId), {
+          nombre: answers.step1.nombre,
+          apellidoPaterno: answers.step1.apellidoPaterno,
+          apellidoMaterno: answers.step1.apellidoMaterno,
+          nombreCompleto: normalizeText(preRegistration.nombreCompleto),
+          nombreCompletoLower: normalizeText(preRegistration.nombreCompleto).toLocaleLowerCase('es-MX'),
+          nombreNormalizado: normalizeName(preRegistration.nombreCompleto),
+          sexo: answers.step1.sexo,
+          edad: answers.step1.edad,
+          fechaNacimiento: answers.step1.fechaNacimiento,
+          telefono: expectedPhone,
+          telefonoNormalizado: expectedPhone,
+          correoElectronico: answers.step1.correoElectronico,
+          correoElectronicoLower: answers.step1.correoElectronico,
+          ocupacion: answers.step1.ocupacion,
+          contactoEmergencia: answers.step1.contactoEmergencia,
+          status: 'active',
+          source: 'preregistration',
+          preRegistrationId,
+          createdBy: normalizeText(preRegistration.createdBy),
+          createdAt: preRegistration.createdAt || FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true })
+      }
+
       const nombreNormalizado = normalizeName(preRegistration.nombreNormalizado || preRegistration.nombreCompleto)
       const { nameReference, phoneReference } = getIdentityReferences(nombreNormalizado, expectedPhone)
       transaction.set(nameReference, {
@@ -707,14 +869,24 @@ exports.deletePreRegistration = onCall(async (request) => {
       const nombreNormalizado = normalizeName(preRegistration.nombreNormalizado || preRegistration.nombreCompleto)
       const telefonoNormalizado = normalizePhone(preRegistration.telefonoNormalizado || preRegistration.telefono)
       const { nameReference, phoneReference } = getIdentityReferences(nombreNormalizado, telefonoNormalizado)
-      const [nameSnapshot, phoneSnapshot] = await Promise.all([
+      const linkedClientId = normalizeText(preRegistration.clientId)
+      const clientReference = linkedClientId ? db.collection('clientes').doc(linkedClientId) : null
+      const [nameSnapshot, phoneSnapshot, clientSnapshot] = await Promise.all([
         transaction.get(nameReference),
         transaction.get(phoneReference),
+        clientReference ? transaction.get(clientReference) : Promise.resolve(null),
       ])
 
       transaction.delete(preRegistrationReference)
       if (nameSnapshot.data()?.preRegistrationId === preRegistrationId) transaction.delete(nameReference)
       if (phoneSnapshot.data()?.preRegistrationId === preRegistrationId) transaction.delete(phoneReference)
+      if (
+        clientReference
+        && clientSnapshot?.data()?.source === 'preregistration'
+        && clientSnapshot.data()?.preRegistrationId === preRegistrationId
+      ) {
+        transaction.delete(clientReference)
+      }
     })
   } catch (error) {
     if (error instanceof HttpsError) throw error

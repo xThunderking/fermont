@@ -95,14 +95,17 @@ export const STEP_FOUR_OPTIONS = {
     'Medicamentos',
     'Fragancias',
     'Activos especificos',
-    'Contraindicaciones',
+    'Otras alergias',
+  ],
+  contraindicaciones: [
+    'Ninguna',
     'Heridas activas',
     'Infecciones',
     'Herpes activo',
     'Cirugias recientes',
     'Quemaduras solares',
     'Irritacion severa',
-    'Otras alergias',
+    'Otra contraindicacion',
   ],
 }
 
@@ -167,6 +170,7 @@ export const STEP_NINE_OPTIONS = {
 
 export const STEP_TEN_OPTIONS = {
   manchasOrigenes: [
+    'No tengo manchas',
     'Por el sol',
     'Por hormonas',
     'Por embarazo',
@@ -271,7 +275,9 @@ const resolveClinicalPhotoUploadErrorMessage = (error) => {
 }
 
 const normalizeStepOneData = (data) => ({
-  tipoCliente: data?.tipoCliente === 'recurrente' ? 'recurrente' : 'nuevo',
+  tipoCliente: ['nuevo', 'recurrente', 'preregistro'].includes(data?.tipoCliente)
+    ? data.tipoCliente
+    : 'nuevo',
   clienteId: normalizeText(data?.clienteId),
   preregistroId: normalizeText(data?.preregistroId),
   apellidoPaterno: normalizeText(data.apellidoPaterno),
@@ -365,10 +371,15 @@ const normalizeStepFourData = (data) => {
   const enfermedadesSet = new Set(STEP_FOUR_OPTIONS.enfermedades)
   const medicamentosSet = new Set(STEP_FOUR_OPTIONS.medicamentos)
   const alergiasSet = new Set(STEP_FOUR_OPTIONS.alergias)
+  const contraindicacionesSet = new Set(STEP_FOUR_OPTIONS.contraindicaciones)
 
   const enfermedades = toNormalizedUniqueArray(data?.enfermedades, enfermedadesSet)
   const medicamentosActuales = toNormalizedUniqueArray(data?.medicamentosActuales, medicamentosSet)
   const alergias = toNormalizedUniqueArray(data?.alergias, alergiasSet)
+  const contraindicacionesSource = Array.isArray(data?.contraindicaciones)
+    ? data.contraindicaciones
+    : data?.alergias
+  const contraindicaciones = toNormalizedUniqueArray(contraindicacionesSource, contraindicacionesSet)
 
   const isMalePatient = normalizeText(data?.sexo).toLowerCase() === 'masculino'
 
@@ -381,6 +392,10 @@ const normalizeStepFourData = (data) => {
       : '',
     alergias,
     alergiasOtro: alergias.includes('Otras alergias') ? normalizeText(data?.alergiasOtro) : '',
+    contraindicaciones,
+    contraindicacionesOtro: contraindicaciones.includes('Otra contraindicacion')
+      ? normalizeText(data?.contraindicacionesOtro)
+      : '',
     embarazoActual: isMalePatient
       ? ''
       : normalizeBinaryAnswer(normalizeText(data?.embarazoActual).toLowerCase()),
@@ -703,6 +718,7 @@ export const saveStepOneValuation = async ({
   )
   const preRegistrationPayload = hasPreRegistrationAnswers
     ? {
+        step3: normalizeStepThreeData(preRegistrationAnswers.step3 ?? {}),
         step4: normalizeStepFourData({
           ...(preRegistrationAnswers.step4 ?? {}),
           sexo: normalizedStepOneData.sexo,
@@ -711,6 +727,7 @@ export const saveStepOneValuation = async ({
         step6: normalizeStepSixData(preRegistrationAnswers.step6 ?? {}),
         step7: normalizeStepSevenData(preRegistrationAnswers.step7 ?? {}),
         step8: normalizeStepEightData(preRegistrationAnswers.step8 ?? {}),
+        step10: normalizeStepTenData(preRegistrationAnswers.step10 ?? {}),
       }
     : {}
 

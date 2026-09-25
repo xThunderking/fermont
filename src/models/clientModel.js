@@ -103,10 +103,10 @@ const readClientById = async (clientId) => {
 export const saveClientFromStepOne = async ({ userId, stepOneData, clientId }) => {
   const normalizedClient = normalizeClientData(stepOneData)
 
-  if (!normalizedClient.nombre || !normalizedClient.apellidoPaterno || !normalizedClient.apellidoMaterno) {
+  if (!normalizedClient.nombre || !normalizedClient.apellidoPaterno) {
     return {
       ok: false,
-      message: 'Completa nombre y apellidos del cliente para guardarlo.',
+      message: 'Completa el nombre y al menos un apellido del cliente para guardarlo.',
     }
   }
 

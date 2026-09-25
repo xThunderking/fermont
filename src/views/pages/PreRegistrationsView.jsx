@@ -24,6 +24,7 @@ function PreRegistrationsView() {
   const [search, setSearch] = useState('')
   const [nombreCompleto, setNombreCompleto] = useState('')
   const [telefono, setTelefono] = useState('')
+  const [sexo, setSexo] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
   const [deletingId, setDeletingId] = useState('')
@@ -92,8 +93,13 @@ function PreRegistrationsView() {
       return
     }
 
+    if (!['femenino', 'masculino'].includes(sexo)) {
+      setError('Selecciona el sexo del cliente.')
+      return
+    }
+
     setIsCreating(true)
-    const result = await createPreRegistrationInvitation({ nombreCompleto, telefono })
+    const result = await createPreRegistrationInvitation({ nombreCompleto, telefono, sexo })
     setIsCreating(false)
 
     if (!result.ok) {
@@ -103,6 +109,7 @@ function PreRegistrationsView() {
 
     setNombreCompleto('')
     setTelefono('')
+    setSexo('')
     setMessage(result.message)
     await loadPreRegistrations()
   }
@@ -148,6 +155,13 @@ function PreRegistrationsView() {
             <div className="client-row-button preregistration-row-summary">
               <strong>{preRegistration.nombreCompleto || 'Sin nombre'}</strong>
               <small>{preRegistration.telefono || 'Sin teléfono'}</small>
+              <small>
+                {preRegistration.sexo === 'femenino'
+                  ? 'Mujer'
+                  : preRegistration.sexo === 'masculino'
+                    ? 'Hombre'
+                    : 'Sin sexo registrado'}
+              </small>
               <small className="small-tag">
                 {status === 'pending' ? 'Creado' : 'Finalizado'}:{' '}
                 {formatDateTime(status === 'pending'
@@ -201,7 +215,7 @@ function PreRegistrationsView() {
 
       <form className="simple-form preregistration-create-form" onSubmit={handleCreate}>
         <label>
-          Nombre completo
+          Nombre completo (nombre y al menos un apellido)
           <input
             required
             type="text"
@@ -209,7 +223,7 @@ function PreRegistrationsView() {
             maxLength="120"
             value={nombreCompleto}
             onChange={(event) => setNombreCompleto(event.target.value)}
-            placeholder="Nombre del cliente"
+            placeholder="Nombre(s) y apellidos"
           />
         </label>
 
@@ -225,6 +239,15 @@ function PreRegistrationsView() {
             onChange={(event) => setTelefono(normalizePhone(event.target.value))}
             placeholder="10 dígitos"
           />
+        </label>
+
+        <label>
+          Sexo
+          <select required value={sexo} onChange={(event) => setSexo(event.target.value)}>
+            <option value="">Selecciona una opción</option>
+            <option value="femenino">Mujer</option>
+            <option value="masculino">Hombre</option>
+          </select>
         </label>
 
         <button type="submit" className="main-button" disabled={isCreating}>

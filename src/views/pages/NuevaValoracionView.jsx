@@ -102,6 +102,8 @@ const createStepFourInitialData = () => ({
   medicamentosActualesOtro: '',
   alergias: [],
   alergiasOtro: '',
+  contraindicaciones: [],
+  contraindicacionesOtro: '',
   embarazoActual: '',
   lactanciaActual: '',
   embarazoProximo: '',
@@ -215,6 +217,12 @@ const STEP_FOUR_OTHER_CONFIG = {
     textField: 'alergiasOtro',
     label: 'Cual alergia?',
     placeholder: 'Escribe la alergia',
+  },
+  contraindicaciones: {
+    option: 'Otra contraindicacion',
+    textField: 'contraindicacionesOtro',
+    label: 'Cual contraindicacion?',
+    placeholder: 'Escribe la contraindicacion',
   },
 }
 
@@ -372,6 +380,10 @@ const normalizeExistingStepFourData = (rawStepFour) => {
   const allowedEnfermedades = new Set(STEP_FOUR_OPTIONS.enfermedades)
   const allowedMedicamentos = new Set(STEP_FOUR_OPTIONS.medicamentos)
   const allowedAlergias = new Set(STEP_FOUR_OPTIONS.alergias)
+  const allowedContraindicaciones = new Set(STEP_FOUR_OPTIONS.contraindicaciones)
+  const contraindicacionesSource = Array.isArray(rawStepFour.contraindicaciones)
+    ? rawStepFour.contraindicaciones
+    : rawStepFour.alergias
 
   const normalizeBinaryValue = (value) => {
     const normalized = String(value ?? '').trim().toLowerCase()
@@ -391,6 +403,10 @@ const normalizeExistingStepFourData = (rawStepFour) => {
       ? rawStepFour.alergias.filter((item) => allowedAlergias.has(item))
       : [],
     alergiasOtro: String(rawStepFour.alergiasOtro ?? ''),
+    contraindicaciones: Array.isArray(contraindicacionesSource)
+      ? contraindicacionesSource.filter((item) => allowedContraindicaciones.has(item))
+      : [],
+    contraindicacionesOtro: String(rawStepFour.contraindicacionesOtro ?? ''),
     embarazoActual: normalizeBinaryValue(rawStepFour.embarazoActual),
     lactanciaActual: normalizeBinaryValue(rawStepFour.lactanciaActual),
     embarazoProximo: normalizeBinaryValue(rawStepFour.embarazoProximo),
@@ -777,6 +793,7 @@ function NuevaValoracionView() {
         const savedStepOne = requestedPreRegistration.answers?.step1 || {}
         const savedAnswers = requestedPreRegistration.answers || {}
         setClientFlowType('preregistro')
+        setSelectedClientId(requestedPreRegistration.clientId || '')
         setSelectedPreRegistrationId(requestedPreRegistration.id)
         setPreRegistrationSearch(requestedPreRegistration.nombreCompleto)
         setStepOneData({
@@ -786,11 +803,13 @@ function NuevaValoracionView() {
           nombre: String(savedStepOne.nombre || requestedPreRegistration.nombreCompleto),
           telefono: String(savedStepOne.telefono || requestedPreRegistration.telefono),
         })
+        setStepThreeData(normalizeExistingStepThreeData(savedAnswers.step3))
         setStepFourData(normalizeExistingStepFourData(savedAnswers.step4))
         setStepFiveData(normalizeExistingStepFiveData(savedAnswers.step5))
         setStepSixData(normalizeExistingStepSixData(savedAnswers.step6))
         setStepSevenData(normalizeExistingStepSevenData(savedAnswers.step7))
         setStepEightData(normalizeExistingStepEightData(savedAnswers.step8))
+        setStepTenData(normalizeExistingStepTenData(savedAnswers.step10))
       }
     }
 
@@ -864,7 +883,11 @@ function NuevaValoracionView() {
         ...createStepOneInitialData(),
         ...(result.valuation.step1 ?? {}),
       }
-      const loadedFlowType = loadedStepOne.tipoCliente === 'recurrente' ? 'recurrente' : 'nuevo'
+      const loadedFlowType = loadedStepOne.tipoCliente === 'recurrente'
+        ? 'recurrente'
+        : loadedStepOne.tipoCliente === 'preregistro' || loadedStepOne.preregistroId
+          ? 'preregistro'
+          : 'nuevo'
 
       setError('')
       setValuationDocId(result.valuation.id)
@@ -872,10 +895,15 @@ function NuevaValoracionView() {
       const normalizedLoadedCurrentStep = Number.isFinite(loadedCurrentStep)
         ? Math.max(1, Math.min(TOTAL_STEPS, Math.trunc(loadedCurrentStep)))
         : 1
-
       setHighestSavedStep(normalizedLoadedCurrentStep)
 
-      if (loadedFlowType === 'recurrente') {
+      if (loadedFlowType === 'preregistro') {
+        if (normalizedLoadedCurrentStep >= 11) setActiveStep(11)
+        else if (normalizedLoadedCurrentStep >= 10) setActiveStep(10)
+        else if (normalizedLoadedCurrentStep >= 9) setActiveStep(9)
+        else if (normalizedLoadedCurrentStep >= 2) setActiveStep(2)
+        else setActiveStep(1)
+      } else if (loadedFlowType === 'recurrente') {
         const hasSavedRecurrentStepFour = Boolean(result.valuation.recurrentStep4)
 
         if (hasSavedRecurrentStepFour) {
@@ -913,6 +941,7 @@ function NuevaValoracionView() {
 
       setClientFlowType(loadedFlowType)
       setSelectedClientId(String(loadedStepOne.clienteId ?? result.valuation.clienteId ?? ''))
+      setSelectedPreRegistrationId(String(loadedStepOne.preregistroId ?? ''))
       setStepOneData(loadedStepOne)
       setStepTwoData(normalizeExistingStepTwoData(result.valuation.step2))
       setStepThreeData(normalizeExistingStepThreeData(result.valuation.step3))
@@ -1003,11 +1032,8 @@ function NuevaValoracionView() {
     return 'Nueva Valoración'
   }, [isProtocolMode, valuationDocId])
 
-  const isFlowSelected = !isProtocolMode && (
-    clientFlowType === 'nuevo'
-    || clientFlowType === 'recurrente'
-    || clientFlowType === 'preregistro'
-  )
+  const isFirstValuationFlow = clientFlowType === 'nuevo' || clientFlowType === 'preregistro'
+  const isFlowSelected = !isProtocolMode && (isFirstValuationFlow || clientFlowType === 'recurrente')
   const normalizedActiveStep = Number.isFinite(Number(activeStep))
     ? Math.max(1, Math.min(TOTAL_STEPS, Math.trunc(Number(activeStep))))
     : 1
@@ -1383,9 +1409,16 @@ function NuevaValoracionView() {
         }
       }
 
+      if (field === 'manchasOrigenes' && option === 'No tengo manchas') {
+        return { ...previous, [field]: [option] }
+      }
+
       return {
         ...previous,
-        [field]: [...currentValues, option],
+        [field]: [
+          ...currentValues.filter((value) => value !== 'No tengo manchas'),
+          option,
+        ],
       }
     })
   }
@@ -1510,7 +1543,7 @@ function NuevaValoracionView() {
     const savedStepOne = preRegistration.answers?.step1 || {}
     const savedAnswers = preRegistration.answers || {}
     setClientFlowType('preregistro')
-    setSelectedClientId('')
+    setSelectedClientId(preRegistration.clientId || '')
     setSelectedPreRegistrationId(preRegistration.id)
     setPreRegistrationSearch(preRegistration.nombreCompleto)
     setStepOneData({
@@ -1520,11 +1553,13 @@ function NuevaValoracionView() {
       nombre: String(savedStepOne.nombre || preRegistration.nombreCompleto),
       telefono: String(savedStepOne.telefono || preRegistration.telefono),
     })
+    setStepThreeData(normalizeExistingStepThreeData(savedAnswers.step3))
     setStepFourData(normalizeExistingStepFourData(savedAnswers.step4))
     setStepFiveData(normalizeExistingStepFiveData(savedAnswers.step5))
     setStepSixData(normalizeExistingStepSixData(savedAnswers.step6))
     setStepSevenData(normalizeExistingStepSevenData(savedAnswers.step7))
     setStepEightData(normalizeExistingStepEightData(savedAnswers.step8))
+    setStepTenData(normalizeExistingStepTenData(savedAnswers.step10))
     setError('')
   }
 
@@ -1628,7 +1663,7 @@ function NuevaValoracionView() {
 
       const requiredFields = [
         stepOneData.apellidoPaterno,
-        stepOneData.apellidoMaterno,
+        ...(clientFlowType === 'nuevo' ? [stepOneData.apellidoMaterno] : []),
         stepOneData.nombre,
         stepOneData.sexo,
         stepOneData.edad,
@@ -1681,6 +1716,13 @@ function NuevaValoracionView() {
 
       if (isStepFourOtherSelected('alergias') && !hasValue(stepFourData.alergiasOtro)) {
         return 'Especifica la alergia en el campo "Otras alergias".'
+      }
+
+      if (
+        isStepFourOtherSelected('contraindicaciones')
+        && !hasValue(stepFourData.contraindicacionesOtro)
+      ) {
+        return 'Especifica la contraindicación en el campo "Otra contraindicación".'
       }
     }
 
@@ -1768,9 +1810,11 @@ function NuevaValoracionView() {
 
     if (step === 10) {
       const requiredFields = [
-        stepTenData.acneEmpeoraPeriodo,
-        stepTenData.cambiosHormonalesRecientes,
-        stepTenData.usaAnticonceptivos,
+        ...(!isMalePatient ? [
+          stepTenData.acneEmpeoraPeriodo,
+          stepTenData.cambiosHormonalesRecientes,
+          stepTenData.usaAnticonceptivos,
+        ] : []),
         stepTenData.manipulaGranitos,
         stepTenData.acneDoloroso,
         stepTenData.pielEnrojeceFacilmente,
@@ -1783,21 +1827,6 @@ function NuevaValoracionView() {
 
       if (!hasValue(stepTenData.escalaFitzpatrick) || !hasValue(stepTenData.escalaGlogau)) {
         return 'Selecciona las escalas Fitzpatrick y Glogau.'
-      }
-    }
-
-    if (step === 11) {
-      const requiredFields = [
-        stepElevenData.circulacionPiernasCansadas,
-        stepElevenData.circulacionVarices,
-        stepElevenData.circulacionRetencionLiquidos,
-        stepElevenData.circulacionDolorTacto,
-        stepElevenData.pesoCambiosRecientes,
-        stepElevenData.pesoFluctuaciones,
-      ]
-
-      if (requiredFields.some((field) => !hasValue(field))) {
-        return 'Completa todos los campos obligatorios del paso 11.'
       }
     }
 
@@ -1825,12 +1854,18 @@ function NuevaValoracionView() {
       return null
     }
 
+    const selectedPreRegistration = clientFlowType === 'preregistro'
+      ? availablePreRegistrations.find(({ id }) => id === selectedPreRegistrationId)
+      : null
+
     setIsSaving(true)
 
     const clientResult = await saveClientFromStepOne({
       userId: currentUser.id,
       stepOneData,
-      clientId: clientFlowType === 'recurrente' ? selectedClientId : '',
+      clientId: clientFlowType === 'recurrente' || clientFlowType === 'preregistro'
+        ? selectedClientId
+        : '',
     })
 
     if (!clientResult.ok || !clientResult.client?.id) {
@@ -1849,14 +1884,14 @@ function NuevaValoracionView() {
       knownCurrentStep: highestSavedStep,
       stepOneData: {
         ...stepOneData,
-        tipoCliente: clientFlowType === 'recurrente' ? 'recurrente' : 'nuevo',
+        tipoCliente: clientFlowType,
         clienteId: linkedClientId,
         preregistroId: clientFlowType === 'preregistro'
           ? selectedPreRegistrationId
           : String(stepOneData.preregistroId || ''),
       },
       preRegistrationAnswers: clientFlowType === 'preregistro'
-        ? availablePreRegistrations.find(({ id }) => id === selectedPreRegistrationId)?.answers
+        ? selectedPreRegistration?.answers
         : null,
     })
 
@@ -1879,7 +1914,12 @@ function NuevaValoracionView() {
     const nextValuationId = valuationResult.valuation?.id || valuationDocId
     setValuationDocId(nextValuationId)
 
-    if (clientFlowType === 'preregistro' && selectedPreRegistrationId && nextValuationId) {
+    if (
+      clientFlowType === 'preregistro'
+      && selectedPreRegistration
+      && selectedPreRegistrationId
+      && nextValuationId
+    ) {
       let preRegistrationWarning = ''
       const refreshedValuationResult = await getValuationForEdition({ valuationId: nextValuationId })
       const historyResult = await saveClientClinicalHistoryFromValuation({
@@ -1921,7 +1961,11 @@ function NuevaValoracionView() {
     setIsSaving(false)
 
     if (!valuationId && nextValuationId) {
-      navigate(`/app/nueva-valoracion/${nextValuationId}`, { replace: true })
+      window.history.replaceState(
+        window.history.state,
+        '',
+        `/app/nueva-valoracion/${nextValuationId}`,
+      )
     }
 
     return nextValuationId
@@ -2195,7 +2239,14 @@ function NuevaValoracionView() {
     const result = await saveStepTenValuation({
       valuationId: valuationDocId,
       knownCurrentStep: highestSavedStep,
-      stepTenData,
+      stepTenData: isMalePatient
+        ? {
+            ...stepTenData,
+            acneEmpeoraPeriodo: '',
+            cambiosHormonalesRecientes: '',
+            usaAnticonceptivos: '',
+          }
+        : stepTenData,
     })
     setIsSaving(false)
 
@@ -2237,7 +2288,7 @@ function NuevaValoracionView() {
     }
 
     let historyWarning = ''
-    if (clientFlowType === 'nuevo' && selectedClientId) {
+    if ((clientFlowType === 'nuevo' || clientFlowType === 'preregistro') && selectedClientId) {
       const refreshedValuationResult = await getValuationForEdition({
         valuationId: result.valuation?.id || valuationDocId,
       })
@@ -2394,7 +2445,7 @@ function NuevaValoracionView() {
       return
     }
 
-    setActiveStep(clientFlowType === 'recurrente' ? 3 : 3)
+    setActiveStep(clientFlowType === 'preregistro' ? 9 : 3)
     setSuccessMessage('')
   }
 
@@ -2417,7 +2468,7 @@ function NuevaValoracionView() {
       return
     }
 
-    setActiveStep(4)
+    setActiveStep(clientFlowType === 'preregistro' ? 8 : 4)
     setSuccessMessage('')
   }
 
@@ -2825,12 +2876,14 @@ function NuevaValoracionView() {
       ) : null}
 
       {!isLoading && isFlowSelected && activeStep === 1 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveAndExit}>
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveAndExit}>
           {clientFlowType === 'preregistro' ? (
             <div className="client-search-box">
               <div>
                 <p className="valuation-section-title">Seleccionar prerregistro finalizado</p>
-                <p className="subtitle">Al elegirlo se copiarán aquí las respuestas enviadas por el cliente.</p>
+                <p className="subtitle">
+                  Al elegirlo se aplicarán sus respuestas y solo aparecerán las preguntas pendientes.
+                </p>
               </div>
 
               <label>
@@ -2931,7 +2984,8 @@ function NuevaValoracionView() {
 
           {clientFlowType === 'nuevo' || clientFlowType === 'preregistro' ? (
             <>
-              <div className="valuation-grid">
+              {clientFlowType === 'nuevo' ? (
+                <div className="valuation-grid">
                 <label>
                   Apellido paterno
                   <input
@@ -3030,7 +3084,8 @@ function NuevaValoracionView() {
                     onChange={(event) => setFieldValue('contactoEmergencia', event.target.value)}
                   />
                 </label>
-              </div>
+                </div>
+              ) : null}
 
               <div className="valuation-grid">
                 <label className="valuation-field-large">
@@ -3084,7 +3139,7 @@ function NuevaValoracionView() {
       ) : null}
 
       {!isLoading && isFlowSelected && activeStep === 2 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepTwoAndExit}>
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepTwoAndExit}>
           <div className="valuation-section-title">Motivo de consulta</div>
 
           <div className="motivos-wrapper">
@@ -3177,8 +3232,8 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 3 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepThreeAndExit}>
+      {!isLoading && !isProtocolMode && isFirstValuationFlow && activeStep === 3 ? (
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepThreeAndExit}>
           <div className="valuation-section-title">Expectativas y prioridades del cliente</div>
 
           <div className="valuation-grid">
@@ -3260,7 +3315,7 @@ function NuevaValoracionView() {
       ) : null}
 
       {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 4 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepFourAndExit}>
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepFourAndExit}>
           <div className="valuation-section-title">Antecedentes de salud</div>
           <div className="valuation-grid">
             <div className="valuation-field-large selection-card">
@@ -3359,7 +3414,7 @@ function NuevaValoracionView() {
             </div>
 
             <div className="valuation-field-large selection-card">
-              <p className="selection-title">Alergias y contraindicaciones</p>
+              <p className="selection-title">Alergias</p>
               <button
                 type="button"
                 className="main-button secondary selection-trigger"
@@ -3374,6 +3429,34 @@ function NuevaValoracionView() {
                   {getStepFourList('alergias').map((item) => (
                     <span key={`alergia-${item}`} className="selection-tag">
                       {formatStepFourSelectedItem('alergias', item)}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="selection-empty">Sin seleccion</p>
+              )}
+            </div>
+
+            <div className="valuation-field-large selection-card">
+              <p className="selection-title">Contraindicaciones</p>
+              <button
+                type="button"
+                className="main-button secondary selection-trigger"
+                onClick={() =>
+                  openStepFourModal(
+                    'contraindicaciones',
+                    'Selecciona contraindicaciones',
+                    STEP_FOUR_OPTIONS.contraindicaciones,
+                  )}
+              >
+                Seleccionar contraindicaciones
+              </button>
+
+              {getStepFourList('contraindicaciones').length > 0 ? (
+                <div className="selection-tags">
+                  {getStepFourList('contraindicaciones').map((item) => (
+                    <span key={`contraindicacion-${item}`} className="selection-tag">
+                      {formatStepFourSelectedItem('contraindicaciones', item)}
                     </span>
                   ))}
                 </div>
@@ -3412,7 +3495,7 @@ function NuevaValoracionView() {
       ) : null}
 
       {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 5 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepFiveAndExit}>
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepFiveAndExit}>
           <div className="valuation-section-title">Hábitos y estilo de vida</div>
 
           <div className="valuation-grid">
@@ -3569,7 +3652,7 @@ function NuevaValoracionView() {
       ) : null}
 
       {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 6 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepSixAndExit}>
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepSixAndExit}>
           <div className="valuation-section-title">Exposición solar</div>
 
           <div className="valuation-grid">
@@ -3660,7 +3743,7 @@ function NuevaValoracionView() {
       ) : null}
 
       {!isLoading && !isProtocolMode && ((clientFlowType === 'nuevo' && activeStep === 7) || (clientFlowType === 'recurrente' && activeStep === 3)) ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepSevenAndExit}>
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepSevenAndExit}>
           <div className="valuation-section-title">Historial estetico</div>
 
           <div className="valuation-grid">
@@ -3843,7 +3926,7 @@ function NuevaValoracionView() {
       ) : null}
 
       {!isLoading && !isProtocolMode && clientFlowType === 'recurrente' && activeStep === 4 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveRecurrentStepFourAndExit}>
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveRecurrentStepFourAndExit}>
           <div className="valuation-section-title">Paso 4</div>
 
           <div className="valuation-grid">
@@ -3938,12 +4021,23 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 8 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepEightAndExit}>
+      {!isLoading && !isProtocolMode && isFirstValuationFlow && activeStep === 8 ? (
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepEightAndExit}>
           <div className="valuation-section-title">Rutina actual</div>
 
           <div className="valuation-grid">
-            <div className="selection-card">
+            {clientFlowType === 'preregistro' ? (
+              <div className="selection-card valuation-field-large">
+                <p className="selection-title">Respuestas del prerregistro aplicadas</p>
+                <p className="selection-empty">
+                  Solo se muestran las preguntas que el cliente todavía no ha contestado.
+                </p>
+              </div>
+            ) : null}
+
+            {clientFlowType === 'nuevo' ? (
+              <>
+                <div className="selection-card">
               <p className="selection-title">Mañana</p>
               <button
                 type="button"
@@ -3965,9 +4059,9 @@ function NuevaValoracionView() {
               ) : (
                 <p className="selection-empty">Sin seleccion</p>
               )}
-            </div>
+                </div>
 
-            <div className="selection-card">
+                <div className="selection-card">
               <p className="selection-title">Noche</p>
               <button
                 type="button"
@@ -3989,9 +4083,9 @@ function NuevaValoracionView() {
               ) : (
                 <p className="selection-empty">Sin seleccion</p>
               )}
-            </div>
+                </div>
 
-            <div className="selection-card valuation-field-large">
+                <div className="selection-card valuation-field-large">
               <p className="selection-title">Activos importantes</p>
 
               <div className="valuation-grid">
@@ -4043,24 +4137,30 @@ function NuevaValoracionView() {
                   </select>
                 </label>
               </div>
-            </div>
+                </div>
+              </>
+            ) : null}
 
             <div className="selection-card valuation-field-large">
-              <p className="selection-title">Compromiso del cliente</p>
+              <p className="selection-title">
+                {clientFlowType === 'preregistro' ? 'Preguntas pendientes' : 'Compromiso del cliente'}
+              </p>
 
               <div className="valuation-grid">
-                <label>
-                  Eres constante con tu rutina?
-                  <select
-                    required
-                    value={stepEightData.constanteRutina}
-                    onChange={(event) => setStepEightFieldValue('constanteRutina', event.target.value)}
-                  >
-                    <option value="">Sin respuesta</option>
-                    <option value="si">Si</option>
-                    <option value="no">No</option>
-                  </select>
-                </label>
+                {clientFlowType === 'nuevo' ? (
+                  <label>
+                    Eres constante con tu rutina?
+                    <select
+                      required
+                      value={stepEightData.constanteRutina}
+                      onChange={(event) => setStepEightFieldValue('constanteRutina', event.target.value)}
+                    >
+                      <option value="">Sin respuesta</option>
+                      <option value="si">Si</option>
+                      <option value="no">No</option>
+                    </select>
+                  </label>
+                ) : null}
 
                 <label>
                   Podrias seguir cuidados en casa?
@@ -4107,16 +4207,16 @@ function NuevaValoracionView() {
               type="button"
               className="main-button secondary"
               disabled={isSaving}
-              onClick={() => setActiveStep(7)}
+              onClick={() => setActiveStep(clientFlowType === 'preregistro' ? 3 : 7)}
             >
-              Volver al paso 7
+              {clientFlowType === 'preregistro' ? 'Volver al paso 3' : 'Volver al paso 7'}
             </button>
           </div>
         </form>
       ) : null}
 
-      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 9 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepNineAndExit}>
+      {!isLoading && !isProtocolMode && isFirstValuationFlow && activeStep === 9 ? (
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepNineAndExit}>
           <div className="valuation-section-title">Evaluación facial</div>
 
           <div className="valuation-grid">
@@ -4217,20 +4317,23 @@ function NuevaValoracionView() {
               type="button"
               className="main-button secondary"
               disabled={isSaving}
-              onClick={() => setActiveStep(8)}
+              onClick={() => setActiveStep(clientFlowType === 'preregistro' ? 2 : 8)}
             >
-              Volver al paso 8
+              {clientFlowType === 'preregistro' ? 'Volver al paso 2' : 'Volver al paso 8'}
             </button>
           </div>
         </form>
       ) : null}
 
-      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 10 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepTenAndExit}>
+      {!isLoading && !isProtocolMode && isFirstValuationFlow && activeStep === 10 ? (
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepTenAndExit}>
           <div className="valuation-section-title">Evaluación facial 2</div>
 
           <div className="valuation-grid">
-            <div className="selection-card valuation-field-large">
+            {clientFlowType === 'nuevo' ? (
+              <>
+                {!isMalePatient ? (
+                  <div className="selection-card valuation-field-large">
               <p className="selection-title">Hormonal</p>
 
               <div className="valuation-grid">
@@ -4274,9 +4377,10 @@ function NuevaValoracionView() {
                   </select>
                 </label>
               </div>
-            </div>
+                  </div>
+                ) : null}
 
-            <div className="selection-card valuation-field-large">
+                <div className="selection-card valuation-field-large">
               <p className="selection-title">Acne</p>
 
               <div className="valuation-grid">
@@ -4315,9 +4419,9 @@ function NuevaValoracionView() {
                   </select>
                 </label>
               </div>
-            </div>
+                </div>
 
-            <div className="selection-card valuation-field-large">
+                <div className="selection-card valuation-field-large">
               <p className="selection-title">Manchas</p>
               <button
                 type="button"
@@ -4339,9 +4443,9 @@ function NuevaValoracionView() {
               ) : (
                 <p className="selection-empty">Sin seleccion</p>
               )}
-            </div>
+                </div>
 
-            <div className="selection-card valuation-field-large">
+                <div className="selection-card valuation-field-large">
               <p className="selection-title">Sensibilidad</p>
 
               <div className="valuation-grid">
@@ -4371,7 +4475,16 @@ function NuevaValoracionView() {
                   </select>
                 </label>
               </div>
-            </div>
+                </div>
+              </>
+            ) : (
+              <div className="selection-card valuation-field-large">
+                <p className="selection-title">Respuestas del prerregistro aplicadas</p>
+                <p className="selection-empty">
+                  Las preguntas hormonales, de acné, manchas y sensibilidad ya fueron contestadas.
+                </p>
+              </div>
+            )}
 
             <div className="selection-card valuation-field-large">
               <p className="selection-title">Escalas (propuesta)</p>
@@ -4488,8 +4601,8 @@ function NuevaValoracionView() {
         </form>
       ) : null}
 
-      {!isLoading && !isProtocolMode && clientFlowType === 'nuevo' && activeStep === 11 ? (
-        <form className="simple-form valuation-form" onSubmit={handleSaveStepElevenAndExit}>
+      {!isLoading && !isProtocolMode && isFirstValuationFlow && activeStep === 11 ? (
+        <form className="simple-form valuation-form" noValidate onSubmit={handleSaveStepElevenAndExit}>
           <div className="valuation-section-title">Preguntas corporales</div>
 
           <div className="valuation-grid">
@@ -4500,7 +4613,6 @@ function NuevaValoracionView() {
                 <label>
                   Tienes piernas cansadas?
                   <select
-                    required
                     value={stepElevenData.circulacionPiernasCansadas}
                     onChange={(event) =>
                       setStepElevenFieldValue('circulacionPiernasCansadas', event.target.value)}
@@ -4514,7 +4626,6 @@ function NuevaValoracionView() {
                 <label>
                   Tienes varices?
                   <select
-                    required
                     value={stepElevenData.circulacionVarices}
                     onChange={(event) => setStepElevenFieldValue('circulacionVarices', event.target.value)}
                   >
@@ -4527,7 +4638,6 @@ function NuevaValoracionView() {
                 <label>
                   Tienes retencion de liquidos?
                   <select
-                    required
                     value={stepElevenData.circulacionRetencionLiquidos}
                     onChange={(event) =>
                       setStepElevenFieldValue('circulacionRetencionLiquidos', event.target.value)}
@@ -4541,7 +4651,6 @@ function NuevaValoracionView() {
                 <label>
                   Tienes dolor al tacto?
                   <select
-                    required
                     value={stepElevenData.circulacionDolorTacto}
                     onChange={(event) =>
                       setStepElevenFieldValue('circulacionDolorTacto', event.target.value)}
@@ -4561,7 +4670,6 @@ function NuevaValoracionView() {
                 <label>
                   Has subido o bajado de peso recientemente?
                   <select
-                    required
                     value={stepElevenData.pesoCambiosRecientes}
                     onChange={(event) => setStepElevenFieldValue('pesoCambiosRecientes', event.target.value)}
                   >
@@ -4574,7 +4682,6 @@ function NuevaValoracionView() {
                 <label>
                   Tu peso fluctua mucho?
                   <select
-                    required
                     value={stepElevenData.pesoFluctuaciones}
                     onChange={(event) => setStepElevenFieldValue('pesoFluctuaciones', event.target.value)}
                   >

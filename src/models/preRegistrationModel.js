@@ -46,6 +46,9 @@ const mapPreRegistrationSnapshot = (snapshot) => {
     nombreNormalizado: String(data.nombreNormalizado ?? ''),
     telefono: String(data.telefono ?? ''),
     telefonoNormalizado: String(data.telefonoNormalizado ?? ''),
+    sexo: ['femenino', 'masculino'].includes(String(data.sexo ?? '').toLowerCase())
+      ? String(data.sexo).toLowerCase()
+      : '',
     answers: data.answers && typeof data.answers === 'object' ? data.answers : {},
     createdAtMs: data.createdAt?.toMillis?.() ?? 0,
     completedAtMs: data.completedAt?.toMillis?.() ?? 0,
@@ -57,10 +60,11 @@ const mapPreRegistrationSnapshot = (snapshot) => {
   }
 }
 
-export const createPreRegistrationInvitation = async ({ nombreCompleto, telefono }) => (
+export const createPreRegistrationInvitation = async ({ nombreCompleto, telefono, sexo }) => (
   callPreRegistrationFunction('createPreRegistrationInvitation', {
     nombreCompleto: normalizeText(nombreCompleto),
     telefono: normalizeText(telefono),
+    sexo: normalizeText(sexo).toLowerCase(),
   }, 'No se pudo generar el prerregistro. Intenta nuevamente.')
 )
 
@@ -78,6 +82,9 @@ export const listPublicPendingPreRegistrations = async () => {
         id: String(preRegistration?.id ?? ''),
         nombreCompleto: String(preRegistration?.nombreCompleto ?? ''),
         telefonoUltimos4: String(preRegistration?.telefonoUltimos4 ?? ''),
+        sexo: ['femenino', 'masculino'].includes(String(preRegistration?.sexo ?? '').toLowerCase())
+          ? String(preRegistration.sexo).toLowerCase()
+          : '',
         createdAtMs: Number(preRegistration?.createdAtMs ?? 0),
       }))
       : [],

@@ -2628,7 +2628,7 @@
   }
 
   .public-questionnaire-sidebar ol {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(8, minmax(0, 1fr));
     gap: clamp(0.15rem, 0.8vw, 0.45rem);
   }
 

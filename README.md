@@ -47,7 +47,7 @@ npx firebase-tools deploy --only firestore:rules,firestore:indexes,storage
 npm run deploy
 ```
 
-El flujo de prerregistro utiliza Cloud Functions. El personal genera una invitación con nombre y teléfono; el cliente la selecciona en la página pública y completa un cuestionario responsivo de datos personales, antecedentes de salud, hábitos, exposición solar, historial estético y rutina actual. Al finalizar, la invitación deja de estar disponible públicamente. Cuando el personal inicia la valoración desde ese prerregistro, las respuestas se precargan en los pasos correspondientes y se vinculan al expediente del cliente. Solo los administradores pueden eliminar invitaciones. Antes del primer despliegue instala las dependencias con `npm install --prefix functions` y confirma que el proyecto de Firebase permita desplegar Functions.
+El flujo de prerregistro utiliza Cloud Functions. El personal genera una invitación con nombre y teléfono; en ese momento también se crea el cliente y su identidad queda protegida para que no pueda modificarse desde la página pública. El cliente completa un cuestionario responsivo de datos personales, antecedentes de salud, hábitos, exposición solar, historial estético y rutina actual. Al finalizar, la invitación deja de estar disponible públicamente. Cuando el personal inicia la valoración desde ese prerregistro, las respuestas se aplican al expediente y la interfaz muestra únicamente las preguntas pendientes. Solo los administradores pueden eliminar invitaciones. Antes del primer despliegue instala las dependencias con `npm install --prefix functions` y confirma que el proyecto de Firebase permita desplegar Functions.
 
 ## Almacenamiento
 
