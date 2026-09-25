@@ -113,6 +113,24 @@ const normalizeIntegerInRange = (value, label, minimum, maximum) => {
   return String(parsed)
 }
 
+const normalizeConsentSignature = (value) => {
+  const normalized = String(value ?? '').trim()
+  const match = /^data:image\/png;base64,([A-Za-z0-9+/]+={0,2})$/.exec(normalized)
+  if (!match) invalidAnswers('La firma del consentimiento no tiene un formato válido.')
+
+  const signatureBuffer = Buffer.from(match[1], 'base64')
+  const pngHeader = signatureBuffer.subarray(0, 8).toString('hex')
+  if (
+    signatureBuffer.length < 100
+    || signatureBuffer.length > 300 * 1024
+    || pngHeader !== '89504e470d0a1a0a'
+  ) {
+    invalidAnswers('La firma del consentimiento no tiene un formato válido.')
+  }
+
+  return normalized
+}
+
 const normalizeBinaryAnswer = (value, label, required = true) => {
   const normalized = normalizeText(value).toLowerCase()
   if (normalized === 'si' || normalized === 'no') return normalized
@@ -214,6 +232,7 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
   const rawStepSeven = rawAnswers.step7 || {}
   const rawStepEight = rawAnswers.step8 || {}
   const rawStepTen = rawAnswers.step10 || {}
+  const rawConsent = rawAnswers.consentimiento || {}
   const registeredSex = normalizeText(preRegistration.sexo).toLowerCase()
   const sexo = normalizeLimitedText(
     registeredSex || rawStepOne.sexo,
@@ -308,6 +327,10 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
     'Origen de las manchas',
     'No tengo manchas',
   )
+  if (rawConsent.aceptado !== true) {
+    invalidAnswers('Debes leer y aceptar el consentimiento informado.')
+  }
+  const firmaCliente = normalizeConsentSignature(rawConsent.firmaCliente)
   const fallbackIdentity = splitFullName(preRegistration.nombreCompleto)
   const identity = {
     nombre: normalizeLimitedText(fallbackIdentity.nombre, 'Nombre', {
@@ -497,6 +520,11 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
         rawStepTen.pielArdeIrritaFacil,
         'Ardor o irritación de la piel',
       ),
+    },
+    consentimiento: {
+      aceptado: true,
+      version: '2026-09-25',
+      firmaCliente,
     },
   }
 }
@@ -787,10 +815,11 @@ exports.submitPreRegistration = onCall(async (request) => {
       }
 
       const answers = normalizePreRegistrationAnswers(rawAnswers, preRegistration)
+      answers.consentimiento.firmadoAt = FieldValue.serverTimestamp()
 
       transaction.update(preRegistrationReference, {
         status: 'completed',
-        schemaVersion: 2,
+        schemaVersion: 3,
         answers,
         completedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),

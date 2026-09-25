@@ -25,6 +25,7 @@ import {
   saveStepNineValuation,
   saveCutaneoStatusData,
   saveRecurrentStepFourValuation,
+  saveInformedConsentSignature,
   saveStepOneValuation,
   saveStepFourValuation,
   saveStepFiveValuation,
@@ -1921,6 +1922,18 @@ function NuevaValoracionView() {
       && nextValuationId
     ) {
       let preRegistrationWarning = ''
+      const preRegistrationClientSignature = String(
+        selectedPreRegistration.answers?.consentimiento?.firmaCliente ?? '',
+      ).trim()
+      if (preRegistrationClientSignature.startsWith('data:image/png;base64,')) {
+        const signatureResult = await saveInformedConsentSignature({
+          valuationId: nextValuationId,
+          signatureType: 'cliente',
+          signature: preRegistrationClientSignature,
+        })
+        if (!signatureResult.ok) preRegistrationWarning = signatureResult.message
+      }
+
       const refreshedValuationResult = await getValuationForEdition({ valuationId: nextValuationId })
       const historyResult = await saveClientClinicalHistoryFromValuation({
         clientId: linkedClientId,
@@ -1939,7 +1952,9 @@ function NuevaValoracionView() {
             },
       })
 
-      if (!historyResult.ok) preRegistrationWarning = historyResult.message
+      if (!historyResult.ok) {
+        preRegistrationWarning = [preRegistrationWarning, historyResult.message].filter(Boolean).join(' ')
+      }
 
       const usedResult = await markPreRegistrationUsed({
         preRegistrationId: selectedPreRegistrationId,

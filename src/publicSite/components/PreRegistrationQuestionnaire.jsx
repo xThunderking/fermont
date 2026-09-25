@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   STEP_EIGHT_OPTIONS,
   STEP_FOUR_OPTIONS,
@@ -15,6 +15,7 @@ const SECTIONS = [
   { number: '07', title: 'Historial estético', shortTitle: 'Historial' },
   { number: '08', title: 'Rutina actual', shortTitle: 'Rutina' },
   { number: '10', title: 'Evaluación facial 2', shortTitle: 'Evaluación' },
+  { number: '12', title: 'Consentimiento informado', shortTitle: 'Firma' },
 ]
 
 const BINARY_OPTIONS = [
@@ -149,6 +150,10 @@ const createInitialAnswers = ({ nombreCompleto, telefono, sexo }) => ({
     pielEnrojeceFacilmente: '',
     pielArdeIrritaFacil: '',
   },
+  consentimiento: {
+    aceptado: false,
+    firmaCliente: '',
+  },
 })
 
 function BinaryChoice({
@@ -216,6 +221,96 @@ function MultipleChoice({ label, hint, name, options, values, onChange, exclusiv
         ))}
       </div>
     </fieldset>
+  )
+}
+
+function SignaturePad({ value, onChange }) {
+  const canvasRef = useRef(null)
+  const drawingRef = useRef(false)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const context = canvas?.getContext('2d')
+    if (!canvas || !context) return
+
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    if (!value) return
+
+    const image = new Image()
+    image.onload = () => context.drawImage(image, 0, 0, canvas.width, canvas.height)
+    image.src = value
+  }, [value])
+
+  const getPoint = (event) => {
+    const canvas = canvasRef.current
+    const bounds = canvas.getBoundingClientRect()
+    return {
+      x: (event.clientX - bounds.left) * (canvas.width / bounds.width),
+      y: (event.clientY - bounds.top) * (canvas.height / bounds.height),
+    }
+  }
+
+  const startDrawing = (event) => {
+    const canvas = canvasRef.current
+    const context = canvas.getContext('2d')
+    const point = getPoint(event)
+    event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    context.beginPath()
+    context.moveTo(point.x, point.y)
+    context.strokeStyle = '#352219'
+    context.lineWidth = 4
+    context.lineCap = 'round'
+    context.lineJoin = 'round'
+    context.lineTo(point.x + 0.01, point.y + 0.01)
+    context.stroke()
+    drawingRef.current = true
+  }
+
+  const continueDrawing = (event) => {
+    if (!drawingRef.current) return
+    const context = canvasRef.current.getContext('2d')
+    const point = getPoint(event)
+    event.preventDefault()
+    context.lineTo(point.x, point.y)
+    context.stroke()
+  }
+
+  const finishDrawing = () => {
+    if (!drawingRef.current) return
+    drawingRef.current = false
+    onChange(canvasRef.current.toDataURL('image/png'))
+  }
+
+  const clearSignature = () => {
+    const canvas = canvasRef.current
+    canvas?.getContext('2d')?.clearRect(0, 0, canvas.width, canvas.height)
+    drawingRef.current = false
+    onChange('')
+  }
+
+  return (
+    <div className="public-consent-signature">
+      <p>Firma dentro del recuadro usando tu dedo, lápiz digital o mouse.</p>
+      <canvas
+        ref={canvasRef}
+        className="public-consent-signature-canvas"
+        width="900"
+        height="260"
+        aria-label="Área para firma del cliente"
+        onPointerDown={startDrawing}
+        onPointerMove={continueDrawing}
+        onPointerUp={finishDrawing}
+        onPointerCancel={finishDrawing}
+        onPointerLeave={finishDrawing}
+      />
+      <div className="public-consent-signature-actions">
+        <button type="button" className="public-button public-button-secondary" onClick={clearSignature}>
+          Limpiar firma
+        </button>
+        <span className={value ? 'is-signed' : ''}>{value ? 'Firma registrada ✓' : 'Firma pendiente'}</span>
+      </div>
+    </div>
   )
 }
 
@@ -309,6 +404,15 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
 
     if (currentSectionNumber === '10' && answers.step10.manchasOrigenes.length === 0) {
       return 'Selecciona al menos un origen de las manchas.'
+    }
+
+    if (currentSectionNumber === '12') {
+      if (!answers.consentimiento.aceptado) {
+        return 'Confirma que leíste y aceptas el consentimiento informado.'
+      }
+      if (!answers.consentimiento.firmaCliente) {
+        return 'Firma el consentimiento antes de finalizar el prerregistro.'
+      }
     }
 
     return ''
@@ -1066,6 +1170,89 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
     </div>
   )
 
+  const renderConsent = () => (
+    <div className="public-consent public-question-field-wide">
+      <div className="public-consent-document" tabIndex="0" aria-label="Texto del consentimiento informado">
+        <header>
+          <p>Fermont Skin Studio</p>
+          <h3>Consentimiento informado</h3>
+          <strong>Para procedimientos cosmetológicos no invasivos</strong>
+        </header>
+
+        <dl className="public-consent-client-data">
+          <div>
+            <dt>Nombre del cliente</dt>
+            <dd>{client.nombreCompleto}</dd>
+          </div>
+          <div>
+            <dt>Fecha</dt>
+            <dd>{today}</dd>
+          </div>
+        </dl>
+
+        <p>
+          Por medio del presente documento manifiesto que he sido informado(a) de manera clara y suficiente
+          sobre el procedimiento cosmetológico no invasivo que recibiré, así como de sus beneficios, posibles
+          efectos temporales y cuidados posteriores.
+        </p>
+        <p>Declaro que entiendo y acepto lo siguiente:</p>
+        <ol>
+          <li>
+            El procedimiento que recibiré es de carácter cosmetológico y no invasivo, con fines exclusivamente
+            estéticos y de bienestar.
+          </li>
+          <li>
+            Entiendo que este procedimiento no constituye un tratamiento médico, no sustituye la atención médica
+            y no tiene como finalidad diagnosticar, tratar o curar enfermedades.
+          </li>
+          <li>
+            He informado de manera veraz cualquier condición de salud, alergia, enfermedad, medicamento o
+            situación que pudiera representar una contraindicación para la realización del procedimiento.
+          </li>
+          <li>
+            Comprendo que durante o después del tratamiento pueden presentarse reacciones temporales normales,
+            tales como enrojecimiento, sensibilidad, ligera inflamación, sensación de calor, hormigueo, resequedad
+            o descamación leve, las cuales generalmente desaparecen en poco tiempo.
+          </li>
+          <li>
+            Entiendo que los resultados pueden variar de una persona a otra y dependen de factores como el tipo
+            de piel, hábitos personales, cuidados posteriores y número de sesiones realizadas.
+          </li>
+          <li>
+            Me comprometo a seguir las recomendaciones e indicaciones proporcionadas por el personal responsable
+            antes y después del procedimiento.
+          </li>
+          <li>
+            Autorizo al personal del establecimiento a suspender o no realizar el procedimiento si considera que
+            existe alguna condición que pueda representar un riesgo para mi salud o seguridad.
+          </li>
+          <li>
+            He tenido la oportunidad de realizar preguntas y todas mis dudas fueron respondidas de forma
+            satisfactoria.
+          </li>
+          <li>
+            Otorgo mi consentimiento de manera libre, voluntaria e informada para la realización del procedimiento
+            cosmetológico no invasivo descrito.
+          </li>
+        </ol>
+      </div>
+
+      <label className="public-consent-acceptance">
+        <input
+          type="checkbox"
+          checked={answers.consentimiento.aceptado}
+          onChange={(event) => setStepField('consentimiento', 'aceptado', event.target.checked)}
+        />
+        <span>He leído, comprendido y acepto el consentimiento informado. <b>*</b></span>
+      </label>
+
+      <SignaturePad
+        value={answers.consentimiento.firmaCliente}
+        onChange={(value) => setStepField('consentimiento', 'firmaCliente', value)}
+      />
+    </div>
+  )
+
   const sectionContent = [
     renderClientData,
     renderExpectations,
@@ -1075,6 +1262,7 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
     renderAestheticHistory,
     renderRoutine,
     renderFacialEvaluationTwo,
+    renderConsent,
   ][sectionIndex]
 
   return (

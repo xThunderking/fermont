@@ -2451,6 +2451,175 @@
   align-self: center;
 }
 
+.public-consent {
+  display: grid;
+  gap: 1rem;
+}
+
+.public-consent-document {
+  max-height: min(58vh, 620px);
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border: 1px solid rgba(104, 70, 52, 0.18);
+  border-radius: 18px;
+  background: #fff;
+  color: #49372f;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  line-height: 1.65;
+  scrollbar-color: #b78a76 #f4e9e0;
+}
+
+.public-consent-document:focus-visible {
+  outline: 3px solid rgba(140, 83, 96, 0.24);
+  outline-offset: 2px;
+}
+
+.public-consent-document header {
+  margin-bottom: 1.2rem;
+  text-align: center;
+}
+
+.public-consent-document header p,
+.public-consent-document header h3 {
+  margin: 0;
+}
+
+.public-consent-document header p {
+  color: var(--public-accent-strong);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.public-consent-document header h3 {
+  margin: 0.2rem 0;
+  color: var(--public-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 500;
+}
+
+.public-consent-document header strong {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.public-consent-client-data {
+  margin: 0 0 1rem;
+  padding: 0.85rem;
+  border-radius: 12px;
+  background: #f8eee7;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+}
+
+.public-consent-client-data div {
+  min-width: 0;
+}
+
+.public-consent-client-data dt {
+  color: var(--public-muted);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.public-consent-client-data dd {
+  margin: 0.18rem 0 0;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.public-consent-document > p {
+  margin: 0 0 0.85rem;
+}
+
+.public-consent-document ol {
+  margin: 0;
+  padding-left: 1.4rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.public-consent-document li {
+  padding-left: 0.3rem;
+}
+
+.public-consent-acceptance {
+  padding: 1rem;
+  border: 1px solid rgba(104, 70, 52, 0.18);
+  border-radius: 14px;
+  background: #f8eee7;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  color: var(--public-ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.public-consent-acceptance input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin-top: 0.05rem;
+  accent-color: #8c5360;
+}
+
+.public-consent-acceptance b {
+  color: #a33f4f;
+}
+
+.public-consent-signature {
+  padding: clamp(0.85rem, 2vw, 1.2rem);
+  border: 1px solid rgba(104, 70, 52, 0.18);
+  border-radius: 16px;
+  background: #f8eee7;
+}
+
+.public-consent-signature > p {
+  margin: 0 0 0.75rem;
+  color: var(--public-ink);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.public-consent-signature-canvas {
+  width: 100%;
+  height: clamp(170px, 28vw, 240px);
+  display: block;
+  border: 2px dashed #b88f79;
+  border-radius: 12px;
+  background: #fff;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.public-consent-signature-actions {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.public-consent-signature-actions span {
+  color: var(--public-muted);
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.public-consent-signature-actions span.is-signed {
+  color: #4b7654;
+}
+
 .public-question-fieldset {
   min-width: 0;
   margin: 0;
@@ -2628,7 +2797,7 @@
   }
 
   .public-questionnaire-sidebar ol {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-columns: repeat(9, minmax(0, 1fr));
     gap: clamp(0.15rem, 0.8vw, 0.45rem);
   }
 
@@ -2666,6 +2835,10 @@
 @media (max-width: 760px) {
   .public-preregistration-actions {
     grid-template-columns: 1fr;
+  }
+
+  .public-questionnaire-sidebar li div {
+    display: none;
   }
 
 }
@@ -3257,6 +3430,31 @@
     bottom: max(0.8rem, env(safe-area-inset-bottom));
     min-height: 54px;
     padding-right: 0.9rem;
+  }
+
+  .public-consent-document {
+    max-height: 52vh;
+    padding: 0.9rem;
+    font-size: 0.82rem;
+  }
+
+  .public-consent-client-data {
+    grid-template-columns: 1fr;
+    gap: 0.55rem;
+  }
+
+  .public-consent-signature-canvas {
+    height: 180px;
+  }
+
+  .public-consent-signature-actions {
+    align-items: stretch;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .public-consent-acceptance input {
+    min-height: 20px;
   }
 }
 

@@ -716,6 +716,10 @@ export const saveStepOneValuation = async ({
     && preRegistrationAnswers
     && typeof preRegistrationAnswers === 'object',
   )
+  const preRegistrationClientSignature = String(
+    preRegistrationAnswers?.consentimiento?.firmaCliente ?? '',
+  ).trim()
+  const hasPreRegistrationClientSignature = preRegistrationClientSignature.startsWith('data:image/png;base64,')
   const preRegistrationPayload = hasPreRegistrationAnswers
     ? {
         step3: normalizeStepThreeData(preRegistrationAnswers.step3 ?? {}),
@@ -728,6 +732,15 @@ export const saveStepOneValuation = async ({
         step7: normalizeStepSevenData(preRegistrationAnswers.step7 ?? {}),
         step8: normalizeStepEightData(preRegistrationAnswers.step8 ?? {}),
         step10: normalizeStepTenData(preRegistrationAnswers.step10 ?? {}),
+        ...(hasPreRegistrationClientSignature
+          ? {
+              consentimientoFirmado: {
+                clienteFirma: { url: preRegistrationClientSignature, path: '' },
+                clienteFirmadoAt: preRegistrationAnswers.consentimiento?.firmadoAt || serverTimestamp(),
+                version: normalizeText(preRegistrationAnswers.consentimiento?.version),
+              },
+            }
+          : {}),
       }
     : {}
 
