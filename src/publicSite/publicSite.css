@@ -1992,6 +1992,7 @@
 
 .public-preregistration-card {
   width: 100%;
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(320px, 1.1fr);
   gap: clamp(2rem, 6vw, 5rem);
@@ -2033,6 +2034,7 @@
   font-size: clamp(2.7rem, 6vw, 4.5rem);
   line-height: 1.02;
   color: var(--public-ink);
+  overflow-wrap: anywhere;
 }
 
 .public-preregistration-copy h1 em {
@@ -2048,6 +2050,7 @@
 
 .public-preregistration-form,
 .public-preregistration-success {
+  min-width: 0;
   display: grid;
   gap: 1rem;
   border: 1px solid rgba(104, 70, 52, 0.12);
@@ -2069,6 +2072,7 @@
 .public-questionnaire-form select,
 .public-questionnaire-form textarea {
   width: 100%;
+  min-width: 0;
   border: 1px solid rgba(104, 70, 52, 0.25);
   border-radius: 14px;
   padding: 0.9rem 1rem;
@@ -2433,10 +2437,12 @@
 }
 
 .public-readonly-identity strong {
+  min-width: 0;
   grid-row: 2;
   color: var(--public-ink);
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.15rem;
+  overflow-wrap: anywhere;
 }
 
 .public-readonly-identity small {
@@ -2597,6 +2603,16 @@
 }
 
 @media (max-width: 900px) {
+  .public-preregistration-main {
+    padding: 2rem 0 3rem;
+    place-items: start center;
+  }
+
+  .public-preregistration-card {
+    grid-template-columns: 1fr;
+    border-radius: 24px;
+  }
+
   .public-preregistration-card.is-questionnaire .public-preregistration-copy {
     grid-template-columns: 1fr;
     gap: 0.65rem;
@@ -2612,12 +2628,14 @@
   }
 
   .public-questionnaire-sidebar ol {
-    grid-template-columns: repeat(6, minmax(54px, 1fr));
-    overflow-x: auto;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: clamp(0.15rem, 0.8vw, 0.45rem);
   }
 
   .public-questionnaire-sidebar li {
     min-height: 0;
+    min-width: 0;
+    padding: 0.45rem 0.2rem;
     grid-template-columns: 1fr;
     justify-items: center;
     gap: 0.25rem;
@@ -2625,7 +2643,14 @@
   }
 
   .public-questionnaire-sidebar li div {
+    min-width: 0;
     justify-items: center;
+  }
+
+  .public-questionnaire-sidebar li strong {
+    max-width: 100%;
+    font-size: clamp(0.68rem, 1.6vw, 0.84rem);
+    overflow-wrap: anywhere;
   }
 
   .public-questionnaire-sidebar li small,
@@ -2639,15 +2664,6 @@
 }
 
 @media (max-width: 760px) {
-  .public-preregistration-main {
-    padding-top: 7rem;
-  }
-
-  .public-preregistration-card {
-    grid-template-columns: 1fr;
-    border-radius: 24px;
-  }
-
   .public-preregistration-actions {
     grid-template-columns: 1fr;
   }
@@ -2819,27 +2835,79 @@
 
   .public-preregistration-main {
     width: min(100% - 1rem, 980px);
-    padding-top: 6rem;
+    padding: 1rem 0 max(2rem, env(safe-area-inset-bottom));
   }
 
   .public-preregistration-card,
   .public-preregistration-card.is-questionnaire {
     width: 100%;
-    padding: 1rem;
+    gap: 1rem;
+    padding: clamp(0.75rem, 3.5vw, 1rem);
     border-radius: 20px;
+    box-shadow: 0 16px 45px rgba(72, 45, 33, 0.1);
   }
 
   .public-preregistration-card.is-questionnaire .public-preregistration-copy {
+    gap: 0.45rem;
     padding: 0.25rem;
   }
 
+  .public-preregistration-card.is-questionnaire .public-preregistration-copy .public-eyebrow,
+  .public-preregistration-card.is-questionnaire .public-preregistration-copy h1,
+  .public-preregistration-card.is-questionnaire .public-preregistration-copy > p:last-child {
+    margin: 0;
+  }
+
   .public-preregistration-card.is-questionnaire .public-preregistration-copy h1 {
-    font-size: 2.05rem;
+    font-size: clamp(1.8rem, 8.2vw, 2.05rem);
+    line-height: 1.04;
+  }
+
+  .public-preregistration-card.is-questionnaire .public-preregistration-copy > p:last-child {
+    font-size: 0.92rem;
+    line-height: 1.55;
+  }
+
+  .public-questionnaire {
+    gap: 0.75rem;
+  }
+
+  .public-questionnaire-sidebar {
+    padding: 0.85rem;
+    border-radius: 18px;
+  }
+
+  .public-questionnaire-progress {
+    margin: 0.55rem 0 0.85rem;
+  }
+
+  .public-questionnaire-sidebar li > span {
+    width: 30px;
+    height: 30px;
   }
 
   .public-questionnaire-form {
-    padding: 1rem;
+    padding: clamp(0.85rem, 4vw, 1rem);
     border-radius: 18px;
+  }
+
+  .public-preregistration-form input,
+  .public-preregistration-form select,
+  .public-questionnaire-form input,
+  .public-questionnaire-form select,
+  .public-questionnaire-form textarea {
+    min-height: 48px;
+    font-size: 1rem;
+  }
+
+  .public-questionnaire-heading {
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding-bottom: 0.9rem;
+  }
+
+  .public-questionnaire-heading > div {
+    min-width: 0;
   }
 
   .public-questionnaire-heading > span {
@@ -2850,6 +2918,12 @@
 
   .public-questionnaire-heading h2 {
     font-size: 1.45rem;
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+  }
+
+  .public-required-note {
+    margin: 0.65rem 0 1rem;
   }
 
   .public-question-grid {
@@ -3183,6 +3257,21 @@
     bottom: max(0.8rem, env(safe-area-inset-bottom));
     min-height: 54px;
     padding-right: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .public-questionnaire-sidebar li {
+    padding: 0.25rem 0;
+  }
+
+  .public-questionnaire-sidebar li div {
+    display: none;
+  }
+
+  .public-questionnaire-sidebar li > span {
+    width: 29px;
+    height: 29px;
   }
 }
 
