@@ -2095,6 +2095,17 @@
   color: var(--public-muted);
 }
 
+/* Los controles de fecha tienen un ancho intrínseco mayor en algunos
+   navegadores móviles. Mantenerlos dentro de la misma caja que el resto
+   de los campos evita que sobresalgan de la columna. */
+.public-questionnaire-form input[type='date'] {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  inline-size: 100%;
+}
+
 .public-questionnaire-form textarea {
   min-height: 104px;
   resize: vertical;
