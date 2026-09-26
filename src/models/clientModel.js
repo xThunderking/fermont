@@ -227,18 +227,19 @@ export const deleteClientById = async (clientId) => {
     const linkedValuations = await getDocs(query(
       collection(db, 'valoraciones'),
       where('clienteId', '==', clientId),
-      limit(1),
     ))
 
-    if (!linkedValuations.empty) {
-      return {
-        ok: false,
-        message: 'El cliente tiene valoraciones asociadas. Elimina primero sus valoraciones para conservar la integridad del expediente.',
-      }
-    }
-
     const historySnapshots = await getDocs(collection(db, CLIENTS_COLLECTION, clientId, CLIENT_HISTORY_COLLECTION))
+    const linkedPreRegistrations = await getDocs(query(
+      collection(db, 'preregistros'),
+      where('clientId', '==', clientId),
+    ))
+    await Promise.all(linkedValuations.docs.map((snapshot) => deleteDoc(snapshot.ref)))
     await Promise.all(historySnapshots.docs.map((snapshot) => deleteDoc(snapshot.ref)))
+    await Promise.all(linkedPreRegistrations.docs.map(async (snapshot) => {
+      const data = snapshot.data() || {}
+      await deleteDoc(snapshot.ref)
+    }))
     await deleteDoc(doc(db, CLIENTS_COLLECTION, clientId))
     return {
       ok: true,

@@ -123,18 +123,21 @@ export const STEP_SEVEN_OPTIONS = {
 export const STEP_EIGHT_OPTIONS = {
   manana: [
     'No tengo rutina',
-    'Limpiador',
+    'Limpieza',
+    'Tónico',
     'Serum',
-    'Hidratante',
+    'Fluido humectante',
     'Protector solar',
     'Otro',
   ],
   noche: [
     'No tengo rutina',
     'Desmaquillante',
-    'Activos',
-    'Cremas',
-    'Exfoliantes',
+    'Limpieza',
+    'Exfoliante (solo cuando se requiera)',
+    'Tónico',
+    'Gel de noche',
+    'Fluido humectante',
     'Otro',
   ],
 }

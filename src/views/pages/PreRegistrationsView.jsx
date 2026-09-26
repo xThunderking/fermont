@@ -5,6 +5,7 @@ import {
   createPreRegistrationInvitation,
   deletePreRegistration,
   listManagedPreRegistrations,
+  syncCompletedPreRegistrationExpedient,
 } from '../../models/preRegistrationModel.js'
 
 const formatDateTime = (timestamp) => {
@@ -40,6 +41,9 @@ function PreRegistrationsView() {
     } else {
       setError('')
       setPreRegistrations(result.preRegistrations)
+      await Promise.all(result.preRegistrations
+        .filter(({ status }) => status === 'completed')
+        .map(({ id }) => syncCompletedPreRegistrationExpedient(id)))
     }
     setIsLoading(false)
   }, [])
@@ -47,7 +51,7 @@ function PreRegistrationsView() {
   useEffect(() => {
     let isMounted = true
 
-    listManagedPreRegistrations().then((result) => {
+    listManagedPreRegistrations().then(async (result) => {
       if (!isMounted) return
 
       if (!result.ok) {
@@ -56,6 +60,11 @@ function PreRegistrationsView() {
       } else {
         setError('')
         setPreRegistrations(result.preRegistrations)
+        await Promise.all(result.preRegistrations
+          .filter(({ status }) => status === 'completed')
+          .map(({ id }) => syncCompletedPreRegistrationExpedient(id)))
+        // Corrige automáticamente prerregistros finalizados anteriormente
+        // que aún no tenían su expediente cosmetológico generado.
       }
       setIsLoading(false)
     })

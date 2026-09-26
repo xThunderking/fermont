@@ -821,6 +821,7 @@ exports.submitPreRegistration = onCall(async (request) => {
         status: 'completed',
         schemaVersion: 3,
         answers,
+        valuationId: clientId ? `preregistro_${preRegistrationId}` : '',
         completedAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       })
@@ -850,6 +851,46 @@ exports.submitPreRegistration = onCall(async (request) => {
           createdAt: preRegistration.createdAt || FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
         }, { merge: true })
+
+        // El preregistro terminado también constituye el primer registro del
+        // expediente cosmetológico. Se guarda como valoración finalizada para
+        // que aparezca inmediatamente en el expediente del cliente.
+        const valuationId = `preregistro_${preRegistrationId}`
+        const valuationReference = db.collection('valoraciones').doc(valuationId)
+        transaction.set(valuationReference, {
+          tipoCliente: 'preregistro',
+          clienteId: clientId,
+          clienteNombre: normalizeText(preRegistration.nombreCompleto),
+          preregistroId: preRegistrationId,
+          status: 'completed',
+          currentStep: 11,
+          totalSteps: 11,
+          step1: answers.step1,
+          step3: answers.step3,
+          step4: answers.step4,
+          step5: answers.step5,
+          step6: answers.step6,
+          step7: answers.step7,
+          step8: answers.step8,
+          step10: answers.step10,
+          consentimientoFirmado: {
+            clienteFirma: { url: answers.consentimiento.firmaCliente, path: '' },
+            clienteFirmadoAt: answers.consentimiento.firmadoAt,
+            version: answers.consentimiento.version,
+          },
+          createdBy: normalizeText(preRegistration.createdBy),
+          createdAt: preRegistration.createdAt || FieldValue.serverTimestamp(),
+          completedAt: FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
+        }, { merge: true })
+        transaction.set(db.collection('clientes').doc(clientId)
+          .collection('historiaClinica').doc(valuationId), {
+          valuationId,
+          clientId,
+          clienteNombre: normalizeText(preRegistration.nombreCompleto),
+          schemaVersion: 2,
+          createdAt: FieldValue.serverTimestamp(),
+        }, { merge: true })
       }
 
       const nombreNormalizado = normalizeName(preRegistration.nombreNormalizado || preRegistration.nombreCompleto)
@@ -877,6 +918,57 @@ exports.submitPreRegistration = onCall(async (request) => {
   }
 })
 
+// Vincula prerregistros finalizados antes de que existiera la generación
+// automática del expediente. Es idempotente y no modifica las respuestas.
+exports.syncCompletedPreRegistrationExpedient = onCall(async (request) => {
+  await assertActiveStaff(request)
+  const preRegistrationId = normalizeText(request.data?.preRegistrationId)
+  if (!preRegistrationId || preRegistrationId.length > 128) {
+    throw new HttpsError('invalid-argument', 'Selecciona un prerregistro válido.')
+  }
+
+  const preRegistrationReference = db.collection('preregistros').doc(preRegistrationId)
+  const valuationId = `preregistro_${preRegistrationId}`
+
+  await db.runTransaction(async (transaction) => {
+    const snapshot = await transaction.get(preRegistrationReference)
+    if (!snapshot.exists) throw new HttpsError('not-found', 'No se encontró el prerregistro.')
+    const preRegistration = snapshot.data() || {}
+    if (preRegistration.status !== 'completed') {
+      throw new HttpsError('failed-precondition', 'El prerregistro aún no está finalizado.')
+    }
+    const clientId = normalizeText(preRegistration.clientId)
+    const answers = preRegistration.answers || {}
+    if (!clientId || !answers.step1) {
+      throw new HttpsError('failed-precondition', 'El prerregistro no tiene información suficiente.')
+    }
+
+    transaction.set(db.collection('valoraciones').doc(valuationId), {
+      tipoCliente: 'preregistro', clienteId: clientId, clienteNombre: normalizeText(preRegistration.nombreCompleto),
+      preregistroId: preRegistrationId, status: 'completed', currentStep: 11, totalSteps: 11,
+      step1: answers.step1, step3: answers.step3 || {}, step4: answers.step4 || {},
+      step5: answers.step5 || {}, step6: answers.step6 || {}, step7: answers.step7 || {},
+      step8: answers.step8 || {}, step10: answers.step10 || {},
+      consentimientoFirmado: answers.consentimiento ? {
+        clienteFirma: { url: answers.consentimiento.firmaCliente || '', path: '' },
+        clienteFirmadoAt: answers.consentimiento.firmadoAt,
+        version: answers.consentimiento.version || '',
+      } : {},
+      createdBy: normalizeText(preRegistration.createdBy),
+      createdAt: preRegistration.createdAt || FieldValue.serverTimestamp(),
+      completedAt: preRegistration.completedAt || FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true })
+    transaction.set(db.collection('clientes').doc(clientId).collection('historiaClinica').doc(valuationId), {
+      valuationId, clientId, clienteNombre: normalizeText(preRegistration.nombreCompleto),
+      schemaVersion: 2, createdAt: preRegistration.completedAt || FieldValue.serverTimestamp(),
+    }, { merge: true })
+    transaction.update(preRegistrationReference, { valuationId, updatedAt: FieldValue.serverTimestamp() })
+  })
+
+  return { ok: true, valuationId, message: 'Expediente cosmetológico sincronizado correctamente.' }
+})
+
 exports.deletePreRegistration = onCall(async (request) => {
   await assertActiveStaff(request, 'admin')
   const preRegistrationId = normalizeText(request.data?.preRegistrationId)
@@ -900,6 +992,12 @@ exports.deletePreRegistration = onCall(async (request) => {
       const { nameReference, phoneReference } = getIdentityReferences(nombreNormalizado, telefonoNormalizado)
       const linkedClientId = normalizeText(preRegistration.clientId)
       const clientReference = linkedClientId ? db.collection('clientes').doc(linkedClientId) : null
+      const linkedValuationId = normalizeText(preRegistration.valuationId)
+        || `preregistro_${preRegistrationId}`
+      const valuationReference = db.collection('valoraciones').doc(linkedValuationId)
+      const historyReference = linkedClientId
+        ? clientReference.collection('historiaClinica').doc(linkedValuationId)
+        : null
       const [nameSnapshot, phoneSnapshot, clientSnapshot] = await Promise.all([
         transaction.get(nameReference),
         transaction.get(phoneReference),
@@ -907,6 +1005,8 @@ exports.deletePreRegistration = onCall(async (request) => {
       ])
 
       transaction.delete(preRegistrationReference)
+      transaction.delete(valuationReference)
+      if (historyReference) transaction.delete(historyReference)
       if (nameSnapshot.data()?.preRegistrationId === preRegistrationId) transaction.delete(nameReference)
       if (phoneSnapshot.data()?.preRegistrationId === preRegistrationId) transaction.delete(phoneReference)
       if (

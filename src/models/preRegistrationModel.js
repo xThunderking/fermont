@@ -118,6 +118,14 @@ export const deletePreRegistration = async (preRegistrationId) => (
   }, 'No se pudo eliminar el prerregistro.')
 )
 
+export const syncCompletedPreRegistrationExpedient = async (preRegistrationId) => (
+  callPreRegistrationFunction(
+    'syncCompletedPreRegistrationExpedient',
+    { preRegistrationId: normalizeText(preRegistrationId) },
+    'No se pudo sincronizar el expediente cosmetológico.',
+  )
+)
+
 export const listManagedPreRegistrations = async () => {
   try {
     const snapshots = await getDocs(query(
