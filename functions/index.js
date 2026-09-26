@@ -78,8 +78,8 @@ const PROCEDURE_OPTIONS = new Set([
 ])
 
 const ROUTINE_OPTIONS = {
-  manana: new Set(['No tengo rutina', 'Limpiador', 'Serum', 'Hidratante', 'Protector solar', 'Otro']),
-  noche: new Set(['No tengo rutina', 'Desmaquillante', 'Activos', 'Cremas', 'Exfoliantes', 'Otro']),
+  manana: new Set(['No tengo rutina', 'Limpieza', 'Tónico', 'Serum', 'Fluido humectante', 'Protector solar', 'Otro']),
+  noche: new Set(['No tengo rutina', 'Desmaquillante', 'Limpieza', 'Exfoliante (solo cuando se requiera)', 'Tónico', 'Gel de noche', 'Fluido humectante', 'Otro']),
 }
 
 const FOOD_QUALITY_OPTIONS = new Set(['muy buena', 'buena', 'regular', 'mala', 'muy mala'])
@@ -816,6 +816,10 @@ exports.submitPreRegistration = onCall(async (request) => {
 
       const answers = normalizePreRegistrationAnswers(rawAnswers, preRegistration)
       answers.consentimiento.firmadoAt = FieldValue.serverTimestamp()
+      // Resolve the linked client before using it in the preregistration update.
+      // Referencing it earlier caused a temporal-dead-zone ReferenceError and
+      // made every final submission return a generic HTTP 500 error.
+      const clientId = normalizeText(preRegistration.clientId)
 
       transaction.update(preRegistrationReference, {
         status: 'completed',
@@ -826,7 +830,6 @@ exports.submitPreRegistration = onCall(async (request) => {
         updatedAt: FieldValue.serverTimestamp(),
       })
 
-      const clientId = normalizeText(preRegistration.clientId)
       if (clientId) {
         transaction.set(db.collection('clientes').doc(clientId), {
           nombre: answers.step1.nombre,
@@ -908,6 +911,7 @@ exports.submitPreRegistration = onCall(async (request) => {
     })
   } catch (error) {
     if (error instanceof HttpsError) throw error
+    console.error('submitPreRegistration failed', error)
     throw new HttpsError('internal', 'No se pudo finalizar el prerregistro. Intenta nuevamente.')
   }
 
