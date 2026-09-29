@@ -1,7 +1,7 @@
 import { jsPDF } from 'jspdf'
 
-const TEMPLATE_WIDTH = 1103
-const TEMPLATE_HEIGHT = 1426
+const TEMPLATE_WIDTH = 1224
+const TEMPLATE_HEIGHT = 1584
 
 const loadImage = (source) =>
   new Promise((resolve, reject) => {
@@ -65,7 +65,12 @@ const shareOrDownloadPdf = async (pdf, fileName) => {
   pdf.save(fileName)
 }
 
-export const downloadInformedConsent = async ({ clientName, valuationDate, clientSignature, cosmetologistSignature }) => {
+export const downloadInformedConsent = async ({
+  clientName,
+  valuationDate,
+  clientSignature,
+  cosmetologistSignature,
+}) => {
   const normalizedName = String(clientName || '').trim()
   const parsedDate = parseValuationDate(valuationDate)
 
@@ -77,7 +82,7 @@ export const downloadInformedConsent = async ({ clientName, valuationDate, clien
     throw new Error('Esta valoración no tiene una fecha válida para el consentimiento.')
   }
 
-  const templateUrl = `${import.meta.env.BASE_URL}consentimiento.png`
+  const templateUrl = `${import.meta.env.BASE_URL}consentimiento.png?v=2`
   const template = await loadImage(templateUrl)
   const canvas = document.createElement('canvas')
   canvas.width = TEMPLATE_WIDTH
@@ -91,14 +96,14 @@ export const downloadInformedConsent = async ({ clientName, valuationDate, clien
   context.textAlign = 'center'
   context.textBaseline = 'alphabetic'
 
-  const nameFontSize = fitFontSize(context, normalizedName, 390, 19)
+  const nameFontSize = fitFontSize(context, normalizedName, 750, 24)
   context.font = `${nameFontSize}px Arial, sans-serif`
-  context.fillText(normalizedName, 473, 550)
+  context.fillText(normalizedName, 735, 292)
 
-  context.font = '18px Arial, sans-serif'
-  context.fillText(parsedDate.day, 817, 550)
-  context.fillText(parsedDate.month, 881, 550)
-  context.fillText(parsedDate.year, 967, 550)
+  context.font = '22px Arial, sans-serif'
+  context.fillText(parsedDate.day, 214, 350)
+  context.fillText(parsedDate.month, 324, 350)
+  context.fillText(parsedDate.year, 465, 350)
 
   const drawSignature = async (signature, x, y, width, height) => {
     if (!signature) return
@@ -115,8 +120,8 @@ export const downloadInformedConsent = async ({ clientName, valuationDate, clien
     )
   }
 
-  await drawSignature(clientSignature, 166, 1235, 292, 84)
-  await drawSignature(cosmetologistSignature, 620, 1235, 316, 84)
+  await drawSignature(clientSignature, 132, 1295, 406, 105)
+  await drawSignature(cosmetologistSignature, 686, 1295, 406, 105)
 
   const pdf = new jsPDF({
     orientation: 'portrait',

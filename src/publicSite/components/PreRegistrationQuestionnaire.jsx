@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  CONSENT_CLAUSES,
+  CONSENT_DECLARATION,
+  CONSENT_INTRO,
+} from '../../constants/consent.js'
+import {
   STEP_EIGHT_OPTIONS,
   STEP_FOUR_OPTIONS,
   STEP_SEVEN_OPTIONS,
@@ -1190,50 +1195,10 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
           </div>
         </dl>
 
-        <p>
-          Por medio del presente documento manifiesto que he sido informado(a) de manera clara y suficiente
-          sobre el procedimiento cosmetológico no invasivo que recibiré, así como de sus beneficios, posibles
-          efectos temporales y cuidados posteriores.
-        </p>
-        <p>Declaro que entiendo y acepto lo siguiente:</p>
+        <p>{CONSENT_INTRO}</p>
+        <p><strong>{CONSENT_DECLARATION}</strong></p>
         <ol>
-          <li>
-            El procedimiento que recibiré es de carácter cosmetológico y no invasivo, con fines exclusivamente
-            estéticos y de bienestar.
-          </li>
-          <li>
-            Entiendo que este procedimiento no constituye un tratamiento médico, no sustituye la atención médica
-            y no tiene como finalidad diagnosticar, tratar o curar enfermedades.
-          </li>
-          <li>
-            He informado de manera veraz cualquier condición de salud, alergia, enfermedad, medicamento o
-            situación que pudiera representar una contraindicación para la realización del procedimiento.
-          </li>
-          <li>
-            Comprendo que durante o después del tratamiento pueden presentarse reacciones temporales normales,
-            tales como enrojecimiento, sensibilidad, ligera inflamación, sensación de calor, hormigueo, resequedad
-            o descamación leve, las cuales generalmente desaparecen en poco tiempo.
-          </li>
-          <li>
-            Entiendo que los resultados pueden variar de una persona a otra y dependen de factores como el tipo
-            de piel, hábitos personales, cuidados posteriores y número de sesiones realizadas.
-          </li>
-          <li>
-            Me comprometo a seguir las recomendaciones e indicaciones proporcionadas por el personal responsable
-            antes y después del procedimiento.
-          </li>
-          <li>
-            Autorizo al personal del establecimiento a suspender o no realizar el procedimiento si considera que
-            existe alguna condición que pueda representar un riesgo para mi salud o seguridad.
-          </li>
-          <li>
-            He tenido la oportunidad de realizar preguntas y todas mis dudas fueron respondidas de forma
-            satisfactoria.
-          </li>
-          <li>
-            Otorgo mi consentimiento de manera libre, voluntaria e informada para la realización del procedimiento
-            cosmetológico no invasivo descrito.
-          </li>
+          {CONSENT_CLAUSES.map((clause) => <li key={clause}>{clause}</li>)}
         </ol>
       </div>
 
