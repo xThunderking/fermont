@@ -9,6 +9,26 @@ const emptyForm = () => ({
   contraindicaciones: [''], fotoUrl: '', fotoPath: '',
 })
 
+function ActivoCardPhoto({ src, name }) {
+  const [failed, setFailed] = useState(false)
+
+  return (
+    <div className="activo-card-media">
+      {src && !failed ? (
+        <img className="activo-card-photo" src={src} alt={`Foto de ${name}`} loading="lazy" onError={() => setFailed(true)} />
+      ) : (
+        <div className="activo-card-placeholder">
+          <svg viewBox="0 0 64 80" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+            <path d="M25 25V13a7 7 0 0 1 14 0v12M22 25h20v10H22zM22 35l-5 9v24a6 6 0 0 0 6 6h18a6 6 0 0 0 6-6V44l-5-9M17 49h30M32 52v15" />
+            <path d="M53 12v10m-5-5h10M8 32v8m-4-4h8" strokeLinecap="round" />
+          </svg>
+          <span>Sin fotografía</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ActivosView() {
   const navigate = useNavigate()
   const { currentUser, isAdmin } = useAuthController()
@@ -32,6 +52,7 @@ function ActivosView() {
   const [revision, setRevision] = useState(0)
   const nameInput = useRef(null)
   const fileInput = useRef(null)
+  const cameraInput = useRef(null)
   const listRequest = useRef(0)
   const contraindicationInputs = useRef([])
   const focusNewContraindication = useRef(false)
@@ -141,6 +162,7 @@ function ActivosView() {
     setPhotoFile(file)
     setPhotoPreview(URL.createObjectURL(file))
     setRemovePhoto(false)
+    event.target.value = ''
     clearFeedback()
   }
 
@@ -150,6 +172,7 @@ function ActivosView() {
     setRemovePhoto(true)
     setPhotoError('')
     if (fileInput.current) fileInput.current.value = ''
+    if (cameraInput.current) cameraInput.current.value = ''
     clearFeedback()
   }
 
@@ -162,6 +185,7 @@ function ActivosView() {
     setPhotoError('')
     setFormError('')
     if (fileInput.current) fileInput.current.value = ''
+    if (cameraInput.current) cameraInput.current.value = ''
   }
 
   const handleSubmit = async (event) => {
@@ -259,17 +283,30 @@ function ActivosView() {
               <input name="categoria" value={form.categoria} onChange={changeField} required maxLength={100} placeholder="Escribe la categoría del activo" />
             </label>
             <div className="activo-photo-field">
-              <label>
-                Foto del activo
-                <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} aria-describedby="activo-photo-help" />
-              </label>
-              <p id="activo-photo-help" className="subtitle">Opcional. JPG, PNG o WebP, máximo 10 MB.</p>
-              {displayedPhoto ? (
+              <span className="activo-photo-label" id="activo-photo-label">Foto del activo</span>
+              <input ref={fileInput} id="activo-gallery-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} aria-label="Elegir foto de la galería" aria-describedby="activo-photo-help" hidden />
+              <input ref={cameraInput} id="activo-camera-input" type="file" accept="image/*" capture="environment" onChange={choosePhoto} aria-label="Tomar foto del activo" aria-describedby="activo-photo-help" hidden />
+              <div className="activo-photo-picker" role="group" aria-labelledby="activo-photo-label">
                 <div className="activo-photo-preview">
-                  <img src={displayedPhoto} alt="Vista previa del activo" />
-                  <button type="button" className="main-button secondary" onClick={clearPhoto}>Quitar foto</button>
+                  {displayedPhoto ? (
+                    <img src={displayedPhoto} alt="Vista previa del activo" />
+                  ) : (
+                    <div className="activo-photo-empty">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+                        <path d="M8 6 9.5 3h5L16 6h4a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z" strokeLinejoin="round" />
+                        <circle cx="12" cy="12" r="4" />
+                      </svg>
+                      <span>Foto del activo</span>
+                    </div>
+                  )}
                 </div>
-              ) : null}
+                <div className="activo-photo-controls">
+                  <button type="button" className="main-button secondary" onClick={() => cameraInput.current?.click()}>Tomar foto</button>
+                  <button type="button" className="main-button secondary" onClick={() => fileInput.current?.click()}>Elegir de la galería</button>
+                  {displayedPhoto ? <button type="button" className="main-button secondary" onClick={clearPhoto}>Quitar foto</button> : null}
+                </div>
+              </div>
+              <p id="activo-photo-help" className="subtitle">Opcional. JPG, PNG o WebP, máximo 10 MB. La foto se ajusta al centro del círculo.</p>
               {photoError ? <p className="error-text" role="alert">{photoError}</p> : null}
             </div>
             <label>
@@ -333,20 +370,38 @@ function ActivosView() {
               {activos.map((activo) => (
                 <li key={activo.id} className="activo-card">
                   <div className="activo-card-heading">
-                    {activo.fotoUrl ? <img className="activo-card-photo" src={activo.fotoUrl} alt={`Foto de ${activo.nombre}`} loading="lazy" /> : null}
-                    <div className="activo-card-title"><h3>{activo.nombre}</h3><span className="activo-category">{activo.categoria}</span></div>
-                    {isAdmin || activo.createdBy === currentUser?.id ? (
-                      <button type="button" className="main-button secondary" onClick={() => editActivo(activo)} aria-label={`Editar ${activo.nombre}`}>Editar</button>
-                    ) : null}
+                    <ActivoCardPhoto key={activo.fotoUrl || 'sin-foto'} src={activo.fotoUrl} name={activo.nombre} />
+                    <div className="activo-card-title">
+                      <span className="activo-card-eyebrow">Activo cosmético</span>
+                      <h3>{activo.nombre}</h3>
+                      <span className="activo-category">{activo.categoria}</span>
+                    </div>
                   </div>
-                  <dl>
+                  <dl className="activo-card-details">
                     <div><dt>Propiedades</dt><dd>{activo.propiedades}</dd></div>
-                    <div><dt>Tipos de piel</dt><dd>{activo.tiposPiel.join(', ')}</dd></div>
+                    <div>
+                      <dt>Tipos de piel</dt>
+                      <dd>
+                        <ul className="activo-skin-tags" aria-label="Tipos de piel compatibles">
+                          {activo.tiposPiel.map((tipo) => <li key={tipo}>{tipo}</li>)}
+                        </ul>
+                      </dd>
+                    </div>
                     <div>
                       <dt>Contraindicaciones</dt>
                       <dd>{activo.contraindicaciones.length ? <ul className="activo-contraindication-list">{activo.contraindicaciones.map((item, index) => <li key={index}>{item}</li>)}</ul> : 'Sin registro'}</dd>
                     </div>
                   </dl>
+                  {isAdmin || activo.createdBy === currentUser?.id ? (
+                    <div className="activo-card-footer">
+                      <button type="button" className="activo-edit-button" onClick={() => editActivo(activo)} aria-label={`Editar ${activo.nombre}`}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+                          <path d="m15 5 4 4M4 20l4-1 12-12a2.8 2.8 0 0 0-4-4L4 15l-1 6z" strokeLinejoin="round" />
+                        </svg>
+                        Editar ficha
+                      </button>
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>

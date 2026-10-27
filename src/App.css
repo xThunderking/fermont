@@ -209,8 +209,7 @@ h2 {
   min-width: 0;
 }
 
-.activos-form,
-.activo-card {
+.activos-form {
   padding: 1rem;
   border: 1px solid #d9c4ae;
   border-radius: 16px;
@@ -268,8 +267,7 @@ h2 {
   min-width: 0;
 }
 
-.activos-actions,
-.activo-card-heading {
+.activos-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -283,45 +281,147 @@ h2 {
 
 .activos-list {
   display: grid;
-  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(0.65rem, 2vw, 1.25rem);
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
 .activo-card {
+  --activo-ink: #fff4e4;
+  --activo-muted: #e0cbb6;
+  --activo-accent: #e9bd8d;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  padding: clamp(0.75rem, 1.6vw, 1.1rem);
+  border: 1px solid #9b7655;
+  border-radius: 20px;
+  background: linear-gradient(150deg, #604330 0%, #483023 60%, #39271f 100%);
+  box-shadow: 0 8px 22px rgba(64, 39, 22, 0.14);
+  color: var(--activo-ink);
   overflow-wrap: anywhere;
 }
 
+.activo-card-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 120px) minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid #aa866345;
+}
+
+.activo-card-eyebrow {
+  display: block;
+  margin-bottom: 0.55rem;
+  color: var(--activo-accent);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
 .activo-card h3 {
-  margin: 0 0 0.4rem;
-  color: #37251b;
+  margin: 0 0 0.7rem;
+  color: var(--activo-ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1rem, 2.2vw, 1.55rem);
+  font-weight: 400;
+  line-height: 1.2;
 }
 
 .activo-category {
   display: inline-block;
-  padding: 0.2rem 0.65rem;
-  border-radius: 999px;
-  background: #e4d2bf;
-  color: #5f3f2c;
-  font-size: 0.85rem;
+  max-width: 100%;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid #b78d665e;
+  border-radius: 6px;
+  background: #e4c29a14;
+  color: var(--activo-accent);
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 
-.activo-card dl {
+.activo-card-details {
   display: grid;
-  gap: 0.75rem;
-  margin: 1rem 0 0;
+  gap: 0.7rem;
+  margin: 0.85rem 0 0;
 }
 
 .activo-card dt {
+  margin-bottom: 0.3rem;
+  color: var(--activo-accent);
+  font-size: 0.65rem;
   font-weight: 600;
-  color: #624834;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+  text-transform: uppercase;
 }
 
 .activo-card dd {
-  margin: 0.25rem 0 0;
+  margin: 0;
+  color: var(--activo-muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
   white-space: pre-wrap;
+}
+
+.activo-skin-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.activo-skin-tags li {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #f3dabe15;
+  color: var(--activo-ink);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.activo-card-footer {
+  margin-top: auto;
+  padding-top: 0.8rem;
+}
+
+.activo-edit-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid #b98f67;
+  border-radius: 9px;
+  background: #e6c6a1;
+  color: #412d21;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.activo-edit-button:hover {
+  background: #f3dabe;
+}
+
+.activo-edit-button:focus-visible {
+  outline: 2px solid #fff4e4;
+  outline-offset: 3px;
+}
+
+.activo-edit-button svg {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
 }
 
 .activos-navigation {
@@ -377,41 +477,188 @@ h2 {
   min-height: 44px;
 }
 
+.activo-photo-label {
+  color: #624834;
+  font-weight: 600;
+}
+
+.activo-photo-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
 .activo-photo-preview {
+  position: relative;
+  flex: 0 0 150px;
   display: grid;
-  justify-items: start;
-  gap: 0.75rem;
+  place-items: center;
+  width: 150px;
+  max-width: 100%;
+  aspect-ratio: 1;
+  border: 3px solid #b08a63;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #fcf4e7, #e0c7ab);
+  box-shadow: 0 0 0 4px #b08a631a;
+  overflow: hidden;
 }
 
 .activo-photo-preview img {
+  position: absolute;
+  inset: 0;
   display: block;
-  width: min(100%, 280px);
-  height: 220px;
-  object-fit: contain;
-  background: #fffaf3;
-  border: 1px solid #d9c4ae;
-  border-radius: 12px;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.activo-photo-empty {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  color: #7a563c;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.activo-photo-empty svg {
+  width: 36px;
+  height: 36px;
+}
+
+.activo-photo-controls {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.activo-photo-controls button {
+  min-height: 44px;
+}
+
+.activo-card-media {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  border: 3px solid #d8b58d;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px #f5d1a018;
+  background: radial-gradient(ellipse at 50% 35%, #fcf4e7, #d9b893);
+  overflow: hidden;
 }
 
 .activo-card-photo {
-  width: 86px;
-  height: 86px;
-  object-fit: contain;
-  border: 1px solid #d9c4ae;
-  border-radius: 12px;
-  background: #fffaf3;
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.activo-card-placeholder {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  color: #7a563c;
+  text-align: center;
+  font-size: 0.65rem;
+  line-height: 1.4;
+}
+
+.activo-card-placeholder svg {
+  width: min(48px, 100%);
+  height: 60px;
 }
 
 .activo-card-title {
-  flex: 1 1 140px;
   min-width: 0;
 }
 
 .activo-contraindication-list {
-  padding-left: 1.25rem;
+  padding-left: 1.1rem;
   margin: 0;
   display: grid;
   gap: 0.35rem;
+}
+
+.activo-contraindication-list li::marker {
+  color: var(--activo-accent);
+}
+
+@media (max-width: 600px) {
+  .activo-card {
+    border-radius: 15px;
+  }
+
+  .activo-card-heading {
+    grid-template-columns: minmax(0, 88px) minmax(0, 1fr);
+    gap: 0.7rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .activo-card-media {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .activo-card-eyebrow {
+    font-size: 0.55rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.4rem;
+  }
+
+  .activo-category {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .activo-card-details {
+    margin-top: 0.75rem;
+    gap: 0.65rem;
+  }
+
+  .activo-card dt {
+    font-size: 0.59rem;
+    letter-spacing: 0.035em;
+  }
+
+  .activo-card dd {
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .activo-card-placeholder {
+    gap: 0.25rem;
+    font-size: 0.55rem;
+  }
+
+  .activo-card-placeholder svg {
+    width: 36px;
+    height: 45px;
+  }
+
+  .activo-skin-tags li {
+    padding: 0.15rem 0.4rem;
+    font-size: 0.65rem;
+  }
+
+  .activo-edit-button {
+    font-size: 0.72rem;
+  }
 }
 
 .preregistration-list {
