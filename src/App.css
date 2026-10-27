@@ -196,17 +196,7 @@ h2 {
 }
 
 .module-card-activos {
-  gap: 1rem;
-  background: radial-gradient(circle at 50% 36%, #fffaf3, #e4d2bf);
-  color: #624834;
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(1.5rem, 5vw, 2.2rem);
-  font-weight: 700;
-}
-
-.module-card-activos svg {
-  width: 30%;
-  height: auto;
+  background-image: url('./img/activos.png');
 }
 
 .activos-screen,

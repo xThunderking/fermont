@@ -55,12 +55,6 @@ function MenuView() {
           title="Activos"
           onClick={() => navigate('/app/activos')}
         >
-          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <path d="M24 8h16M28 8v17L13 48a5 5 0 0 0 4 8h30a5 5 0 0 0 4-8L36 25V8M21 37h22" />
-            <circle cx="28" cy="45" r="2" />
-            <circle cx="37" cy="49" r="2" />
-          </svg>
-          <span>Activos</span>
         </button>
 
         {isAdmin ? (
