@@ -17,6 +17,7 @@ Sistema web para administrar clientes, valoraciones cosmetológicas, expedientes
 - Inicio de sesión con correo o Google
 - Administración de usuarios y roles
 - Clientes e historial clínico
+- Activos cosméticos: Inventario y Registro, con categoría, propiedades, tipos de piel, lista de contraindicaciones y foto opcional
 - Valoraciones nuevas y recurrentes
 - Valoraciones pendientes
 - Consentimiento informado con firma táctil
@@ -56,6 +57,12 @@ El flujo de prerregistro utiliza Cloud Functions. El personal genera una invitac
 - Firestore conserva únicamente URLs y rutas de las firmas nuevas.
 - Al reemplazar fotografías se eliminan los archivos anteriores.
 - Al eliminar una valoración se eliminan también sus archivos de Storage y su referencia en el historial clínico.
+
+Los activos se guardan en la colección `activos` de Firestore. El módulo tiene dos secciones: Inventario para consultar y buscar, y Registro para crear o editar una ficha. El personal activo puede consultarlos y registrar nuevos; cada autor puede editar sus registros y los administradores pueden editar cualquiera. El formulario permite escribir libremente la categoría, seleccionar varios tipos de piel y agregar o quitar contraindicaciones individuales (hasta 20). Las fichas anteriores con contraindicaciones en texto se convierten en lista al leerlas, sin perder su contenido.
+
+La foto del activo es opcional y acepta JPG, PNG y WebP de hasta 10 MB. Se guarda en Storage bajo `activos/{uploaderId}/{activoId}/{photoId}`; Firestore conserva su URL y ruta. Al reemplazarla o quitarla, la ficha se actualiza antes de intentar eliminar el archivo anterior. Si falla el guardado después de subir una foto, se intenta eliminar la nueva para evitar archivos sin ficha. Despliega las reglas de Firestore y Storage junto con la interfaz para habilitar el módulo; desplegar solo Hosting no actualiza los permisos.
+
+Las reglas de fotos consultan el perfil del personal en Firestore. Firebase Storage necesita que su cuenta de servicio tenga el rol `roles/firebaserules.firestoreServiceAgent`; el CLI de Firebase permite habilitarlo durante el despliegue interactivo. Valida previamente con `npx firebase-tools deploy --only firestore:rules,storage --dry-run`.
 
 ## Requisitos para finalizar una valoración
 

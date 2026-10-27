@@ -79,6 +79,63 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    function isActiveStaff() {
+      return isSignedIn()
+        && exists(currentUserPath())
+        && get(currentUserPath()).data.get('status', 'active') == 'active'
+        && validRole(get(currentUserPath()).data.get('role', 'user'));
+    }
+
+    function validActivo(data, activoId) {
+      return data.keys().hasAll([
+          'nombre', 'nombreBusqueda', 'categoria', 'propiedades',
+          'tiposPiel', 'contraindicaciones', 'fotoUrl', 'fotoPath', 'createdBy', 'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'nombre', 'nombreBusqueda', 'categoria', 'propiedades',
+          'tiposPiel', 'contraindicaciones', 'fotoUrl', 'fotoPath', 'createdBy', 'createdAt', 'updatedAt'
+        ])
+        && data.nombre is string && data.nombre.size() > 0 && data.nombre.size() <= 150
+        && data.nombre.matches('.*[^\\s].*')
+        && data.nombreBusqueda is string && data.nombreBusqueda.size() > 0
+        && data.nombreBusqueda.size() <= 150
+        && data.categoria is string && data.categoria.size() > 0 && data.categoria.size() <= 100
+        && data.categoria.matches('.*[^\\s].*')
+        && data.propiedades is string && data.propiedades.size() > 0 && data.propiedades.size() <= 3000
+        && data.propiedades.matches('[\\s\\S]*[^\\s][\\s\\S]*')
+        && data.contraindicaciones is list && data.contraindicaciones.size() <= 20
+        && data.contraindicaciones.join('').size() <= 10000
+        && data.fotoUrl is string && data.fotoPath is string
+        && (
+          (data.fotoUrl == '' && data.fotoPath == '')
+          || (
+            data.fotoUrl.matches('https://firebasestorage[.]googleapis[.]com/.*')
+            && data.fotoUrl.size() <= 2048
+            && data.fotoPath.matches('activos/[^/]+/' + activoId + '/[^/]+')
+          )
+        )
+        && data.tiposPiel is list && data.tiposPiel.size() > 0 && data.tiposPiel.size() <= 6
+        && data.tiposPiel.hasOnly(['Normal', 'Seca', 'Grasa', 'Mixta', 'Sensible', 'Madura'])
+        && data.createdBy is string
+        && data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    match /activos/{activoId} {
+      allow get, list: if isActiveStaff();
+      allow create: if isActiveStaff()
+        && validActivo(request.resource.data, activoId)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time;
+      allow update: if isActiveStaff()
+        && validActivo(request.resource.data, activoId)
+        && (request.auth.uid == resource.data.createdBy || isAdmin())
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+
     match /clientes/{clientId} {
       allow get, list: if isSignedIn();
 

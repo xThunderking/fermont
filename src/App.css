@@ -195,6 +195,235 @@ h2 {
   background-image: url('./img/prerregistros.png');
 }
 
+.module-card-activos {
+  gap: 1rem;
+  background: radial-gradient(circle at 50% 36%, #fffaf3, #e4d2bf);
+  color: #624834;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.5rem, 5vw, 2.2rem);
+  font-weight: 700;
+}
+
+.module-card-activos svg {
+  width: 30%;
+  height: auto;
+}
+
+.activos-screen,
+.activos-form,
+.activos-fields,
+.activos-registry,
+.activos-feedback {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.activos-form,
+.activo-card {
+  padding: 1rem;
+  border: 1px solid #d9c4ae;
+  border-radius: 16px;
+  background: rgba(255, 250, 243, 0.82);
+}
+
+.activos-form h2,
+.activos-registry h2 {
+  font-size: clamp(1.2rem, 4vw, 1.5rem);
+}
+
+.activos-fields,
+.activos-skin-fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.activos-fields > label,
+.activos-skin-fieldset legend {
+  font-weight: 600;
+}
+
+.activos-skin-fieldset legend {
+  margin-bottom: 0.4rem;
+  color: #624834;
+}
+
+.activos-skin-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.25rem 1rem;
+  margin-top: 0.5rem;
+}
+
+.activos-skin-options label {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  cursor: pointer;
+}
+
+.activos-skin-options input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: #7e6148;
+}
+
+.activos-screen input:not([type='checkbox']),
+.activos-screen textarea {
+  width: 100%;
+  min-width: 0;
+}
+
+.activos-actions,
+.activo-card-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.activos-actions > button {
+  flex: 1 1 180px;
+}
+
+.activos-list {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.activo-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.activo-card h3 {
+  margin: 0 0 0.4rem;
+  color: #37251b;
+}
+
+.activo-category {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  background: #e4d2bf;
+  color: #5f3f2c;
+  font-size: 0.85rem;
+}
+
+.activo-card dl {
+  display: grid;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+}
+
+.activo-card dt {
+  font-weight: 600;
+  color: #624834;
+}
+
+.activo-card dd {
+  margin: 0.25rem 0 0;
+  white-space: pre-wrap;
+}
+
+.activos-navigation {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.activos-navigation .main-button {
+  min-height: 44px;
+}
+
+.activo-photo-field,
+.activos-contraindications {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.activos-contraindications {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.activos-contraindications legend {
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #624834;
+}
+
+.activo-contraindication-inputs {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.activo-contraindication-inputs > li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.activo-contraindication-inputs label {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.activo-contraindication-inputs button {
+  min-height: 44px;
+}
+
+.activo-photo-preview {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+.activo-photo-preview img {
+  display: block;
+  width: min(100%, 280px);
+  height: 220px;
+  object-fit: contain;
+  background: #fffaf3;
+  border: 1px solid #d9c4ae;
+  border-radius: 12px;
+}
+
+.activo-card-photo {
+  width: 86px;
+  height: 86px;
+  object-fit: contain;
+  border: 1px solid #d9c4ae;
+  border-radius: 12px;
+  background: #fffaf3;
+}
+
+.activo-card-title {
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.activo-contraindication-list {
+  padding-left: 1.25rem;
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
 .preregistration-list {
   margin-top: 1rem;
 }

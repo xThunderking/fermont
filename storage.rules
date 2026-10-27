@@ -5,6 +5,27 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function isActiveStaff() {
+      return isSignedIn()
+        && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('status', 'active') == 'active'
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('role', 'user') in ['admin', 'user'];
+    }
+
+    match /activos/{uploaderId}/{activoId}/{photoId} {
+      allow get: if isActiveStaff();
+      allow create: if isActiveStaff()
+        && request.auth.uid == uploaderId
+        && request.resource.size > 0
+        && request.resource.size <= 10 * 1024 * 1024
+        && request.resource.contentType in ['image/jpeg', 'image/png', 'image/webp'];
+      allow delete: if isActiveStaff()
+        && (
+          request.auth.uid == uploaderId
+          || firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'
+        );
+    }
+
     // La eliminación de una valoración recorre primero su carpeta raíz para
     // localizar fotografías y firmas. El comodín v2 también cubre la carpeta
     // raíz e intermedias, pero únicamente concede la operación de listado.

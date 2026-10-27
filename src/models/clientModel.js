@@ -237,7 +237,6 @@ export const deleteClientById = async (clientId) => {
     await Promise.all(linkedValuations.docs.map((snapshot) => deleteDoc(snapshot.ref)))
     await Promise.all(historySnapshots.docs.map((snapshot) => deleteDoc(snapshot.ref)))
     await Promise.all(linkedPreRegistrations.docs.map(async (snapshot) => {
-      const data = snapshot.data() || {}
       await deleteDoc(snapshot.ref)
     }))
     await deleteDoc(doc(db, CLIENTS_COLLECTION, clientId))

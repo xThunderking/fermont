@@ -5,6 +5,7 @@ import AdminRoute from './views/components/AdminRoute.jsx'
 import ProtectedRoute from './views/components/ProtectedRoute.jsx'
 import SystemLayout from './views/layouts/SystemLayout.jsx'
 import ClientesView from './views/pages/ClientesView.jsx'
+import ActivosView from './views/pages/ActivosView.jsx'
 import LoginView from './views/pages/LoginView.jsx'
 import MenuView from './views/pages/MenuView.jsx'
 import NuevaValoracionView from './views/pages/NuevaValoracionView.jsx'
@@ -26,6 +27,7 @@ function AppRoutes() {
         <Route path="/app" element={<SystemLayout />}>
           <Route index element={<MenuView />} />
           <Route path="clientes" element={<ClientesView />} />
+          <Route path="activos" element={<ActivosView />} />
           <Route path="nueva-valoracion" element={<NuevaValoracionView />} />
           <Route path="nueva-valoracion/:valuationId" element={<NuevaValoracionView />} />
           <Route path="valoraciones-pendientes" element={<ValoracionesPendientesView />} />
