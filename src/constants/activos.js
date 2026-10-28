@@ -1,15 +1,32 @@
-export const TIPOS_PIEL = ['Normal', 'Seca', 'Grasa', 'Mixta', 'Sensible', 'Madura']
+export const CATEGORIAS_ACTIVOS = [
+  'Hidratantes y humectantes', 'Exfoliantes', 'Despigmentantes',
+  'Antioxidantes', 'Antiinflamatorios y calmantes', 'Seborreguladores',
+  'Reparadores de la barrera cutánea', 'Oclusivos', 'Antiedad y reafirmantes',
+  'Emolientes', 'Regeneradores y cicatrizantes', 'Queratolíticos',
+  'Queratoplásticos', 'Antimicrobianos', 'Descongestivos',
+  'Fotoprotectores', 'Tensores', 'Iluminadores',
+]
+export const TIPOS_PIEL = ['Eudérmica', 'Alípica', 'Grasa', 'Grasa deshidratada', 'Sensible']
+
+// Las fichas anteriores tienen una sola categoría guardada como texto.
+export const normalizeCategorias = (value) => [...new Set((Array.isArray(value)
+  ? value : typeof value === 'string' ? [value] : [])
+  .filter((item) => typeof item === 'string')
+  .map((item) => item.trim()).filter(Boolean))]
 export const MAX_CONTRAINDICACIONES = 20
 export const MAX_FOTO_BYTES = 10 * 1024 * 1024
 export const FOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
-// Conserva las fichas anteriores, que guardaban las contraindicaciones como texto.
-export const normalizeContraindicaciones = (value) => (Array.isArray(value)
+const normalizeTextList = (value) => (Array.isArray(value)
   ? value
   : typeof value === 'string' ? value.split(/\r?\n/) : [])
   .filter((item) => typeof item === 'string')
   .map((item) => item.trim())
   .filter(Boolean)
+
+// Acepta tanto las listas guardadas como los campos de texto por renglón.
+export const normalizeContraindicaciones = normalizeTextList
+export const normalizePropiedades = normalizeTextList
 
 export const validateActivoPhoto = (file) => {
   if (!file) return { ok: true }
@@ -31,17 +48,21 @@ export const normalizeActivoSearch = (value) => String(value ?? '')
 export const validateActivo = (data) => {
   const activo = {
     nombre: String(data?.nombre ?? '').trim(),
-    categoria: String(data?.categoria ?? '').trim(),
-    propiedades: String(data?.propiedades ?? '').trim(),
+    categoria: normalizeCategorias(data?.categoria),
+    propiedades: normalizePropiedades(data?.propiedades).join('\n'),
     tiposPiel: TIPOS_PIEL.filter((tipo) => Array.isArray(data?.tiposPiel) && data.tiposPiel.includes(tipo)),
     contraindicaciones: normalizeContraindicaciones(data?.contraindicaciones),
   }
 
-  if (!activo.nombre || !activo.categoria || !activo.propiedades) {
-    return { ok: false, message: 'Completa el nombre, la categoría y las propiedades del activo.' }
+  if (!activo.nombre || !activo.categoria.length || !activo.propiedades) {
+    return { ok: false, message: 'Completa el nombre, selecciona al menos una categoría y describe las propiedades.' }
   }
 
-  if (activo.nombre.length > 150 || activo.categoria.length > 100
+  if (activo.categoria.some((categoria) => !CATEGORIAS_ACTIVOS.includes(categoria))) {
+    return { ok: false, message: 'Selecciona las categorías del catálogo actualizado.' }
+  }
+
+  if (activo.nombre.length > 150
     || activo.propiedades.length > 3000) {
     return { ok: false, message: 'Revisa la longitud de los campos del activo.' }
   }

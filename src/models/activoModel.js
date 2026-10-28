@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore'
 import { deleteObject, getDownloadURL, ref, uploadBytes } from 'firebase/storage'
 import { db, storage } from '../services/firebase.js'
-import { normalizeActivoSearch, normalizeContraindicaciones, validateActivo, validateActivoPhoto } from '../constants/activos.js'
+import { normalizeActivoSearch, normalizeCategorias, normalizeContraindicaciones, validateActivo, validateActivoPhoto } from '../constants/activos.js'
 
 const ACTIVOS_COLLECTION = 'activos'
 const PAGE_SIZE = 25
@@ -51,6 +51,7 @@ export const listActivos = async ({ search = '', cursor = null } = {}) => {
         return {
           ...data,
           id: snapshot.id,
+          categoria: normalizeCategorias(data.categoria),
           tiposPiel: Array.isArray(data.tiposPiel) ? data.tiposPiel : [],
           contraindicaciones: normalizeContraindicaciones(data.contraindicaciones),
           fotoUrl: String(data.fotoUrl ?? ''),

@@ -99,8 +99,21 @@ service cloud.firestore {
         && data.nombre.matches('.*[^\\s].*')
         && data.nombreBusqueda is string && data.nombreBusqueda.size() > 0
         && data.nombreBusqueda.size() <= 150
-        && data.categoria is string && data.categoria.size() > 0 && data.categoria.size() <= 100
-        && data.categoria.matches('.*[^\\s].*')
+        && (
+          // Compatibilidad con fichas y sesiones anteriores que usan texto.
+          (data.categoria is string && data.categoria.size() > 0 && data.categoria.size() <= 100
+            && data.categoria.matches('.*[^\\s].*'))
+          || (data.categoria is list && data.categoria.size() > 0 && data.categoria.size() <= 18
+            && data.categoria.toSet().size() == data.categoria.size()
+            && data.categoria.hasOnly([
+              'Hidratantes y humectantes', 'Exfoliantes', 'Despigmentantes',
+              'Antioxidantes', 'Antiinflamatorios y calmantes', 'Seborreguladores',
+              'Reparadores de la barrera cutánea', 'Oclusivos', 'Antiedad y reafirmantes',
+              'Emolientes', 'Regeneradores y cicatrizantes', 'Queratolíticos',
+              'Queratoplásticos', 'Antimicrobianos', 'Descongestivos',
+              'Fotoprotectores', 'Tensores', 'Iluminadores'
+            ]))
+        )
         && data.propiedades is string && data.propiedades.size() > 0 && data.propiedades.size() <= 3000
         && data.propiedades.matches('[\\s\\S]*[^\\s][\\s\\S]*')
         && data.contraindicaciones is list && data.contraindicaciones.size() <= 20
@@ -115,7 +128,8 @@ service cloud.firestore {
           )
         )
         && data.tiposPiel is list && data.tiposPiel.size() > 0 && data.tiposPiel.size() <= 6
-        && data.tiposPiel.hasOnly(['Normal', 'Seca', 'Grasa', 'Mixta', 'Sensible', 'Madura'])
+        // Los nombres anteriores siguen admitidos para no romper sesiones abiertas.
+        && data.tiposPiel.hasOnly(['Eudérmica', 'Alípica', 'Grasa', 'Grasa deshidratada', 'Sensible', 'Normal', 'Seca', 'Mixta', 'Madura'])
         && data.createdBy is string
         && data.createdAt is timestamp && data.updatedAt is timestamp;
     }

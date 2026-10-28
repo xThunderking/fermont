@@ -221,44 +221,15 @@ h2 {
   font-size: clamp(1.2rem, 4vw, 1.5rem);
 }
 
-.activos-fields,
-.activos-skin-fieldset {
+.activos-fields {
   margin: 0;
   padding: 0;
   border: 0;
   min-width: 0;
 }
 
-.activos-fields > label,
-.activos-skin-fieldset legend {
+.activos-fields > label {
   font-weight: 600;
-}
-
-.activos-skin-fieldset legend {
-  margin-bottom: 0.4rem;
-  color: #624834;
-}
-
-.activos-skin-options {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.25rem 1rem;
-  margin-top: 0.5rem;
-}
-
-.activos-skin-options label {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 44px;
-  cursor: pointer;
-}
-
-.activos-skin-options input {
-  width: 20px;
-  height: 20px;
-  margin: 0;
-  accent-color: #7e6148;
 }
 
 .activos-screen input:not([type='checkbox']),
@@ -277,6 +248,380 @@ h2 {
 
 .activos-actions > button {
   flex: 1 1 180px;
+}
+
+.activo-form-section {
+  display: grid;
+  gap: 1.1rem;
+  min-width: 0;
+  padding: clamp(0.85rem, 2vw, 1.4rem);
+  border: 1px solid #e1cfba;
+  border-radius: 18px;
+  background: #fffcf7;
+}
+
+.activo-section-heading,
+.activo-field-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.activo-section-heading {
+  justify-content: flex-start;
+}
+
+.activo-section-heading > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #ede0d1;
+  color: #755439;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.activo-section-heading h3 {
+  margin: 0;
+  font-size: clamp(1rem, 2.5vw, 1.2rem);
+  color: #593d2b;
+}
+
+.activo-basics-grid,
+.activo-basics-text,
+.activo-category-field {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.activo-basics-text label,
+.activo-field-heading {
+  font-weight: 600;
+}
+
+.activo-basics-text label:has(> input[required])::after,
+.activo-basics-text label:has(> textarea[required])::after {
+  content: none;
+}
+
+.activo-category-field {
+  gap: 0.6rem;
+}
+
+.activo-input-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #816a57;
+}
+
+.activo-text-field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.activo-form-section .subtitle {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.activo-selection-count {
+  flex-shrink: 0;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #755439;
+}
+
+.activo-selector-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem;
+  min-height: 48px;
+  color: #593d2b;
+  cursor: pointer;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #c9ad90;
+  border-radius: 14px;
+  background: #fffaf3;
+  font: inherit;
+  text-align: left;
+  font-weight: 600;
+}
+
+.activo-selector-trigger:hover {
+  background: #f3e7d9;
+}
+
+.activo-selection-dialog {
+  width: min(720px, calc(100% - 1.5rem));
+  max-width: none;
+  max-height: min(88dvh, 850px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid #d8c1a7;
+  border-radius: 22px;
+  background: #fffaf3;
+  color: #593d2b;
+  box-shadow: 0 24px 80px #26140955;
+  overflow: hidden;
+}
+
+.activo-selection-dialog::backdrop {
+  background: #2c1d14a8;
+  backdrop-filter: blur(4px);
+}
+
+.activo-dialog-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: min(calc(88dvh - 2px), 848px);
+}
+
+.activo-dialog-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1rem 1.1rem;
+  border-bottom: 1px solid #e4d4c2;
+}
+
+.activo-dialog-header h2 {
+  margin: 0.25rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.3rem, 4vw, 1.7rem);
+}
+
+.activo-dialog-header p {
+  margin: 0;
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.activo-dialog-header .activo-dialog-kicker {
+  color: #89684c;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.activo-dialog-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #d8c1a7;
+  border-radius: 50%;
+  background: #f2e5d5;
+  color: #62432e;
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+
+.activo-dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  border-top: 1px solid #e4d4c2;
+  background: #f8efe3;
+}
+
+.activo-dialog-footer > span {
+  font-size: 0.8rem;
+}
+
+.activo-dialog-footer button {
+  min-width: 120px;
+  min-height: 44px;
+}
+
+.activo-dialog-header,
+.activo-dialog-footer {
+  flex-shrink: 0;
+}
+
+.activo-selection-dialog .activo-category-options {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  padding-bottom: 1rem;
+}
+
+.activo-category-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0.65rem;
+  border: 0;
+  min-width: 0;
+}
+
+.activo-category-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-width: 0;
+  min-height: 112px;
+  padding: 1.6rem 0.5rem 0.8rem;
+  border: 1px solid #e3d5c6;
+  border-radius: 12px;
+  background: #fffdf9;
+  color: #715139;
+  text-align: center;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.activo-category-option svg {
+  width: 25px;
+  height: 25px;
+  flex-shrink: 0;
+}
+
+.activo-category-option span {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+
+.activo-category-option input {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: #795438;
+}
+
+.activo-category-option:has(input:checked) {
+  border-color: #99714f;
+  background: #f0e2d1;
+  color: #513622;
+  box-shadow: inset 0 0 0 1px #99714f;
+}
+
+.activo-category-option:has(input:focus-visible),
+.activo-selector-trigger:focus-visible {
+  outline: 3px solid #91633e;
+  outline-offset: -3px;
+}
+
+.activo-selected-categories,
+.activo-card-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.activo-selected-categories li {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.activo-selected-categories button {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #cfb596;
+  border-radius: 12px;
+  background: #f1e6d9;
+  color: #5e412b;
+  font: inherit;
+  font-size: 0.78rem;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.activo-selected-categories button span {
+  font-size: 1.2rem;
+}
+
+.activo-legacy-notice {
+  margin: 0;
+  padding: 0.85rem;
+  border-left: 3px solid #ad7950;
+  background: #f6eadb;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.activo-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (min-width: 700px) {
+  .activo-basics-grid {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .activo-category-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+}
+
+@media (max-width: 600px) {
+  .activos-form {
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .activos-form input:not([type='checkbox']),
+  .activos-form textarea {
+    font-size: 16px;
+  }
+
+  .activo-form-section .activo-photo-preview {
+    flex-basis: 104px;
+    width: 104px;
+  }
+
+  .activo-form-section .activo-photo-controls {
+    flex: 1 1 130px;
+  }
+
+  .activo-form-section .activo-photo-controls button {
+    padding-inline: 0.6rem;
+    font-size: 0.8rem;
+  }
+
 }
 
 .activos-list {
@@ -434,47 +779,10 @@ h2 {
   min-height: 44px;
 }
 
-.activo-photo-field,
-.activos-contraindications {
+.activo-photo-field {
   display: grid;
   gap: 0.75rem;
   min-width: 0;
-}
-
-.activos-contraindications {
-  margin: 0;
-  padding: 0;
-  border: 0;
-}
-
-.activos-contraindications legend {
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: #624834;
-}
-
-.activo-contraindication-inputs {
-  display: grid;
-  gap: 0.75rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.activo-contraindication-inputs > li {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 0.5rem;
-}
-
-.activo-contraindication-inputs label {
-  flex: 1 1 220px;
-  min-width: 0;
-}
-
-.activo-contraindication-inputs button {
-  min-height: 44px;
 }
 
 .activo-photo-label {
@@ -586,14 +894,16 @@ h2 {
   min-width: 0;
 }
 
-.activo-contraindication-list {
+.activo-contraindication-list,
+.activo-properties-list {
   padding-left: 1.1rem;
   margin: 0;
   display: grid;
   gap: 0.35rem;
 }
 
-.activo-contraindication-list li::marker {
+.activo-contraindication-list li::marker,
+.activo-properties-list li::marker {
   color: var(--activo-accent);
 }
 

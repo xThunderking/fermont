@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
-import { MAX_CONTRAINDICACIONES, normalizeContraindicaciones, TIPOS_PIEL, validateActivoPhoto } from '../../constants/activos.js'
+import { CATEGORIAS_ACTIVOS, normalizeCategorias, normalizeContraindicaciones, normalizePropiedades, TIPOS_PIEL, validateActivoPhoto } from '../../constants/activos.js'
 import { listActivos, saveActivo } from '../../models/activoModel.js'
+import ActivoCategorySelect, { ActivoSkinSelect } from './ActivoCategorySelect.jsx'
 
 const emptyForm = () => ({
-  nombre: '', categoria: '', propiedades: '', tiposPiel: [],
-  contraindicaciones: [''], fotoUrl: '', fotoPath: '',
+  nombre: '', categoria: [], propiedades: '', tiposPiel: [],
+  contraindicaciones: '', fotoUrl: '', fotoPath: '',
 })
 
 function ActivoCardPhoto({ src, name }) {
@@ -50,12 +51,11 @@ function ActivosView() {
   const [listError, setListError] = useState('')
   const [success, setSuccess] = useState('')
   const [revision, setRevision] = useState(0)
+  const [legacyClassification, setLegacyClassification] = useState('')
   const nameInput = useRef(null)
   const fileInput = useRef(null)
   const cameraInput = useRef(null)
   const listRequest = useRef(0)
-  const contraindicationInputs = useRef([])
-  const focusNewContraindication = useRef(false)
 
   useEffect(() => {
     if (section !== 'inventario') return
@@ -97,13 +97,6 @@ function ActivosView() {
     if (section === 'registro' && editingId) nameInput.current?.focus()
   }, [section, editingId])
 
-  useEffect(() => {
-    if (focusNewContraindication.current) {
-      contraindicationInputs.current[form.contraindicaciones.length - 1]?.focus()
-      focusNewContraindication.current = false
-    }
-  }, [form.contraindicaciones.length])
-
   const clearFeedback = () => {
     setFormError('')
     setSuccess('')
@@ -125,26 +118,12 @@ function ActivosView() {
     clearFeedback()
   }
 
-  const changeContraindication = (index, value) => {
+  const toggleCategory = (categoria) => {
     setForm((previous) => ({
       ...previous,
-      contraindicaciones: previous.contraindicaciones.map((item, itemIndex) => itemIndex === index ? value : item),
-    }))
-    clearFeedback()
-  }
-
-  const addContraindication = () => {
-    if (form.contraindicaciones.length >= MAX_CONTRAINDICACIONES) return
-    focusNewContraindication.current = true
-    setForm((previous) => ({ ...previous, contraindicaciones: [...previous.contraindicaciones, ''] }))
-    clearFeedback()
-  }
-
-  const removeContraindication = (index) => {
-    setForm((previous) => ({
-      ...previous,
-      contraindicaciones: previous.contraindicaciones.length === 1
-        ? [''] : previous.contraindicaciones.filter((_, itemIndex) => itemIndex !== index),
+      categoria: previous.categoria.includes(categoria)
+        ? previous.categoria.filter((value) => value !== categoria)
+        : [...previous.categoria, categoria],
     }))
     clearFeedback()
   }
@@ -179,6 +158,7 @@ function ActivosView() {
   const resetForm = () => {
     setForm(emptyForm())
     setEditingId('')
+    setLegacyClassification('')
     setPhotoFile(null)
     setPhotoPreview('')
     setRemovePhoto(false)
@@ -210,14 +190,17 @@ function ActivosView() {
 
   const editActivo = (activo) => {
     const contraindicaciones = normalizeContraindicaciones(activo.contraindicaciones)
+    const categorias = normalizeCategorias(activo.categoria)
+    const previousValues = [...categorias.filter((value) => !CATEGORIAS_ACTIVOS.includes(value)), ...activo.tiposPiel.filter((value) => !TIPOS_PIEL.includes(value))]
     resetForm()
+    setLegacyClassification(previousValues.length ? `Clasificación anterior: ${previousValues.join(', ')}. Selecciona las opciones del nuevo catálogo antes de guardar.` : '')
     setEditingId(activo.id)
     setForm({
       nombre: activo.nombre,
-      categoria: activo.categoria,
-      propiedades: activo.propiedades,
-      tiposPiel: [...activo.tiposPiel],
-      contraindicaciones: contraindicaciones.length ? contraindicaciones : [''],
+      categoria: categorias.filter((value) => CATEGORIAS_ACTIVOS.includes(value)),
+      propiedades: normalizePropiedades(activo.propiedades).join('\n'),
+      tiposPiel: activo.tiposPiel.filter((value) => TIPOS_PIEL.includes(value)),
+      contraindicaciones: contraindicaciones.join('\n'),
       fotoUrl: activo.fotoUrl || '',
       fotoPath: activo.fotoPath || '',
     })
@@ -258,7 +241,6 @@ function ActivosView() {
         </button>
         <div>
           <h1>Activos</h1>
-          <p className="subtitle">Inventario y registro de activos cosméticos.</p>
         </div>
       </div>
 
@@ -272,16 +254,21 @@ function ActivosView() {
       {section === 'registro' ? (
         <form className="activos-form" onSubmit={handleSubmit} aria-labelledby="activos-form-title">
           <h2 id="activos-form-title">{editingId ? 'Editar activo cosmético' : 'Nuevo activo cosmético'}</h2>
-          <p className="subtitle">Los campos con * son obligatorios.</p>
           <fieldset className="activos-fields" disabled={saving}>
+            <section className="activo-form-section" aria-labelledby="activo-basics-title">
+              <div className="activo-section-heading"><span aria-hidden="true">01</span><h3 id="activo-basics-title">Conoce el activo</h3></div>
+              <div className="activo-basics-grid">
+              <div className="activo-basics-text">
             <label>
-              Nombre del activo
+              <span className="required-title">Nombre del activo</span>
               <input ref={nameInput} name="nombre" value={form.nombre} onChange={changeField} required maxLength={150} placeholder="Ej. Niacinamida" />
             </label>
             <label>
-              Categoría
-              <input name="categoria" value={form.categoria} onChange={changeField} required maxLength={100} placeholder="Escribe la categoría del activo" />
+              <span className="required-title">Propiedades</span>
+              <textarea name="propiedades" value={form.propiedades} onChange={changeField} required maxLength={3000} rows={4} aria-describedby="activo-propiedades-help" placeholder={'Hidrata la piel.\nRefuerza la barrera cutánea.'} />
+              <span id="activo-propiedades-help" className="activo-input-hint">Una por renglón.</span>
             </label>
+              </div>
             <div className="activo-photo-field">
               <span className="activo-photo-label" id="activo-photo-label">Foto del activo</span>
               <input ref={fileInput} id="activo-gallery-input" type="file" accept="image/jpeg,image/png,image/webp" onChange={choosePhoto} aria-label="Elegir foto de la galería" aria-describedby="activo-photo-help" hidden />
@@ -306,47 +293,31 @@ function ActivosView() {
                   {displayedPhoto ? <button type="button" className="main-button secondary" onClick={clearPhoto}>Quitar foto</button> : null}
                 </div>
               </div>
-              <p id="activo-photo-help" className="subtitle">Opcional. JPG, PNG o WebP, máximo 10 MB. La foto se ajusta al centro del círculo.</p>
+              <p id="activo-photo-help" className="activo-input-hint">Opcional · JPG, PNG o WebP · 10 MB</p>
               {photoError ? <p className="error-text" role="alert">{photoError}</p> : null}
             </div>
-            <label>
-              Propiedades
-              <textarea name="propiedades" value={form.propiedades} onChange={changeField} required maxLength={3000} rows={3} placeholder="Describe las propiedades del activo" />
-            </label>
-            <fieldset className="activos-skin-fieldset" aria-describedby="activos-skin-help">
-              <legend className="required-title">Tipos de piel</legend>
-              <p id="activos-skin-help" className="subtitle">Selecciona uno o más tipos de piel.</p>
-              <div className="activos-skin-options">
-                {TIPOS_PIEL.map((tipo) => (
-                  <label key={tipo}>
-                    <input type="checkbox" checked={form.tiposPiel.includes(tipo)} onChange={() => toggleSkinType(tipo)} />
-                    {tipo}
-                  </label>
-                ))}
               </div>
-            </fieldset>
-            <fieldset className="activos-contraindications">
-              <legend>Contraindicaciones</legend>
-              <p className="subtitle">Agrega una contraindicación por campo, si aplica.</p>
-              <ol className="activo-contraindication-inputs">
-                {form.contraindicaciones.map((item, index) => (
-                  <li key={index}>
-                    <label>
-                      Contraindicación {index + 1}
-                      <textarea ref={(element) => { contraindicationInputs.current[index] = element }} value={item} onChange={(event) => changeContraindication(index, event.target.value)} maxLength={3000} rows={2} placeholder="Escribe una contraindicación" />
-                    </label>
-                    <button type="button" className="main-button secondary" aria-label={`Quitar contraindicación ${index + 1}`} onClick={() => removeContraindication(index)}>Quitar</button>
-                  </li>
-                ))}
-              </ol>
-              <button type="button" className="main-button secondary" onClick={addContraindication} disabled={form.contraindicaciones.length >= MAX_CONTRAINDICACIONES}>Agregar otra contraindicación</button>
-            </fieldset>
+            </section>
+            <section className="activo-form-section" aria-labelledby="activo-classification-title">
+              <div className="activo-section-heading"><span aria-hidden="true">02</span><h3 id="activo-classification-title">Clasifica sus beneficios</h3></div>
+              {legacyClassification ? <p className="activo-legacy-notice" role="status">{legacyClassification}</p> : null}
+              <ActivoCategorySelect value={form.categoria} onToggle={toggleCategory} disabled={saving} />
+              <ActivoSkinSelect value={form.tiposPiel} onToggle={toggleSkinType} disabled={saving} />
+            </section>
+            <section className="activo-form-section" aria-labelledby="activo-safety-title">
+              <div className="activo-section-heading"><span aria-hidden="true">03</span><h3 id="activo-safety-title">Cuidados y precauciones</h3></div>
+              <div className="activo-field-heading"><label htmlFor="activo-contraindicaciones">Contraindicaciones</label><span className="activo-input-hint">Opcional</span></div>
+              <div className="activo-text-field">
+                <textarea id="activo-contraindicaciones" name="contraindicaciones" value={form.contraindicaciones} onChange={changeField} maxLength={10019} rows={4} aria-describedby="activo-contraindicaciones-help" placeholder={'Evitar en caso de alergia al ingrediente.\nNo aplicar sobre piel irritada.'} />
+                <p id="activo-contraindicaciones-help" className="activo-input-hint">Una por renglón.</p>
+              </div>
+            </section>
+            {formError ? <p className="error-text" role="alert">{formError}</p> : null}
             <div className="activos-actions">
               <button type="submit" className="main-button">{saving ? 'Guardando...' : editingId ? 'Guardar cambios' : 'Guardar activo'}</button>
               {editingId ? <button type="button" className="main-button secondary" onClick={() => { resetForm(); setLoading(true); setSection('inventario') }}>Cancelar edición</button> : null}
             </div>
           </fieldset>
-          {formError ? <p className="error-text" role="alert">{formError}</p> : null}
         </form>
       ) : (
         <section className="activos-registry" aria-labelledby="activos-registry-title" aria-busy={loading || loadingMore}>
@@ -374,11 +345,13 @@ function ActivosView() {
                     <div className="activo-card-title">
                       <span className="activo-card-eyebrow">Activo cosmético</span>
                       <h3>{activo.nombre}</h3>
-                      <span className="activo-category">{activo.categoria}</span>
+                      <ul className="activo-card-categories" aria-label="Categorías del activo">
+                        {normalizeCategorias(activo.categoria).map((categoria) => <li key={categoria} className="activo-category">{categoria}</li>)}
+                      </ul>
                     </div>
                   </div>
                   <dl className="activo-card-details">
-                    <div><dt>Propiedades</dt><dd>{activo.propiedades}</dd></div>
+                    <div><dt>Propiedades</dt><dd><ul className="activo-properties-list">{normalizePropiedades(activo.propiedades).map((item, index) => <li key={index}>{item}</li>)}</ul></dd></div>
                     <div>
                       <dt>Tipos de piel</dt>
                       <dd>
