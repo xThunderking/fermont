@@ -119,7 +119,7 @@ function PublicHome() {
             <article className="public-service-menu-card">
               <span className="public-service-menu-label">Menú de servicios</span>
               <strong>{totalServices}</strong>
-              <p>Opciones faciales y corporales organizadas para que encuentres rápido lo que tu piel o tu cuerpo necesita.</p>
+              <p>Opciones faciales y corporales organizadas para que encuentres fácilmente el cuidado que buscas.</p>
               <a href={publicSiteConfig.recommendationWhatsapp} target="_blank" rel="noreferrer">
                 Pedir recomendación <PublicIcon name="arrow" />
               </a>
@@ -184,7 +184,9 @@ function PublicHome() {
 
           <div className="public-services-note" data-reveal="up">
             <span><PublicIcon name="heart" /></span>
-            <p>Cada servicio se personaliza de acuerdo con las características y necesidades de tu piel. Productos y aparatología pueden variar después de la valoración.</p>
+            <p>Cada servicio se adapta a las características de tu piel, tus necesidades y posibles contraindicaciones. Los productos y técnicas utilizados pueden variar después de la valoración.
+              <br /><br />
+              Nuestros servicios tienen fines estéticos y de bienestar; no sustituyen la valoración ni la atención médica. Los resultados pueden variar de una persona a otra.</p>
             <a href={publicSiteConfig.whatsapp} target="_blank" rel="noreferrer">
               Agendar valoración <PublicIcon name="arrow" />
             </a>
@@ -273,7 +275,7 @@ function PublicHome() {
             <div className="public-contact-glow" aria-hidden="true" />
             <p className="public-eyebrow public-eyebrow-light"><span /> Agenda tu momento</p>
             <h2>¿Lista para comenzar?</h2>
-            <p className="public-contact-intro">Escríbenos y con gusto encontraremos el tratamiento y el horario ideal para ti.</p>
+            <p className="public-contact-intro">Escríbenos y con gusto te ayudaremos a encontrar la experiencia de cuidado y el horario más adecuado para ti.</p>
 
             <div className="public-contact-details">
               <div><span><PublicIcon name="clock" /></span><p><small>Horario</small>{publicSiteConfig.schedule}</p></div>

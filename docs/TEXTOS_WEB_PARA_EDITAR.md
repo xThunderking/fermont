@@ -1,0 +1,817 @@
+# Fermont · Textos visibles de la página pública
+
+Textos actualizados con el documento definitivo recibido. Conserva los códigos entre corchetes para indicar cada cambio.
+
+
+## 1. Encabezado y menú de navegación
+
+**[MENU-01] Marca**
+
+Fermont
+
+**[MENU-02] Subtítulo de la marca**
+
+Skin & Beauty Studio
+
+**[MENU-03] Enlace del menú**
+
+Servicios
+
+**[MENU-04] Enlace del menú**
+
+Experiencia
+
+**[MENU-05] Enlace del menú**
+
+Tu visita
+
+**[MENU-06] Enlace del menú**
+
+Prerregistro
+
+**[MENU-07] Enlace del menú**
+
+Contacto
+
+**[MENU-08] Enlace del menú**
+
+Acceso del personal
+
+**[MENU-09] Botón del encabezado**
+
+Agenda tu cita
+
+
+
+## 2. Portada principal
+
+**[INICIO-01] Texto superior**
+
+Cosmetología facial y corporal
+
+**[INICIO-02] Título principal**
+
+El cuidado que tu piel merece sentir.
+
+**[INICIO-03] Descripción**
+
+Una experiencia creada para reconectar contigo, cuidar tu piel y regalarte un momento de calma con atención completamente personalizada.
+
+**[INICIO-04] Botón principal**
+
+Agendar mi cita
+
+**[INICIO-05] Botón de tratamientos**
+
+Explorar tratamientos
+
+**[INICIO-06] Enlace de prerregistro**
+
+Hacer mi prerregistro
+
+**[INICIO-07] Indicador de valoración**
+
+01
+
+**[INICIO-08] Característica**
+
+Valoración personalizada
+
+**[INICIO-09] Indicador de atención**
+
+1:1
+
+**[INICIO-10] Característica**
+
+Atención individual
+
+**[INICIO-11] Característica**
+
+Cuidado con intención
+
+**[INICIO-12] Nota junto a la imagen**
+
+Tu momento de bienestar
+
+**[INICIO-13] Nota junto a la imagen**
+
+Agenda abierta
+
+**[INICIO-14] Nota junto a la imagen**
+
+Previa cita
+
+**[INICIO-15] Indicador para seguir bajando**
+
+Descubre
+
+
+
+## 3. Textos dentro de la imagen principal
+
+**[BANNER-01] Texto en la imagen**
+
+F M
+
+**[BANNER-02] Texto en la imagen**
+
+FERMONT
+
+**[BANNER-03] Texto en la imagen**
+
+SKIN & BEAUTY STUDIO
+
+**[BANNER-04] Texto en la imagen**
+
+IMAGEN
+
+**[BANNER-05] Texto en la imagen**
+
+CUIDADO
+
+**[BANNER-06] Texto en la imagen**
+
+CONFIANZA
+
+**[BANNER-07] Texto en la imagen**
+
+belleza que se siente
+
+
+
+## 4. Franja de valores en movimiento
+
+**[FRANJA-01] Texto de la franja**
+
+Imagen
+
+**[FRANJA-02] Texto de la franja**
+
+Cuidado
+
+**[FRANJA-03] Texto de la franja**
+
+Confianza
+
+**[FRANJA-04] Texto de la franja**
+
+Atención personalizada
+
+**[FRANJA-05] Texto de la franja**
+
+Belleza que se siente
+
+
+
+## 5. Presentación del menú de servicios
+
+**[SERVICIOS-01] Texto superior**
+
+Servicios Fermont
+
+**[SERVICIOS-02] Título**
+
+Rituales creados alrededor de tu piel.
+
+**[SERVICIOS-03] Descripción**
+
+Antes de recomendar, escuchamos. Cada experiencia comienza conociéndote y se adapta a lo que tú necesitas.
+
+**[SERVICIOS-04] Título de la tarjeta**
+
+Menú de servicios
+
+**[SERVICIOS-05] Cantidad de servicios**
+
+18
+
+**[SERVICIOS-06] Descripción de la tarjeta**
+
+Opciones faciales y corporales organizadas para que encuentres fácilmente el cuidado que buscas.
+
+**[SERVICIOS-07] Enlace**
+
+Pedir recomendación
+
+**[SERVICIOS-CAT-1-NOMBRE] Categoría del menú**
+
+Faciales
+
+**[SERVICIOS-CAT-1-CANTIDAD] Cantidad en la categoría**
+
+13 opciones
+
+**[SERVICIOS-CAT-2-NOMBRE] Categoría del menú**
+
+Corporales
+
+**[SERVICIOS-CAT-2-CANTIDAD] Cantidad en la categoría**
+
+2 opciones
+
+**[SERVICIOS-CAT-3-NOMBRE] Categoría del menú**
+
+Ritual corporal renovador
+
+**[SERVICIOS-CAT-3-CANTIDAD] Cantidad en la categoría**
+
+3 opciones
+
+
+
+## 6. Servicios · Faciales
+
+**[FACIALES-CAB-01] Número de categoría**
+
+01
+
+**[FACIALES-CAB-02] Categoría**
+
+Faciales
+
+**[FACIALES-CAB-03] Título de la categoría**
+
+Cuidado facial para cada momento de tu piel
+
+**[FACIALES-CAB-04] Descripción de la categoría**
+
+Elige una experiencia de limpieza, hidratación, luminosidad, renovación o relajación. Cada protocolo se adapta a las características de tu piel después de una valoración personalizada.
+
+**[FACIALES-01-NUMERO] Número del tratamiento**
+
+01
+
+**[FACIALES-01-ETIQUETA] Etiqueta del tratamiento**
+
+Inicio suave
+
+**[FACIALES-01-NOMBRE] Nombre del tratamiento**
+
+Facial Esencial
+
+**[FACIALES-01-DESCRIPCION] Descripción del tratamiento**
+
+Limpieza, exfoliación suave, tonificación, mascarilla e hidratación para una piel de aspecto fresco, suave y cuidado.
+
+**[FACIALES-02-NUMERO] Número del tratamiento**
+
+02
+
+**[FACIALES-02-ETIQUETA] Etiqueta del tratamiento**
+
+Profunda
+
+**[FACIALES-02-NOMBRE] Nombre del tratamiento**
+
+Limpieza Facial Profunda
+
+**[FACIALES-02-DESCRIPCION] Descripción del tratamiento**
+
+Limpieza facial profunda, extracción cosmética de comedones y aparatología según valoración, enfocada en retirar impurezas superficiales y mejorar la apariencia de la piel.
+
+**[FACIALES-03-NUMERO] Número del tratamiento**
+
+03
+
+**[FACIALES-03-ETIQUETA] Etiqueta del tratamiento**
+
+Equilibrio
+
+**[FACIALES-03-NOMBRE] Nombre del tratamiento**
+
+Facial Purificante
+
+**[FACIALES-03-DESCRIPCION] Descripción del tratamiento**
+
+Cuidado cosmético especialmente pensado para piel con tendencia grasa, brillo excesivo, poros congestionados e imperfecciones visibles.
+
+**[FACIALES-04-NUMERO] Número del tratamiento**
+
+04
+
+**[FACIALES-04-ETIQUETA] Etiqueta del tratamiento**
+
+Calma
+
+**[FACIALES-04-NOMBRE] Nombre del tratamiento**
+
+Facial Piel Sensible
+
+**[FACIALES-04-DESCRIPCION] Descripción del tratamiento**
+
+Limpieza e hidratación suave con productos seleccionados para piel delicada o reactiva, enfocada en aportar confort y una agradable sensación de calma.
+
+**[FACIALES-05-NUMERO] Número del tratamiento**
+
+05
+
+**[FACIALES-05-ETIQUETA] Etiqueta del tratamiento**
+
+Hidratación
+
+**[FACIALES-05-NOMBRE] Nombre del tratamiento**
+
+Hidratación Intensiva
+
+**[FACIALES-05-DESCRIPCION] Descripción del tratamiento**
+
+Experiencia enfocada en favorecer la hidratación superficial de la piel y aportar suavidad, frescura y una agradable sensación de confort.
+
+**[FACIALES-06-NUMERO] Número del tratamiento**
+
+06
+
+**[FACIALES-06-ETIQUETA] Etiqueta del tratamiento**
+
+Luminosidad
+
+**[FACIALES-06-NOMBRE] Nombre del tratamiento**
+
+Facial Iluminador
+
+**[FACIALES-06-DESCRIPCION] Descripción del tratamiento**
+
+Exfoliación y cuidado cosmético enfocados en mejorar la apariencia de la piel opaca y favorecer un aspecto más luminoso y uniforme.
+
+**[FACIALES-07-NUMERO] Número del tratamiento**
+
+07
+
+**[FACIALES-07-ETIQUETA] Etiqueta del tratamiento**
+
+Vitalidad
+
+**[FACIALES-07-NOMBRE] Nombre del tratamiento**
+
+Facial Revitalizante
+
+**[FACIALES-07-DESCRIPCION] Descripción del tratamiento**
+
+Cuidado cosmético enfocado en la hidratación, luminosidad y apariencia de las líneas finas, para una piel de aspecto fresco y cuidado.
+
+**[FACIALES-08-NUMERO] Número del tratamiento**
+
+08
+
+**[FACIALES-08-ETIQUETA] Etiqueta del tratamiento**
+
+Sensorial
+
+**[FACIALES-08-NOMBRE] Nombre del tratamiento**
+
+Facial Chocolate
+
+**[FACIALES-08-DESCRIPCION] Descripción del tratamiento**
+
+Experiencia facial sensorial con productos cosméticos de chocolate, mascarilla y masaje relajante, pensada para consentir tu piel y disfrutar un momento de bienestar.
+
+**[FACIALES-09-NUMERO] Número del tratamiento**
+
+09
+
+**[FACIALES-09-ETIQUETA] Etiqueta del tratamiento**
+
+Textura
+
+**[FACIALES-09-NOMBRE] Nombre del tratamiento**
+
+Facial Renovador
+
+**[FACIALES-09-DESCRIPCION] Descripción del tratamiento**
+
+Exfoliación y renovación cosmética superficial enfocadas en mejorar la apariencia de la textura, suavidad y luminosidad de la piel.
+
+**[FACIALES-10-NUMERO] Número del tratamiento**
+
+10
+
+**[FACIALES-10-ETIQUETA] Etiqueta del tratamiento**
+
+Exfoliación
+
+**[FACIALES-10-NOMBRE] Nombre del tratamiento**
+
+Exfoliación Cosmética Iluminadora
+
+**[FACIALES-10-DESCRIPCION] Descripción del tratamiento**
+
+Exfoliación cosmética superficial con productos seleccionados según las características de tu piel, enfocada en el cuidado de la textura y luminosidad.
+
+**[FACIALES-11-NUMERO] Número del tratamiento**
+
+11
+
+**[FACIALES-11-ETIQUETA] Etiqueta del tratamiento**
+
+Luz LED estética
+
+**[FACIALES-11-NOMBRE] Nombre del tratamiento**
+
+Facial LED
+
+**[FACIALES-11-DESCRIPCION] Descripción del tratamiento**
+
+Experiencia facial personalizada que incorpora luz LED como complemento cosmético, de acuerdo con la valoración de la piel y las indicaciones del equipo.
+
+**[FACIALES-12-NUMERO] Número del tratamiento**
+
+12
+
+**[FACIALES-12-ETIQUETA] Etiqueta del tratamiento**
+
+Experiencia completa
+
+**[FACIALES-12-NOMBRE] Nombre del tratamiento**
+
+Facial Deluxe Fermont
+
+**[FACIALES-12-DESCRIPCION] Descripción del tratamiento**
+
+Limpieza facial profunda, aparatología cosmética seleccionada según valoración, mascarilla personalizada y masaje para una experiencia de cuidado facial completa.
+
+**[FACIALES-13-NUMERO] Número del tratamiento**
+
+13
+
+**[FACIALES-13-ETIQUETA] Etiqueta del tratamiento**
+
+Relax
+
+**[FACIALES-13-NOMBRE] Nombre del tratamiento**
+
+Masaje Facial Relajante
+
+**[FACIALES-13-DESCRIPCION] Descripción del tratamiento**
+
+Masaje de rostro, cuello y escote con maniobras suaves enfocadas en la relajación, el descanso y el bienestar facial.
+
+
+
+## 7. Servicios · Corporales
+
+**[CORPORALES-CAB-01] Número de categoría**
+
+02
+
+**[CORPORALES-CAB-02] Categoría**
+
+Corporales
+
+**[CORPORALES-CAB-03] Título de la categoría**
+
+Bienestar corporal con enfoque estético y relajante
+
+**[CORPORALES-CAB-04] Descripción de la categoría**
+
+Experiencias de cuidado corporal enfocadas en el bienestar, la relajación y la atención personalizada de distintas zonas del cuerpo.
+
+**[CORPORALES-01-NUMERO] Número del tratamiento**
+
+01
+
+**[CORPORALES-01-ETIQUETA] Etiqueta del tratamiento**
+
+Descanso
+
+**[CORPORALES-01-NOMBRE] Nombre del tratamiento**
+
+Masaje Corporal Relajante
+
+**[CORPORALES-01-DESCRIPCION] Descripción del tratamiento**
+
+Masaje manual con maniobras suaves y relajantes, enfocado en brindar una agradable sensación de descanso, confort y bienestar corporal.
+
+**[CORPORALES-02-NUMERO] Número del tratamiento**
+
+02
+
+**[CORPORALES-02-ETIQUETA] Etiqueta del tratamiento**
+
+Modelador
+
+**[CORPORALES-02-NOMBRE] Nombre del tratamiento**
+
+Masaje Modelador Manual
+
+**[CORPORALES-02-DESCRIPCION] Descripción del tratamiento**
+
+Masaje estético con maniobras manuales enfocadas en el cuidado del contorno corporal de abdomen, cintura u otras zonas, según valoración.
+
+
+
+## 8. Servicios · Ritual corporal renovador
+
+**[RITUAL-CAB-01] Número de categoría**
+
+03
+
+**[RITUAL-CAB-02] Categoría**
+
+Ritual corporal renovador
+
+**[RITUAL-CAB-03] Título de la categoría**
+
+Exfoliación, hidratación y masaje en un mismo ritual
+
+**[RITUAL-CAB-04] Descripción de la categoría**
+
+Una experiencia de cuidado corporal que combina exfoliación cosmética, hidratación y masaje relajante, pensada para aportar suavidad a la piel y una agradable sensación de bienestar.
+
+**[RITUAL-01-NUMERO] Número del tratamiento**
+
+01
+
+**[RITUAL-01-ETIQUETA] Etiqueta del tratamiento**
+
+Ritual completo
+
+**[RITUAL-01-NOMBRE] Nombre del tratamiento**
+
+Brazos más piernas
+
+**[RITUAL-01-DESCRIPCION] Descripción del tratamiento**
+
+Exfoliación cosmética, hidratación y masaje relajante para consentir la piel de brazos y piernas en una sola experiencia.
+
+**[RITUAL-02-NUMERO] Número del tratamiento**
+
+02
+
+**[RITUAL-02-ETIQUETA] Etiqueta del tratamiento**
+
+Zona específica
+
+**[RITUAL-02-NOMBRE] Nombre del tratamiento**
+
+Solo brazos
+
+**[RITUAL-02-DESCRIPCION] Descripción del tratamiento**
+
+Cuidado corporal que combina exfoliación, hidratación y masaje para aportar suavidad y una agradable sensación de bienestar a la piel de los brazos.
+
+**[RITUAL-03-NUMERO] Número del tratamiento**
+
+03
+
+**[RITUAL-03-ETIQUETA] Etiqueta del tratamiento**
+
+Zona específica
+
+**[RITUAL-03-NOMBRE] Nombre del tratamiento**
+
+Solo piernas
+
+**[RITUAL-03-DESCRIPCION] Descripción del tratamiento**
+
+Experiencia de exfoliación, hidratación y masaje enfocada en el cuidado de la piel de las piernas, aportando suavidad y una sensación de descanso.
+
+
+
+## 9. Nota al final del catálogo
+
+**[NOTA-SERVICIOS-01] Nota**
+
+Cada servicio se adapta a las características de tu piel, tus necesidades y posibles contraindicaciones. Los productos y técnicas utilizados pueden variar después de la valoración.
+
+Nuestros servicios tienen fines estéticos y de bienestar; no sustituyen la valoración ni la atención médica. Los resultados pueden variar de una persona a otra.
+
+**[NOTA-SERVICIOS-02] Enlace**
+
+Agendar valoración
+
+
+
+## 10. La experiencia Fermont
+
+**[EXPERIENCIA-01] Marca de fondo**
+
+FERMONT
+
+**[EXPERIENCIA-02] Texto superior**
+
+La experiencia Fermont
+
+**[EXPERIENCIA-03] Título**
+
+Más que un tratamiento, un espacio para ti.
+
+**[EXPERIENCIA-04] Descripción**
+
+Queremos que cada visita se sienta como una pausa: cálida, privada y cuidadosamente preparada.
+
+**[EXPERIENCIA-VALOR-1-TITULO] Título del valor**
+
+Atención cercana
+
+**[EXPERIENCIA-VALOR-1-DESCRIPCION] Descripción del valor**
+
+Un espacio privado donde puedes expresar con confianza lo que buscas.
+
+**[EXPERIENCIA-VALOR-2-TITULO] Título del valor**
+
+Cuidado consciente
+
+**[EXPERIENCIA-VALOR-2-DESCRIPCION] Descripción del valor**
+
+Cada paso tiene una intención y se adapta a las necesidades de tu piel.
+
+**[EXPERIENCIA-VALOR-3-TITULO] Título del valor**
+
+Experiencia especial
+
+**[EXPERIENCIA-VALOR-3-DESCRIPCION] Descripción del valor**
+
+Detalles pensados para que tu visita también sea un momento de calma.
+
+**[EXPERIENCIA-05] Monograma decorativo**
+
+F M
+
+**[EXPERIENCIA-06] Lema junto al monograma**
+
+Belleza que se siente
+
+
+
+## 11. Tu visita · Proceso paso a paso
+
+**[VISITA-01] Texto superior**
+
+Así comienza tu experiencia
+
+**[VISITA-02] Título**
+
+Tu cuidado, paso a paso.
+
+**[VISITA-03] Descripción**
+
+Un proceso sencillo y cercano para que sepas qué esperar desde el primer momento.
+
+**[VISITA-PASO-1-NUMERO] Número de paso**
+
+01
+
+**[VISITA-PASO-1-TITULO] Título del paso**
+
+Te escuchamos
+
+**[VISITA-PASO-1-DESCRIPCION] Descripción del paso**
+
+Conversamos sobre tus necesidades, hábitos y objetivos de cuidado.
+
+**[VISITA-PASO-2-NUMERO] Número de paso**
+
+02
+
+**[VISITA-PASO-2-TITULO] Título del paso**
+
+Diseñamos tu experiencia
+
+**[VISITA-PASO-2-DESCRIPCION] Descripción del paso**
+
+Seleccionamos el protocolo cosmético y las recomendaciones de cuidado más adecuadas según tu valoración.
+
+**[VISITA-PASO-3-NUMERO] Número de paso**
+
+03
+
+**[VISITA-PASO-3-TITULO] Título del paso**
+
+Acompañamos tu proceso
+
+**[VISITA-PASO-3-DESCRIPCION] Descripción del paso**
+
+Te compartimos recomendaciones de cuidado posterior y, si lo deseas, damos seguimiento a tu experiencia.
+
+
+
+## 12. Mensaje central antes del contacto
+
+**[MENSAJE-01] Texto superior**
+
+No se trata de cambiar quién eres.
+
+**[MENSAJE-02] Título**
+
+Se trata de sentirte bien en tu propia piel.
+
+**[MENSAJE-03] Botón**
+
+Quiero regalarme este momento
+
+
+
+## 13. Preguntas frecuentes
+
+**[PREGUNTAS-01] Texto superior**
+
+Preguntas frecuentes
+
+**[PREGUNTAS-02] Título**
+
+Antes de tu primera visita.
+
+**[PREGUNTA-1-TEXTO] Pregunta**
+
+¿Necesito una valoración antes de mi tratamiento?
+
+**[PREGUNTA-1-RESPUESTA] Respuesta**
+
+Sí. Antes de comenzar, conocemos las características de tu piel, tus objetivos de cuidado y posibles contraindicaciones para seleccionar el servicio más adecuado.
+
+**[PREGUNTA-2-TEXTO] Pregunta**
+
+¿Cómo puedo agendar una cita?
+
+**[PREGUNTA-2-RESPUESTA] Respuesta**
+
+Puedes escribirnos directamente por WhatsApp. Ahí te compartiremos los horarios disponibles y resolveremos tus dudas.
+
+**[PREGUNTA-3-TEXTO] Pregunta**
+
+¿La atención es personalizada?
+
+**[PREGUNTA-3-RESPUESTA] Respuesta**
+
+Sí. Cada visita se realiza de forma individual y el protocolo se adapta a tus objetivos de cuidado y a las características de tu piel.
+
+
+
+## 14. Tarjeta de contacto
+
+**[CONTACTO-01] Texto superior**
+
+Agenda tu momento
+
+**[CONTACTO-02] Título**
+
+¿Lista para comenzar?
+
+**[CONTACTO-03] Descripción**
+
+Escríbenos y con gusto te ayudaremos a encontrar la experiencia de cuidado y el horario más adecuado para ti.
+
+**[CONTACTO-04] Etiqueta**
+
+Horario
+
+**[CONTACTO-05] Horario visible**
+
+Lunes a sábado · Previa cita
+
+**[CONTACTO-06] Etiqueta**
+
+Ubicación
+
+**[CONTACTO-07] Texto del enlace de ubicación**
+
+Abrir en Google Maps
+
+**[CONTACTO-08] Botón**
+
+Escríbenos por WhatsApp
+
+**[CONTACTO-09] Texto sobre los iconos de redes**
+
+Síguenos
+
+
+
+## 15. Pie de página
+
+**[PIE-01] Marca**
+
+Fermont
+
+**[PIE-02] Subtítulo de la marca**
+
+Skin & Beauty Studio
+
+**[PIE-03] Lema**
+
+Imagen · Cuidado · Confianza
+
+**[PIE-04] Derechos de autor**
+
+© 2026 Fermont
+
+**[PIE-05] Enlace visible**
+
+Acceso del personal
+
+
+
+## 16. Otros textos visibles de la página
+
+**[EXTRAS-01] Botón flotante de WhatsApp**
+
+Agenda tu cita
+
+**[EXTRAS-02] Enlace visible al navegar con teclado**
+
+Saltar al contenido
+
+**[EXTRAS-03] Título de la pestaña del navegador**
+
+FERMONT
+

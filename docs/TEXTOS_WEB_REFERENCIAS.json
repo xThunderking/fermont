@@ -1,0 +1,1437 @@
+{
+  "date": "2026-10-28",
+  "scope": "Solo contenido visible de la página principal pública /",
+  "groups": [
+    {
+      "id": "ENCABEZADO",
+      "title": "Encabezado y menú de navegación",
+      "entries": [
+        {
+          "id": "MENU-01",
+          "label": "Marca",
+          "text": "Fermont",
+          "file": "src/publicSite/components/PublicHeader.jsx",
+          "line": 3
+        },
+        {
+          "id": "MENU-02",
+          "label": "Subtítulo de la marca",
+          "text": "Skin & Beauty Studio",
+          "file": "src/publicSite/components/PublicHeader.jsx",
+          "line": 18
+        },
+        {
+          "id": "MENU-03",
+          "label": "Enlace del menú",
+          "text": "Servicios",
+          "file": "src/publicSite/components/PublicHeader.jsx",
+          "line": 23
+        },
+        {
+          "id": "MENU-04",
+          "label": "Enlace del menú",
+          "text": "Experiencia",
+          "file": "src/publicSite/components/PublicHeader.jsx",
+          "line": 24
+        },
+        {
+          "id": "MENU-05",
+          "label": "Enlace del menú",
+          "text": "Tu visita",
+          "file": "src/publicSite/components/PublicHeader.jsx",
+          "line": 25
+        },
+        {
+          "id": "MENU-06",
+          "label": "Enlace del menú",
+          "text": "Prerregistro",
+          "file": "src/publicSite/components/PublicHeader.jsx",
+          "line": 26
+        },
+        {
+          "id": "MENU-07",
+          "label": "Enlace del menú",
+          "text": "Contacto",
+          "file": "src/publicSite/components/PublicHeader.jsx",
+          "line": 27
+        },
+        {
+          "id": "MENU-08",
+          "label": "Enlace del menú",
+          "text": "Acceso del personal",
+          "file": "src/publicSite/components/PublicHeader.jsx",
+          "line": 28
+        },
+        {
+          "id": "MENU-09",
+          "label": "Botón del encabezado",
+          "text": "Agenda tu cita",
+          "file": "src/publicSite/components/PublicHeader.jsx",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "id": "INICIO",
+      "title": "Portada principal",
+      "entries": [
+        {
+          "id": "INICIO-01",
+          "label": "Texto superior",
+          "text": "Cosmetología facial y corporal",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 33
+        },
+        {
+          "id": "INICIO-02",
+          "label": "Título principal",
+          "text": "El cuidado que tu piel merece sentir.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 34
+        },
+        {
+          "id": "INICIO-03",
+          "label": "Descripción",
+          "text": "Una experiencia creada para reconectar contigo, cuidar tu piel y regalarte un momento de calma con atención completamente personalizada.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 36
+        },
+        {
+          "id": "INICIO-04",
+          "label": "Botón principal",
+          "text": "Agendar mi cita",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 42
+        },
+        {
+          "id": "INICIO-05",
+          "label": "Botón de tratamientos",
+          "text": "Explorar tratamientos",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 46
+        },
+        {
+          "id": "INICIO-06",
+          "label": "Enlace de prerregistro",
+          "text": "Hacer mi prerregistro",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 52
+        },
+        {
+          "id": "INICIO-07",
+          "label": "Indicador de valoración",
+          "text": "01",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 58
+        },
+        {
+          "id": "INICIO-08",
+          "label": "Característica",
+          "text": "Valoración personalizada",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 59
+        },
+        {
+          "id": "INICIO-09",
+          "label": "Indicador de atención",
+          "text": "1:1",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 62
+        },
+        {
+          "id": "INICIO-10",
+          "label": "Característica",
+          "text": "Atención individual",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 63
+        },
+        {
+          "id": "INICIO-11",
+          "label": "Característica",
+          "text": "Cuidado con intención",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 67
+        },
+        {
+          "id": "INICIO-12",
+          "label": "Nota junto a la imagen",
+          "text": "Tu momento de bienestar",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 86
+        },
+        {
+          "id": "INICIO-13",
+          "label": "Nota junto a la imagen",
+          "text": "Agenda abierta",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 90
+        },
+        {
+          "id": "INICIO-14",
+          "label": "Nota junto a la imagen",
+          "text": "Previa cita",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 90
+        },
+        {
+          "id": "INICIO-15",
+          "label": "Indicador para seguir bajando",
+          "text": "Descubre",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 95
+        }
+      ]
+    },
+    {
+      "id": "BANNER",
+      "title": "Textos dentro de la imagen principal",
+      "entries": [
+        {
+          "id": "BANNER-01",
+          "label": "Texto en la imagen",
+          "text": "F M",
+          "file": "src/img/banner.jpeg",
+          "line": null
+        },
+        {
+          "id": "BANNER-02",
+          "label": "Texto en la imagen",
+          "text": "FERMONT",
+          "file": "src/img/banner.jpeg",
+          "line": null
+        },
+        {
+          "id": "BANNER-03",
+          "label": "Texto en la imagen",
+          "text": "SKIN & BEAUTY STUDIO",
+          "file": "src/img/banner.jpeg",
+          "line": null
+        },
+        {
+          "id": "BANNER-04",
+          "label": "Texto en la imagen",
+          "text": "IMAGEN",
+          "file": "src/img/banner.jpeg",
+          "line": null
+        },
+        {
+          "id": "BANNER-05",
+          "label": "Texto en la imagen",
+          "text": "CUIDADO",
+          "file": "src/img/banner.jpeg",
+          "line": null
+        },
+        {
+          "id": "BANNER-06",
+          "label": "Texto en la imagen",
+          "text": "CONFIANZA",
+          "file": "src/img/banner.jpeg",
+          "line": null
+        },
+        {
+          "id": "BANNER-07",
+          "label": "Texto en la imagen",
+          "text": "belleza que se siente",
+          "file": "src/img/banner.jpeg",
+          "line": null
+        }
+      ]
+    },
+    {
+      "id": "FRANJA",
+      "title": "Franja de valores en movimiento",
+      "entries": [
+        {
+          "id": "FRANJA-01",
+          "label": "Texto de la franja",
+          "text": "Imagen",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 15
+        },
+        {
+          "id": "FRANJA-02",
+          "label": "Texto de la franja",
+          "text": "Cuidado",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 15
+        },
+        {
+          "id": "FRANJA-03",
+          "label": "Texto de la franja",
+          "text": "Confianza",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 15
+        },
+        {
+          "id": "FRANJA-04",
+          "label": "Texto de la franja",
+          "text": "Atención personalizada",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 15
+        },
+        {
+          "id": "FRANJA-05",
+          "label": "Texto de la franja",
+          "text": "Belleza que se siente",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "id": "SERVICIOS",
+      "title": "Presentación del menú de servicios",
+      "entries": [
+        {
+          "id": "SERVICIOS-01",
+          "label": "Texto superior",
+          "text": "Servicios Fermont",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 112
+        },
+        {
+          "id": "SERVICIOS-02",
+          "label": "Título",
+          "text": "Rituales creados alrededor de tu piel.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 113
+        },
+        {
+          "id": "SERVICIOS-03",
+          "label": "Descripción",
+          "text": "Antes de recomendar, escuchamos. Cada experiencia comienza conociéndote y se adapta a lo que tú necesitas.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 115
+        },
+        {
+          "id": "SERVICIOS-04",
+          "label": "Título de la tarjeta",
+          "text": "Menú de servicios",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 120
+        },
+        {
+          "id": "SERVICIOS-05",
+          "label": "Cantidad de servicios",
+          "text": "18",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 121
+        },
+        {
+          "id": "SERVICIOS-06",
+          "label": "Descripción de la tarjeta",
+          "text": "Opciones faciales y corporales organizadas para que encuentres fácilmente el cuidado que buscas.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 122
+        },
+        {
+          "id": "SERVICIOS-07",
+          "label": "Enlace",
+          "text": "Pedir recomendación",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 124
+        },
+        {
+          "id": "SERVICIOS-CAT-1-NOMBRE",
+          "label": "Categoría del menú",
+          "text": "Faciales",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 14
+        },
+        {
+          "id": "SERVICIOS-CAT-1-CANTIDAD",
+          "label": "Cantidad en la categoría",
+          "text": "13 opciones",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 139
+        },
+        {
+          "id": "SERVICIOS-CAT-2-NOMBRE",
+          "label": "Categoría del menú",
+          "text": "Corporales",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 103
+        },
+        {
+          "id": "SERVICIOS-CAT-2-CANTIDAD",
+          "label": "Cantidad en la categoría",
+          "text": "2 opciones",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 139
+        },
+        {
+          "id": "SERVICIOS-CAT-3-NOMBRE",
+          "label": "Categoría del menú",
+          "text": "Ritual corporal renovador",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 126
+        },
+        {
+          "id": "SERVICIOS-CAT-3-CANTIDAD",
+          "label": "Cantidad en la categoría",
+          "text": "3 opciones",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 139
+        }
+      ]
+    },
+    {
+      "id": "FACIALES",
+      "title": "Servicios · Faciales",
+      "entries": [
+        {
+          "id": "FACIALES-CAB-01",
+          "label": "Número de categoría",
+          "text": "01",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 58
+        },
+        {
+          "id": "FACIALES-CAB-02",
+          "label": "Categoría",
+          "text": "Faciales",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 14
+        },
+        {
+          "id": "FACIALES-CAB-03",
+          "label": "Título de la categoría",
+          "text": "Cuidado facial para cada momento de tu piel",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 15
+        },
+        {
+          "id": "FACIALES-CAB-04",
+          "label": "Descripción de la categoría",
+          "text": "Elige una experiencia de limpieza, hidratación, luminosidad, renovación o relajación. Cada protocolo se adapta a las características de tu piel después de una valoración personalizada.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 16
+        },
+        {
+          "id": "FACIALES-01-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "01",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 58
+        },
+        {
+          "id": "FACIALES-01-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Inicio suave",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 23,
+          "reference": "serviceCategories[0].items[0].tag"
+        },
+        {
+          "id": "FACIALES-01-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Facial Esencial",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 22
+        },
+        {
+          "id": "FACIALES-01-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Limpieza, exfoliación suave, tonificación, mascarilla e hidratación para una piel de aspecto fresco, suave y cuidado.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 24
+        },
+        {
+          "id": "FACIALES-02-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "02",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-02-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Profunda",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 29,
+          "reference": "serviceCategories[0].items[1].tag"
+        },
+        {
+          "id": "FACIALES-02-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Limpieza Facial Profunda",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 28
+        },
+        {
+          "id": "FACIALES-02-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Limpieza facial profunda, extracción cosmética de comedones y aparatología según valoración, enfocada en retirar impurezas superficiales y mejorar la apariencia de la piel.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 30
+        },
+        {
+          "id": "FACIALES-03-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "03",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-03-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Equilibrio",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 35,
+          "reference": "serviceCategories[0].items[2].tag"
+        },
+        {
+          "id": "FACIALES-03-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Facial Purificante",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 34
+        },
+        {
+          "id": "FACIALES-03-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Cuidado cosmético especialmente pensado para piel con tendencia grasa, brillo excesivo, poros congestionados e imperfecciones visibles.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 36
+        },
+        {
+          "id": "FACIALES-04-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "04",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-04-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Calma",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 41,
+          "reference": "serviceCategories[0].items[3].tag"
+        },
+        {
+          "id": "FACIALES-04-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Facial Piel Sensible",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 40
+        },
+        {
+          "id": "FACIALES-04-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Limpieza e hidratación suave con productos seleccionados para piel delicada o reactiva, enfocada en aportar confort y una agradable sensación de calma.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 42
+        },
+        {
+          "id": "FACIALES-05-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "05",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-05-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Hidratación",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 47,
+          "reference": "serviceCategories[0].items[4].tag"
+        },
+        {
+          "id": "FACIALES-05-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Hidratación Intensiva",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 46
+        },
+        {
+          "id": "FACIALES-05-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Experiencia enfocada en favorecer la hidratación superficial de la piel y aportar suavidad, frescura y una agradable sensación de confort.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 48
+        },
+        {
+          "id": "FACIALES-06-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "06",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-06-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Luminosidad",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 53,
+          "reference": "serviceCategories[0].items[5].tag"
+        },
+        {
+          "id": "FACIALES-06-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Facial Iluminador",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 52
+        },
+        {
+          "id": "FACIALES-06-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Exfoliación y cuidado cosmético enfocados en mejorar la apariencia de la piel opaca y favorecer un aspecto más luminoso y uniforme.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 54
+        },
+        {
+          "id": "FACIALES-07-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "07",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-07-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Vitalidad",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 59,
+          "reference": "serviceCategories[0].items[6].tag"
+        },
+        {
+          "id": "FACIALES-07-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Facial Revitalizante",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 58
+        },
+        {
+          "id": "FACIALES-07-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Cuidado cosmético enfocado en la hidratación, luminosidad y apariencia de las líneas finas, para una piel de aspecto fresco y cuidado.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 60
+        },
+        {
+          "id": "FACIALES-08-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "08",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-08-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Sensorial",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 65,
+          "reference": "serviceCategories[0].items[7].tag"
+        },
+        {
+          "id": "FACIALES-08-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Facial Chocolate",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 64
+        },
+        {
+          "id": "FACIALES-08-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Experiencia facial sensorial con productos cosméticos de chocolate, mascarilla y masaje relajante, pensada para consentir tu piel y disfrutar un momento de bienestar.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 66
+        },
+        {
+          "id": "FACIALES-09-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "09",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-09-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Textura",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 71,
+          "reference": "serviceCategories[0].items[8].tag"
+        },
+        {
+          "id": "FACIALES-09-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Facial Renovador",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 70
+        },
+        {
+          "id": "FACIALES-09-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Exfoliación y renovación cosmética superficial enfocadas en mejorar la apariencia de la textura, suavidad y luminosidad de la piel.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 72
+        },
+        {
+          "id": "FACIALES-10-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "10",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 237
+        },
+        {
+          "id": "FACIALES-10-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Exfoliación",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 77,
+          "reference": "serviceCategories[0].items[9].tag"
+        },
+        {
+          "id": "FACIALES-10-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Exfoliación Cosmética Iluminadora",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 76
+        },
+        {
+          "id": "FACIALES-10-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Exfoliación cosmética superficial con productos seleccionados según las características de tu piel, enfocada en el cuidado de la textura y luminosidad.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 78
+        },
+        {
+          "id": "FACIALES-11-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "11",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 237
+        },
+        {
+          "id": "FACIALES-11-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Luz LED estética",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 83,
+          "reference": "serviceCategories[0].items[10].tag"
+        },
+        {
+          "id": "FACIALES-11-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Facial LED",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 82
+        },
+        {
+          "id": "FACIALES-11-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Experiencia facial personalizada que incorpora luz LED como complemento cosmético, de acuerdo con la valoración de la piel y las indicaciones del equipo.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 84
+        },
+        {
+          "id": "FACIALES-12-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "12",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-12-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Experiencia completa",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 89,
+          "reference": "serviceCategories[0].items[11].tag"
+        },
+        {
+          "id": "FACIALES-12-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Facial Deluxe Fermont",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 88
+        },
+        {
+          "id": "FACIALES-12-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Limpieza facial profunda, aparatología cosmética seleccionada según valoración, mascarilla personalizada y masaje para una experiencia de cuidado facial completa.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 90
+        },
+        {
+          "id": "FACIALES-13-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "13",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "FACIALES-13-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Relax",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 95,
+          "reference": "serviceCategories[0].items[12].tag"
+        },
+        {
+          "id": "FACIALES-13-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Masaje Facial Relajante",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 94
+        },
+        {
+          "id": "FACIALES-13-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Masaje de rostro, cuello y escote con maniobras suaves enfocadas en la relajación, el descanso y el bienestar facial.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 96
+        }
+      ]
+    },
+    {
+      "id": "CORPORALES",
+      "title": "Servicios · Corporales",
+      "entries": [
+        {
+          "id": "CORPORALES-CAB-01",
+          "label": "Número de categoría",
+          "text": "02",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 156
+        },
+        {
+          "id": "CORPORALES-CAB-02",
+          "label": "Categoría",
+          "text": "Corporales",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 103
+        },
+        {
+          "id": "CORPORALES-CAB-03",
+          "label": "Título de la categoría",
+          "text": "Bienestar corporal con enfoque estético y relajante",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 104
+        },
+        {
+          "id": "CORPORALES-CAB-04",
+          "label": "Descripción de la categoría",
+          "text": "Experiencias de cuidado corporal enfocadas en el bienestar, la relajación y la atención personalizada de distintas zonas del cuerpo.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 105
+        },
+        {
+          "id": "CORPORALES-01-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "01",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 58
+        },
+        {
+          "id": "CORPORALES-01-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Descanso",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 112,
+          "reference": "serviceCategories[1].items[0].tag"
+        },
+        {
+          "id": "CORPORALES-01-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Masaje Corporal Relajante",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 111
+        },
+        {
+          "id": "CORPORALES-01-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Masaje manual con maniobras suaves y relajantes, enfocado en brindar una agradable sensación de descanso, confort y bienestar corporal.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 113
+        },
+        {
+          "id": "CORPORALES-02-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "02",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "CORPORALES-02-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Modelador",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 118,
+          "reference": "serviceCategories[1].items[1].tag"
+        },
+        {
+          "id": "CORPORALES-02-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Masaje Modelador Manual",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 117
+        },
+        {
+          "id": "CORPORALES-02-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Masaje estético con maniobras manuales enfocadas en el cuidado del contorno corporal de abdomen, cintura u otras zonas, según valoración.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 119
+        }
+      ]
+    },
+    {
+      "id": "RITUAL",
+      "title": "Servicios · Ritual corporal renovador",
+      "entries": [
+        {
+          "id": "RITUAL-CAB-01",
+          "label": "Número de categoría",
+          "text": "03",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 156
+        },
+        {
+          "id": "RITUAL-CAB-02",
+          "label": "Categoría",
+          "text": "Ritual corporal renovador",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 126
+        },
+        {
+          "id": "RITUAL-CAB-03",
+          "label": "Título de la categoría",
+          "text": "Exfoliación, hidratación y masaje en un mismo ritual",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 127
+        },
+        {
+          "id": "RITUAL-CAB-04",
+          "label": "Descripción de la categoría",
+          "text": "Una experiencia de cuidado corporal que combina exfoliación cosmética, hidratación y masaje relajante, pensada para aportar suavidad a la piel y una agradable sensación de bienestar.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 128
+        },
+        {
+          "id": "RITUAL-01-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "01",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 58
+        },
+        {
+          "id": "RITUAL-01-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Ritual completo",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 135,
+          "reference": "serviceCategories[2].items[0].tag"
+        },
+        {
+          "id": "RITUAL-01-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Brazos más piernas",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 134
+        },
+        {
+          "id": "RITUAL-01-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Exfoliación cosmética, hidratación y masaje relajante para consentir la piel de brazos y piernas en una sola experiencia.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 136
+        },
+        {
+          "id": "RITUAL-02-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "02",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "RITUAL-02-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Zona específica",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 141,
+          "reference": "serviceCategories[2].items[1].tag"
+        },
+        {
+          "id": "RITUAL-02-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Solo brazos",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 140
+        },
+        {
+          "id": "RITUAL-02-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Cuidado corporal que combina exfoliación, hidratación y masaje para aportar suavidad y una agradable sensación de bienestar a la piel de los brazos.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 142
+        },
+        {
+          "id": "RITUAL-03-NUMERO",
+          "label": "Número del tratamiento",
+          "text": "03",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 173
+        },
+        {
+          "id": "RITUAL-03-ETIQUETA",
+          "label": "Etiqueta del tratamiento",
+          "text": "Zona específica",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 147,
+          "reference": "serviceCategories[2].items[2].tag"
+        },
+        {
+          "id": "RITUAL-03-NOMBRE",
+          "label": "Nombre del tratamiento",
+          "text": "Solo piernas",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 146
+        },
+        {
+          "id": "RITUAL-03-DESCRIPCION",
+          "label": "Descripción del tratamiento",
+          "text": "Experiencia de exfoliación, hidratación y masaje enfocada en el cuidado de la piel de las piernas, aportando suavidad y una sensación de descanso.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 148
+        }
+      ]
+    },
+    {
+      "id": "NOTA-SERVICIOS",
+      "title": "Nota al final del catálogo",
+      "entries": [
+        {
+          "id": "NOTA-SERVICIOS-01",
+          "label": "Nota",
+          "text": "Cada servicio se adapta a las características de tu piel, tus necesidades y posibles contraindicaciones. Los productos y técnicas utilizados pueden variar después de la valoración.\n\nNuestros servicios tienen fines estéticos y de bienestar; no sustituyen la valoración ni la atención médica. Los resultados pueden variar de una persona a otra.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 187
+        },
+        {
+          "id": "NOTA-SERVICIOS-02",
+          "label": "Enlace",
+          "text": "Agendar valoración",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 191
+        }
+      ]
+    },
+    {
+      "id": "EXPERIENCIA",
+      "title": "La experiencia Fermont",
+      "entries": [
+        {
+          "id": "EXPERIENCIA-01",
+          "label": "Marca de fondo",
+          "text": "FERMONT",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 197
+        },
+        {
+          "id": "EXPERIENCIA-02",
+          "label": "Texto superior",
+          "text": "La experiencia Fermont",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 200
+        },
+        {
+          "id": "EXPERIENCIA-03",
+          "label": "Título",
+          "text": "Más que un tratamiento, un espacio para ti.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 199
+        },
+        {
+          "id": "EXPERIENCIA-04",
+          "label": "Descripción",
+          "text": "Queremos que cada visita se sienta como una pausa: cálida, privada y cuidadosamente preparada.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 202
+        },
+        {
+          "id": "EXPERIENCIA-VALOR-1-TITULO",
+          "label": "Título del valor",
+          "text": "Atención cercana",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 157
+        },
+        {
+          "id": "EXPERIENCIA-VALOR-1-DESCRIPCION",
+          "label": "Descripción del valor",
+          "text": "Un espacio privado donde puedes expresar con confianza lo que buscas.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 158
+        },
+        {
+          "id": "EXPERIENCIA-VALOR-2-TITULO",
+          "label": "Título del valor",
+          "text": "Cuidado consciente",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 162
+        },
+        {
+          "id": "EXPERIENCIA-VALOR-2-DESCRIPCION",
+          "label": "Descripción del valor",
+          "text": "Cada paso tiene una intención y se adapta a las necesidades de tu piel.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 163
+        },
+        {
+          "id": "EXPERIENCIA-VALOR-3-TITULO",
+          "label": "Título del valor",
+          "text": "Experiencia especial",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 167
+        },
+        {
+          "id": "EXPERIENCIA-VALOR-3-DESCRIPCION",
+          "label": "Descripción del valor",
+          "text": "Detalles pensados para que tu visita también sea un momento de calma.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 168
+        },
+        {
+          "id": "EXPERIENCIA-05",
+          "label": "Monograma decorativo",
+          "text": "F M",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 215
+        },
+        {
+          "id": "EXPERIENCIA-06",
+          "label": "Lema junto al monograma",
+          "text": "Belleza que se siente",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 15
+        }
+      ]
+    },
+    {
+      "id": "VISITA",
+      "title": "Tu visita · Proceso paso a paso",
+      "entries": [
+        {
+          "id": "VISITA-01",
+          "label": "Texto superior",
+          "text": "Así comienza tu experiencia",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 229
+        },
+        {
+          "id": "VISITA-02",
+          "label": "Título",
+          "text": "Tu cuidado, paso a paso.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 228
+        },
+        {
+          "id": "VISITA-03",
+          "label": "Descripción",
+          "text": "Un proceso sencillo y cercano para que sepas qué esperar desde el primer momento.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 231
+        },
+        {
+          "id": "VISITA-PASO-1-NUMERO",
+          "label": "Número de paso",
+          "text": "01",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 174
+        },
+        {
+          "id": "VISITA-PASO-1-TITULO",
+          "label": "Título del paso",
+          "text": "Te escuchamos",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 175
+        },
+        {
+          "id": "VISITA-PASO-1-DESCRIPCION",
+          "label": "Descripción del paso",
+          "text": "Conversamos sobre tus necesidades, hábitos y objetivos de cuidado.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 176
+        },
+        {
+          "id": "VISITA-PASO-2-NUMERO",
+          "label": "Número de paso",
+          "text": "02",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 179
+        },
+        {
+          "id": "VISITA-PASO-2-TITULO",
+          "label": "Título del paso",
+          "text": "Diseñamos tu experiencia",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 180
+        },
+        {
+          "id": "VISITA-PASO-2-DESCRIPCION",
+          "label": "Descripción del paso",
+          "text": "Seleccionamos el protocolo cosmético y las recomendaciones de cuidado más adecuadas según tu valoración.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 181
+        },
+        {
+          "id": "VISITA-PASO-3-NUMERO",
+          "label": "Número de paso",
+          "text": "03",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 184
+        },
+        {
+          "id": "VISITA-PASO-3-TITULO",
+          "label": "Título del paso",
+          "text": "Acompañamos tu proceso",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 185
+        },
+        {
+          "id": "VISITA-PASO-3-DESCRIPCION",
+          "label": "Descripción del paso",
+          "text": "Te compartimos recomendaciones de cuidado posterior y, si lo deseas, damos seguimiento a tu experiencia.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 186
+        }
+      ]
+    },
+    {
+      "id": "MENSAJE",
+      "title": "Mensaje central antes del contacto",
+      "entries": [
+        {
+          "id": "MENSAJE-01",
+          "label": "Texto superior",
+          "text": "No se trata de cambiar quién eres.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 252
+        },
+        {
+          "id": "MENSAJE-02",
+          "label": "Título",
+          "text": "Se trata de sentirte bien en tu propia piel.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 251
+        },
+        {
+          "id": "MENSAJE-03",
+          "label": "Botón",
+          "text": "Quiero regalarme este momento",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 255
+        }
+      ]
+    },
+    {
+      "id": "PREGUNTAS",
+      "title": "Preguntas frecuentes",
+      "entries": [
+        {
+          "id": "PREGUNTAS-01",
+          "label": "Texto superior",
+          "text": "Preguntas frecuentes",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 262
+        },
+        {
+          "id": "PREGUNTAS-02",
+          "label": "Título",
+          "text": "Antes de tu primera visita.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 261
+        },
+        {
+          "id": "PREGUNTA-1-TEXTO",
+          "label": "Pregunta",
+          "text": "¿Necesito una valoración antes de mi tratamiento?",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 192
+        },
+        {
+          "id": "PREGUNTA-1-RESPUESTA",
+          "label": "Respuesta",
+          "text": "Sí. Antes de comenzar, conocemos las características de tu piel, tus objetivos de cuidado y posibles contraindicaciones para seleccionar el servicio más adecuado.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 193
+        },
+        {
+          "id": "PREGUNTA-2-TEXTO",
+          "label": "Pregunta",
+          "text": "¿Cómo puedo agendar una cita?",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 196
+        },
+        {
+          "id": "PREGUNTA-2-RESPUESTA",
+          "label": "Respuesta",
+          "text": "Puedes escribirnos directamente por WhatsApp. Ahí te compartiremos los horarios disponibles y resolveremos tus dudas.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 197
+        },
+        {
+          "id": "PREGUNTA-3-TEXTO",
+          "label": "Pregunta",
+          "text": "¿La atención es personalizada?",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 200
+        },
+        {
+          "id": "PREGUNTA-3-RESPUESTA",
+          "label": "Respuesta",
+          "text": "Sí. Cada visita se realiza de forma individual y el protocolo se adapta a tus objetivos de cuidado y a las características de tu piel.",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 201
+        }
+      ]
+    },
+    {
+      "id": "CONTACTO",
+      "title": "Tarjeta de contacto",
+      "entries": [
+        {
+          "id": "CONTACTO-01",
+          "label": "Texto superior",
+          "text": "Agenda tu momento",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 276
+        },
+        {
+          "id": "CONTACTO-02",
+          "label": "Título",
+          "text": "¿Lista para comenzar?",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 277
+        },
+        {
+          "id": "CONTACTO-03",
+          "label": "Descripción",
+          "text": "Escríbenos y con gusto te ayudaremos a encontrar la experiencia de cuidado y el horario más adecuado para ti.",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 278
+        },
+        {
+          "id": "CONTACTO-04",
+          "label": "Etiqueta",
+          "text": "Horario",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 281
+        },
+        {
+          "id": "CONTACTO-05",
+          "label": "Horario visible",
+          "text": "Lunes a sábado · Previa cita",
+          "file": "src/publicSite/siteConfig.js",
+          "line": 7
+        },
+        {
+          "id": "CONTACTO-06",
+          "label": "Etiqueta",
+          "text": "Ubicación",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 290
+        },
+        {
+          "id": "CONTACTO-07",
+          "label": "Texto del enlace de ubicación",
+          "text": "Abrir en Google Maps",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 290
+        },
+        {
+          "id": "CONTACTO-08",
+          "label": "Botón",
+          "text": "Escríbenos por WhatsApp",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 296
+        },
+        {
+          "id": "CONTACTO-09",
+          "label": "Texto sobre los iconos de redes",
+          "text": "Síguenos",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 300
+        }
+      ]
+    },
+    {
+      "id": "PIE",
+      "title": "Pie de página",
+      "entries": [
+        {
+          "id": "PIE-01",
+          "label": "Marca",
+          "text": "Fermont",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 2
+        },
+        {
+          "id": "PIE-02",
+          "label": "Subtítulo de la marca",
+          "text": "Skin & Beauty Studio",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 80
+        },
+        {
+          "id": "PIE-03",
+          "label": "Lema",
+          "text": "Imagen · Cuidado · Confianza",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 312
+        },
+        {
+          "id": "PIE-04",
+          "label": "Derechos de autor",
+          "text": "© 2026 Fermont",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 312
+        },
+        {
+          "id": "PIE-05",
+          "label": "Enlace visible",
+          "text": "Acceso del personal",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 315
+        }
+      ]
+    },
+    {
+      "id": "EXTRAS",
+      "title": "Otros textos visibles de la página",
+      "entries": [
+        {
+          "id": "EXTRAS-01",
+          "label": "Botón flotante de WhatsApp",
+          "text": "Agenda tu cita",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 322
+        },
+        {
+          "id": "EXTRAS-02",
+          "label": "Enlace visible al navegar con teclado",
+          "text": "Saltar al contenido",
+          "file": "src/publicSite/PublicHome.jsx",
+          "line": 23
+        },
+        {
+          "id": "EXTRAS-03",
+          "label": "Título de la pestaña del navegador",
+          "text": "FERMONT",
+          "file": "index.html",
+          "line": 8
+        }
+      ]
+    }
+  ],
+  "pending": [
+    {
+      "id": "PIE-06",
+      "label": "Enlace al aviso de privacidad",
+      "text": "Aviso de privacidad",
+      "status": "Diferido por indicación del usuario; se solicitará más adelante. El enlace todavía no se muestra."
+    }
+  ]
+}
