@@ -142,6 +142,7 @@ function ExpedientesView() {
         valuationDate: item.step1?.fechaValoracion,
         clientSignature: item.consentimientoFirmado.clienteFirma.url,
         cosmetologistSignature: item.consentimientoFirmado.cosmetologaFirma.url,
+        marketingAuthorization: item.consentimientoFirmado.usoImagenMarketing === true,
       })
       setError('')
     } catch {

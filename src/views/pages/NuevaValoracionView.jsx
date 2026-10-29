@@ -66,6 +66,29 @@ const RECURRENT_TOTAL_STEPS = 4
 
 const getTodayDate = () => new Date().toISOString().split('T')[0]
 
+const getAdultBirthDateLimit = () => {
+  const date = new Date()
+  date.setFullYear(date.getFullYear() - 18)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+const getAgeFromBirthDate = (birthDate) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(birthDate ?? ''))
+  if (!match) return -1
+
+  const today = new Date()
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  let age = today.getFullYear() - year
+  if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) {
+    age -= 1
+  }
+  return age
+}
+
 const createStepOneInitialData = () => ({
   preregistroId: '',
   apellidoPaterno: '',
@@ -1680,6 +1703,10 @@ function NuevaValoracionView() {
       if (requiredFields.some((field) => !hasValue(field))) {
         return 'Completa todos los campos obligatorios del paso 1.'
       }
+
+      if (getAgeFromBirthDate(stepOneData.fechaNacimiento) < 18) {
+        return 'Fermont no atiende a personas menores de edad.'
+      }
     }
 
     if (step === 3) {
@@ -1930,6 +1957,7 @@ function NuevaValoracionView() {
           valuationId: nextValuationId,
           signatureType: 'cliente',
           signature: preRegistrationClientSignature,
+          marketingAuthorization: selectedPreRegistration.answers?.consentimiento?.usoImagenMarketing === true,
         })
         if (!signatureResult.ok) preRegistrationWarning = signatureResult.message
       }
@@ -3046,7 +3074,8 @@ function NuevaValoracionView() {
                   <input
                     required
                     type="number"
-                    min="0"
+                    min="18"
+                    max="120"
                     value={stepOneData.edad}
                     onChange={(event) => setFieldValue('edad', event.target.value)}
                   />
@@ -3057,6 +3086,7 @@ function NuevaValoracionView() {
                   <input
                     required
                     type="date"
+                    max={getAdultBirthDateLimit()}
                     value={stepOneData.fechaNacimiento}
                     onChange={(event) => setFieldValue('fechaNacimiento', event.target.value)}
                   />

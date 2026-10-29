@@ -130,6 +130,19 @@ function PreRegistrationView() {
             ) : null}
           </div>
 
+          <div className="public-preregistration-privacy" role="note">
+            <p>
+              María Fernanda Montesinos Rodríguez, responsable de Fermont Skin &amp; Beauty Studio, con domicilio en
+              C. Verónica 112D, El Tintero, C. P. 76134, Santiago de Querétaro, tratará tus datos de identificación,
+              contacto y valoración cosmetológica, incluidos los datos sensibles de salud que proporciones, para
+              gestionar el prerregistro, valorar posibles contraindicaciones, brindar servicios cosmetológicos no
+              invasivos, integrar tu expediente y dar seguimiento a tu atención. El uso de fotos o videos para
+              publicidad es opcional y requiere autorización separada; puedes rechazarlo sin afectar tu servicio.
+              Contacto: fermont.estudio@gmail.com.
+            </p>
+            <Link to="/aviso-privacidad">Consulta el aviso de privacidad integral</Link>
+          </div>
+
           {successMessage ? (
             <div className="public-preregistration-success" role="status">
               <span><PublicIcon name="heart" /></span>

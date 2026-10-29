@@ -6,12 +6,22 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAllowlistedStaff() {
+      return isSignedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() in [
+          'reynarayonacho850@gmail.com',
+          'mafermonts30@gmail.com',
+          'ignacioreynarayo25@gmail.com'
+        ];
+    }
+
     function currentUserPath() {
       return /databases/$(database)/documents/users/$(request.auth.uid);
     }
 
     function isAdmin() {
-      return isSignedIn()
+      return isAllowlistedStaff()
         && exists(currentUserPath())
         && get(currentUserPath()).data.role == 'admin'
         && get(currentUserPath()).data.status == 'active';
@@ -36,10 +46,10 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow get: if isAllowlistedStaff() && (request.auth.uid == userId || isAdmin());
       allow list: if isAdmin();
 
-      allow create: if isSignedIn() && (
+      allow create: if isAllowlistedStaff() && (
         (
           request.auth.uid == userId
           && request.resource.data.uid == request.auth.uid
@@ -56,7 +66,7 @@ service cloud.firestore {
         )
       );
 
-      allow update: if isSignedIn() && (
+      allow update: if isAllowlistedStaff() && (
         (
           request.auth.uid == userId
           && request.resource.data.uid == resource.data.uid
@@ -80,7 +90,7 @@ service cloud.firestore {
     }
 
     function isActiveStaff() {
-      return isSignedIn()
+      return isAllowlistedStaff()
         && exists(currentUserPath())
         && get(currentUserPath()).data.get('status', 'active') == 'active'
         && validRole(get(currentUserPath()).data.get('role', 'user'));
@@ -151,12 +161,12 @@ service cloud.firestore {
     }
 
     match /clientes/{clientId} {
-      allow get, list: if isSignedIn();
+      allow get, list: if isActiveStaff();
 
-      allow create: if isSignedIn()
+      allow create: if isActiveStaff()
         && request.resource.data.createdBy == request.auth.uid;
 
-      allow update: if isSignedIn()
+      allow update: if isActiveStaff()
         && (
           (
             request.resource.data.createdBy == resource.data.createdBy
@@ -174,22 +184,22 @@ service cloud.firestore {
 
     // REGLA PARA EL EXPEDIENTE COSMETOLÓGICO
     match /clientes/{clientId}/historiaClinica/{historyId} {
-      allow get, list: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn();
+      allow get, list: if isActiveStaff();
+      allow create: if isActiveStaff();
+      allow update: if isActiveStaff();
       allow delete: if isAdmin();
     }
 
     match /valoraciones/{valuationId} {
-      allow get, list: if isSignedIn();
+      allow get, list: if isActiveStaff();
 
-      allow create: if isSignedIn()
+      allow create: if isActiveStaff()
         && request.resource.data.createdBy == request.auth.uid
         && validValuationStatus(request.resource.data.status)
         && validProgressStep(request.resource.data.currentStep)
         && request.resource.data.totalSteps == 14;
 
-      allow update: if isSignedIn()
+      allow update: if isActiveStaff()
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.totalSteps == resource.data.totalSteps
         && validValuationStatus(request.resource.data.status)
@@ -203,10 +213,10 @@ service cloud.firestore {
     }
 
     match /preregistros/{preRegistrationId} {
-      allow get, list: if isSignedIn();
+      allow get, list: if isActiveStaff();
       allow create: if false;
 
-      allow update: if isSignedIn()
+      allow update: if isActiveStaff()
         && resource.data.status == 'completed'
         && request.resource.data.status == 'used'
         && request.resource.data.usedBy == request.auth.uid

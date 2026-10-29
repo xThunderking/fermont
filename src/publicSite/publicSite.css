@@ -2560,6 +2560,20 @@
   padding-left: 0.3rem;
 }
 
+.public-consent-media {
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(111, 75, 48, 0.22);
+}
+
+.public-consent-media h4 {
+  margin: 0 0 0.45rem;
+}
+
+.public-consent-media p {
+  margin: 0.4rem 0;
+}
+
 .public-consent-acceptance {
   padding: 1rem;
   border: 1px solid rgba(104, 70, 52, 0.18);
@@ -2585,6 +2599,10 @@
 
 .public-consent-acceptance b {
   color: #a33f4f;
+}
+
+.public-consent-marketing-choice {
+  margin-top: -0.45rem;
 }
 
 .public-consent-signature {
@@ -3506,4 +3524,131 @@
 
   .public-scroll-progress { display: none; }
   .public-reveal-ready [data-reveal] { opacity: 1; transform: none; }
+}
+
+.public-privacy-page {
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 85% 7%, rgba(210, 177, 143, 0.22), transparent 30rem),
+    #faf7f1;
+  color: #3d3028;
+}
+
+.public-privacy-header,
+.public-privacy-footer {
+  width: min(100% - 2.5rem, 1160px);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.public-privacy-header {
+  min-height: 92px;
+  border-bottom: 1px solid rgba(107, 78, 59, 0.16);
+}
+
+.public-privacy-back,
+.public-privacy-footer a {
+  color: #6f503d;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.public-privacy-main {
+  width: min(100% - 2.5rem, 900px);
+  margin: 0 auto;
+  padding: clamp(3.5rem, 8vw, 6.5rem) 0 5rem;
+}
+
+.public-privacy-main > .public-eyebrow { margin-bottom: 1.1rem; }
+
+.public-privacy-main > h1 {
+  margin: 0;
+  color: #39281f;
+  font-family: Georgia, serif;
+  font-size: clamp(2.8rem, 7vw, 5.4rem);
+  font-weight: 500;
+  letter-spacing: -0.055em;
+  line-height: 1;
+}
+
+.public-privacy-main > h1 em { color: #9a7255; font-weight: 400; }
+
+.public-privacy-lead {
+  max-width: 660px;
+  margin: 1.35rem 0 0;
+  color: #705e51;
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  line-height: 1.75;
+}
+
+.public-privacy-updated { margin: 1.1rem 0 2.75rem; color: #92765f; font-size: 0.82rem; }
+.public-privacy-content { display: grid; gap: 1rem; }
+
+.public-privacy-content > section {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid rgba(139, 103, 76, 0.18);
+  border-radius: 1.1rem;
+  background: rgba(255, 253, 249, 0.86);
+  box-shadow: 0 12px 35px rgba(73, 49, 32, 0.035);
+}
+
+.public-privacy-content h2 {
+  margin: 0 0 0.8rem;
+  color: #493428;
+  font-family: Georgia, serif;
+  font-size: clamp(1.18rem, 2vw, 1.45rem);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.public-privacy-content p,
+.public-privacy-content li { color: #69574a; font-size: 0.96rem; line-height: 1.75; }
+.public-privacy-content p { margin: 0.55rem 0 0; }
+.public-privacy-content ul { display: grid; gap: 0.55rem; margin: 0.75rem 0; padding-left: 1.25rem; }
+
+.public-privacy-content a,
+.public-consent-privacy-link a,
+.public-preregistration-privacy a {
+  color: #765338;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.public-privacy-simplified { border-color: rgba(147, 107, 73, 0.28) !important; background: #f2e6d8 !important; }
+.public-privacy-simplified .public-eyebrow { margin: 0 0 0.8rem; font-size: 0.72rem; }
+.public-privacy-home { margin-top: 1.75rem; }
+
+.public-privacy-footer {
+  min-height: 90px;
+  border-top: 1px solid rgba(107, 78, 59, 0.16);
+  color: #806b59;
+  font-size: 0.82rem;
+}
+
+.public-preregistration-privacy {
+  margin: 0 0 1.4rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid rgba(139, 103, 76, 0.2);
+  border-radius: 0.9rem;
+  background: #f8f0e7;
+}
+
+.public-preregistration-privacy p { margin: 0 0 0.5rem; color: #6c5949; font-size: 0.85rem; line-height: 1.6; }
+.public-preregistration-privacy a { font-size: 0.82rem; }
+.public-consent-privacy-link { margin: 0 0 0.25rem; color: #6c5949; font-size: 0.9rem; line-height: 1.6; }
+
+@media (max-width: 760px) {
+  .public-privacy-header,
+  .public-privacy-footer { width: calc(100% - 2rem); }
+  .public-privacy-header { min-height: 78px; }
+  .public-privacy-back { font-size: 0.8rem; }
+  .public-privacy-main { width: calc(100% - 2rem); padding-top: 3.2rem; }
+  .public-privacy-content p,
+  .public-privacy-content li { font-size: 0.9rem; }
+  .public-privacy-footer { min-height: 76px; font-size: 0.73rem; }
 }

@@ -24,6 +24,26 @@ const fitFontSize = (context, text, maxWidth, initialSize) => {
   return fontSize
 }
 
+const drawWrappedParagraph = (context, text, x, y, maxWidth, lineHeight) => {
+  const words = String(text || '').split(/\s+/).filter(Boolean)
+  const lines = []
+  let line = ''
+
+  words.forEach((word) => {
+    const candidate = line ? `${line} ${word}` : word
+    if (line && context.measureText(candidate).width > maxWidth) {
+      lines.push(line)
+      line = word
+    } else {
+      line = candidate
+    }
+  })
+  if (line) lines.push(line)
+
+  lines.forEach((lineText, index) => context.fillText(lineText, x, y + index * lineHeight))
+  return y + lines.length * lineHeight
+}
+
 const parseValuationDate = (dateValue) => {
   const match = String(dateValue || '').trim().match(/^(\d{4})-(\d{2})-(\d{2})/)
 
@@ -70,6 +90,7 @@ export const downloadInformedConsent = async ({
   valuationDate,
   clientSignature,
   cosmetologistSignature,
+  marketingAuthorization = false,
 }) => {
   const normalizedName = String(clientName || '').trim()
   const parsedDate = parseValuationDate(valuationDate)
@@ -104,6 +125,38 @@ export const downloadInformedConsent = async ({
   context.fillText(parsedDate.day, 214, 350)
   context.fillText(parsedDate.month, 324, 350)
   context.fillText(parsedDate.year, 465, 350)
+
+  // Sustituye la cláusula antigua, que mezclaba fotos del expediente con marketing,
+  // por la finalidad de atención y la autorización promocional independiente.
+  context.fillStyle = '#fff'
+  context.fillRect(82, 1103, 1060, 218)
+  context.textAlign = 'left'
+  context.textBaseline = 'top'
+  context.fillStyle = '#2d1d17'
+  context.font = 'bold 17px Arial, sans-serif'
+  context.fillText('10. Fotografías para valoración y expediente', 96, 1110)
+  context.font = '15px Arial, sans-serif'
+  drawWrappedParagraph(
+    context,
+    'Autorizo la toma y conservación de fotografías o videos necesarios para documentar mi valoración cosmetológica, integrar mi expediente y dar seguimiento a mi evolución. Este material se utilizará para esos fines de atención y cuidado.',
+    96,
+    1134,
+    1010,
+    20,
+  )
+  context.font = 'bold 17px Arial, sans-serif'
+  context.fillText('Autorización opcional para publicidad', 96, 1197)
+  context.font = '15px Arial, sans-serif'
+  drawWrappedParagraph(
+    context,
+    'El uso de fotografías o videos para material informativo y de marketing de Fermont, incluyendo redes sociales, sitio web y portafolio, requiere mi autorización expresa. Puedo rechazarla sin que esto afecte mi valoración ni mi servicio.',
+    96,
+    1221,
+    1010,
+    20,
+  )
+  context.font = 'bold 16px Arial, sans-serif'
+  context.fillText(`Respuesta registrada: ${marketingAuthorization ? 'SÍ AUTORIZO' : 'NO AUTORIZO'}`, 96, 1287)
 
   const drawSignature = async (signature, x, y, width, height) => {
     if (!signature) return

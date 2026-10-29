@@ -192,6 +192,7 @@ const normalizeBirthDate = (value) => {
   if (now.getUTCMonth() + 1 < month || (now.getUTCMonth() + 1 === month && now.getUTCDate() < day)) {
     age -= 1
   }
+  if (age < 18) invalidAnswers('Fermont no atiende a personas menores de edad.')
   if (age < 0 || age > 120) invalidAnswers('La fecha de nacimiento está fuera del rango permitido.')
 
   return { fechaNacimiento: normalized, edad: String(age) }
@@ -523,8 +524,9 @@ const normalizePreRegistrationAnswers = (rawAnswers, preRegistration) => {
     },
     consentimiento: {
       aceptado: true,
-      version: '2026-09-25',
+      version: '2026-10-28',
       firmaCliente,
+      usoImagenMarketing: rawConsent.usoImagenMarketing === true,
     },
   }
 }
@@ -880,6 +882,10 @@ exports.submitPreRegistration = onCall(async (request) => {
             clienteFirma: { url: answers.consentimiento.firmaCliente, path: '' },
             clienteFirmadoAt: answers.consentimiento.firmadoAt,
             version: answers.consentimiento.version,
+            usoImagenMarketing: answers.consentimiento.usoImagenMarketing === true,
+            marketingAutorizadoAt: answers.consentimiento.usoImagenMarketing === true
+              ? answers.consentimiento.firmadoAt
+              : null,
           },
           createdBy: normalizeText(preRegistration.createdBy),
           createdAt: preRegistration.createdAt || FieldValue.serverTimestamp(),
@@ -957,6 +963,10 @@ exports.syncCompletedPreRegistrationExpedient = onCall(async (request) => {
         clienteFirma: { url: answers.consentimiento.firmaCliente || '', path: '' },
         clienteFirmadoAt: answers.consentimiento.firmadoAt,
         version: answers.consentimiento.version || '',
+        usoImagenMarketing: answers.consentimiento.usoImagenMarketing === true,
+        marketingAutorizadoAt: answers.consentimiento.usoImagenMarketing === true
+          ? answers.consentimiento.firmadoAt
+          : null,
       } : {},
       createdBy: normalizeText(preRegistration.createdBy),
       createdAt: preRegistration.createdAt || FieldValue.serverTimestamp(),

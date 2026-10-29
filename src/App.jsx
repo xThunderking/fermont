@@ -15,12 +15,14 @@ import ExpedientesView from './views/pages/ExpedientesView.jsx'
 import PreRegistrationsView from './views/pages/PreRegistrationsView.jsx'
 import PublicHome from './publicSite/PublicHome.jsx'
 import PreRegistrationView from './publicSite/PreRegistrationView.jsx'
+import PrivacyNoticeView from './publicSite/PrivacyNoticeView.jsx'
 
 function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<PublicHome />} />
       <Route path="/preregistro" element={<PreRegistrationView />} />
+      <Route path="/aviso-privacidad" element={<PrivacyNoticeView />} />
       <Route path="/login" element={<LoginView />} />
 
       <Route element={<ProtectedRoute />}>

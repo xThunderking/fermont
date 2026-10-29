@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   CONSENT_CLAUSES,
   CONSENT_DECLARATION,
   CONSENT_INTRO,
+  MEDIA_MARKETING_AUTHORIZATION,
 } from '../../constants/consent.js'
 import {
   STEP_EIGHT_OPTIONS,
@@ -61,6 +63,21 @@ const calculateAge = (birthDate) => {
   }
 
   return age >= 0 && age <= 120 ? String(age) : ''
+}
+
+const getAdultBirthDateLimit = () => {
+  const date = new Date()
+  date.setFullYear(date.getFullYear() - 18)
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+const getTodayDateInputValue = () => {
+  const date = new Date()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
 }
 
 const createInitialAnswers = ({ nombreCompleto, telefono, sexo }) => ({
@@ -157,6 +174,7 @@ const createInitialAnswers = ({ nombreCompleto, telefono, sexo }) => ({
   },
   consentimiento: {
     aceptado: false,
+    usoImagenMarketing: false,
     firmaCliente: '',
   },
 })
@@ -324,7 +342,8 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
   const [sectionIndex, setSectionIndex] = useState(0)
   const [sectionError, setSectionError] = useState('')
   const sectionTopRef = useRef(null)
-  const today = new Date().toISOString().split('T')[0]
+  const adultBirthDateLimit = getAdultBirthDateLimit()
+  const today = getTodayDateInputValue()
 
   const isFemale = answers.step1.sexo === 'femenino'
   const selectedProcedures = answers.step7.procedimientosPrevios.filter((item) => item !== 'Ninguno')
@@ -355,6 +374,10 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
 
   const validateCurrentSection = () => {
     const currentSectionNumber = SECTIONS[sectionIndex].number
+
+    if (currentSectionNumber === '01' && Number(answers.step1.edad) < 18) {
+      return 'Fermont no atiende a personas menores de edad.'
+    }
 
     if (currentSectionNumber === '04') {
       if (
@@ -469,7 +492,7 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
         <input
           required
           type="date"
-          max={today}
+          max={adultBirthDateLimit}
           value={answers.step1.fechaNacimiento}
           onChange={(event) => {
             setAnswers((current) => ({
@@ -1177,6 +1200,9 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
 
   const renderConsent = () => (
     <div className="public-consent public-question-field-wide">
+      <p className="public-consent-privacy-link">
+        He leído el <Link to="/aviso-privacidad" target="_blank" rel="noreferrer">aviso de privacidad</Link> sobre el tratamiento de mis datos personales.
+      </p>
       <div className="public-consent-document" tabIndex="0" aria-label="Texto del consentimiento informado">
         <header>
           <p>Fermont Skin Studio</p>
@@ -1200,6 +1226,11 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
         <ol>
           {CONSENT_CLAUSES.map((clause) => <li key={clause}>{clause}</li>)}
         </ol>
+        <section className="public-consent-media">
+          <h4>Autorización opcional para publicidad</h4>
+          <p>{MEDIA_MARKETING_AUTHORIZATION}</p>
+          <p><strong>Respuesta: {answers.consentimiento.usoImagenMarketing ? 'Sí autorizo' : 'No autorizo'}</strong></p>
+        </section>
       </div>
 
       <label className="public-consent-acceptance">
@@ -1209,6 +1240,15 @@ function PreRegistrationQuestionnaire({ client, error, isSaving, onCancel, onSub
           onChange={(event) => setStepField('consentimiento', 'aceptado', event.target.checked)}
         />
         <span>He leído, comprendido y acepto el consentimiento informado. <b>*</b></span>
+      </label>
+
+      <label className="public-consent-acceptance public-consent-marketing-choice">
+        <input
+          type="checkbox"
+          checked={answers.consentimiento.usoImagenMarketing}
+          onChange={(event) => setStepField('consentimiento', 'usoImagenMarketing', event.target.checked)}
+        />
+        <span>Sí autorizo el uso de mis fotografías o videos para publicidad. Es opcional y puedo rechazarlo sin afectar mi servicio.</span>
       </label>
 
       <SignaturePad

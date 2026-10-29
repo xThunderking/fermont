@@ -5,8 +5,18 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function isActiveStaff() {
+    function isAllowlistedStaff() {
       return isSignedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email.lower() in [
+          'reynarayonacho850@gmail.com',
+          'mafermonts30@gmail.com',
+          'ignacioreynarayo25@gmail.com'
+        ];
+    }
+
+    function isActiveStaff() {
+      return isAllowlistedStaff()
         && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
         && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('status', 'active') == 'active'
         && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.get('role', 'user') in ['admin', 'user'];
@@ -30,19 +40,19 @@ service firebase.storage {
     // localizar fotografías y firmas. El comodín v2 también cubre la carpeta
     // raíz e intermedias, pero únicamente concede la operación de listado.
     match /valoraciones/{valuationId}/{allPaths=**} {
-      allow list: if isSignedIn();
+      allow list: if isActiveStaff();
     }
 
     match /valoraciones/{valuationId}/fotografias-clinicas/{allPaths=**} {
-      allow read, delete: if isSignedIn();
-      allow create, update: if isSignedIn()
+      allow read, delete: if isActiveStaff();
+      allow create, update: if isActiveStaff()
         && request.resource.size < 12 * 1024 * 1024
         && request.resource.contentType.matches('image/.*');
     }
 
     match /valoraciones/{valuationId}/consentimiento-firmas/{signatureId} {
-      allow read, delete: if isSignedIn();
-      allow create, update: if isSignedIn()
+      allow read, delete: if isActiveStaff();
+      allow create, update: if isActiveStaff()
         && request.resource.size < 300 * 1024
         && request.resource.contentType == 'image/png';
     }

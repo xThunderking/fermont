@@ -281,6 +281,7 @@ function ValoracionesPendientesView() {
     signing: '',
     clientSignature: '',
     cosmetologistSignature: '',
+    marketingAuthorization: false,
   })
   const [mapaModal, setMapaModal] = useState({
     open: false,
@@ -1114,6 +1115,7 @@ function ValoracionesPendientesView() {
       signing: '',
       clientSignature: valuation.consentimientoFirmado?.clienteFirma?.url || '',
       cosmetologistSignature: valuation.consentimientoFirmado?.cosmetologaFirma?.url || '',
+      marketingAuthorization: valuation.consentimientoFirmado?.usoImagenMarketing === true,
     })
   }
 
@@ -1125,6 +1127,7 @@ function ValoracionesPendientesView() {
       signing: '',
       clientSignature: '',
       cosmetologistSignature: '',
+      marketingAuthorization: false,
     })
   }
 
@@ -1193,6 +1196,7 @@ function ValoracionesPendientesView() {
       valuationId: consentModal.valuation.id,
       signatureType,
       signature: signatureDataUrl,
+      marketingAuthorization: consentModal.marketingAuthorization,
     })
 
     if (!result.ok) {
@@ -1208,6 +1212,12 @@ function ValoracionesPendientesView() {
             consentimientoFirmado: {
               ...valuation.consentimientoFirmado,
               [signatureType === 'cliente' ? 'clienteFirma' : 'cosmetologaFirma']: result.signature,
+              ...(signatureType === 'cliente'
+                ? {
+                    usoImagenMarketing: consentModal.marketingAuthorization,
+                    marketingAutorizadoAt: consentModal.marketingAuthorization ? Date.now() : null,
+                  }
+                : {}),
             },
           }
         : valuation
@@ -1224,6 +1234,7 @@ function ValoracionesPendientesView() {
         valuationDate: valuation.step1?.fechaValoracion,
         clientSignature: consentModal.clientSignature,
         cosmetologistSignature: consentModal.cosmetologistSignature,
+        marketingAuthorization: consentModal.marketingAuthorization,
       })
       setError('')
     } catch (consentError) {
@@ -1498,6 +1509,19 @@ function ValoracionesPendientesView() {
 
             {consentModal.signing ? (
               <div className="consent-signature-editor">
+                {consentModal.signing === 'client' ? (
+                  <label className="consent-marketing-choice">
+                    <input
+                      type="checkbox"
+                      checked={consentModal.marketingAuthorization}
+                      onChange={(event) => setConsentModal((current) => ({
+                        ...current,
+                        marketingAuthorization: event.target.checked,
+                      }))}
+                    />
+                    <span>Autorizo el uso de mis fotografías o videos para publicidad. Es opcional; rechazarlo no afecta mi servicio.</span>
+                  </label>
+                ) : null}
                 <p className="consent-signature-instruction">
                   Firma de {consentModal.signing === 'client' ? 'cliente' : 'cosmetóloga'}
                 </p>

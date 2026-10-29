@@ -197,6 +197,21 @@ export const STEP_TEN_OPTIONS = {
 
 const normalizeText = (value) => String(value ?? '').trim()
 
+const getAgeFromBirthDate = (birthDate) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normalizeText(birthDate))
+  if (!match) return -1
+
+  const today = new Date()
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  let age = today.getFullYear() - year
+  if (today.getMonth() + 1 < month || (today.getMonth() + 1 === month && today.getDate() < day)) {
+    age -= 1
+  }
+  return age
+}
+
 const buildEmptyClinicalPhotosByType = () => ({
   facial: {
     frente: { antes: null, despues: null },
@@ -634,6 +649,8 @@ const mapValuationSnapshot = (snapshot) => {
     consentimientoFirmado: {
       clienteFirma: normalizeStoredAsset(data.consentimientoFirmado?.clienteFirma),
       cosmetologaFirma: normalizeStoredAsset(data.consentimientoFirmado?.cosmetologaFirma),
+      usoImagenMarketing: data.consentimientoFirmado?.usoImagenMarketing === true,
+      marketingAutorizadoAt: data.consentimientoFirmado?.marketingAutorizadoAt ?? null,
     },
     createdAtMs: data.createdAt?.toMillis?.() ?? 0,
     updatedAtMs: data.updatedAt?.toMillis?.() ?? 0,
@@ -714,6 +731,12 @@ export const saveStepOneValuation = async ({
 }) => {
   const normalizedStepOneData = normalizeStepOneData(stepOneData)
   const clienteNombre = buildClienteNombre(normalizedStepOneData)
+  if (
+    normalizedStepOneData.tipoCliente !== 'preregistro'
+    && getAgeFromBirthDate(normalizedStepOneData.fechaNacimiento) < 18
+  ) {
+    return { ok: false, message: 'Fermont no atiende a personas menores de edad.' }
+  }
   const hasPreRegistrationAnswers = Boolean(
     normalizedStepOneData.preregistroId
     && preRegistrationAnswers
@@ -741,6 +764,10 @@ export const saveStepOneValuation = async ({
                 clienteFirma: { url: preRegistrationClientSignature, path: '' },
                 clienteFirmadoAt: preRegistrationAnswers.consentimiento?.firmadoAt || serverTimestamp(),
                 version: normalizeText(preRegistrationAnswers.consentimiento?.version),
+                usoImagenMarketing: preRegistrationAnswers.consentimiento?.usoImagenMarketing === true,
+                marketingAutorizadoAt: preRegistrationAnswers.consentimiento?.usoImagenMarketing === true
+                  ? preRegistrationAnswers.consentimiento?.firmadoAt || serverTimestamp()
+                  : null,
               },
             }
           : {}),
@@ -1285,7 +1312,12 @@ export const deleteStoredValuationFile = async (filePath) => {
   }
 }
 
-export const saveInformedConsentSignature = async ({ valuationId, signatureType, signature }) => {
+export const saveInformedConsentSignature = async ({
+  valuationId,
+  signatureType,
+  signature,
+  marketingAuthorization = false,
+}) => {
   if (!valuationId || !['cliente', 'cosmetologa'].includes(signatureType)) {
     return { ok: false, message: 'No se pudo identificar la firma del consentimiento.' }
   }
@@ -1312,14 +1344,23 @@ export const saveInformedConsentSignature = async ({ valuationId, signatureType,
     const signatureReference = ref(storage, signaturePath)
     await uploadString(signatureReference, normalizedSignature, 'data_url', { contentType: 'image/png' })
     const signatureUrl = await getDownloadURL(signatureReference)
-    await updateDoc(valuationRef, {
+    const consentUpdate = {
       [`consentimientoFirmado.${signatureField}`]: {
         url: signatureUrl,
         path: signaturePath,
       },
       [`consentimientoFirmado.${signatureType}FirmadoAt`]: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    })
+    }
+
+    if (signatureType === 'cliente') {
+      consentUpdate['consentimientoFirmado.usoImagenMarketing'] = marketingAuthorization === true
+      consentUpdate['consentimientoFirmado.marketingAutorizadoAt'] = marketingAuthorization === true
+        ? serverTimestamp()
+        : null
+    }
+
+    await updateDoc(valuationRef, consentUpdate)
 
     return {
       ok: true,

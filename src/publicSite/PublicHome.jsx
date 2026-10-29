@@ -312,6 +312,7 @@ function PublicHome() {
         <p>Imagen · Cuidado · Confianza</p>
         <div>
           <span>© {new Date().getFullYear()} Fermont</span>
+          <Link to="/aviso-privacidad">Aviso de privacidad</Link>
           <Link to="/login">Acceso del personal</Link>
         </div>
       </footer>
