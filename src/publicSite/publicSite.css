@@ -13,7 +13,7 @@
   --public-border: rgba(92, 59, 42, 0.16);
   min-height: 100dvh;
   max-width: 100vw;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--public-cream);
   color: var(--public-ink);
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;

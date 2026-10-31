@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { useAuthController } from '../../controllers/authController.jsx'
 
@@ -5,6 +6,11 @@ function SystemLayout() {
   const { logout } = useAuthController()
   const location = useLocation()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const appBody = document.querySelector('.app-body')
+    if (appBody) appBody.scrollTop = 0
+  }, [location.pathname])
 
   const isValuationFlow =
     location.pathname === '/app/nueva-valoracion'
