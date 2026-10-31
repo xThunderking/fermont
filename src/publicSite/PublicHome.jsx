@@ -3,20 +3,21 @@ import bannerFermont from '../img/banner.jpeg'
 import PublicHeader from './components/PublicHeader.jsx'
 import PublicIcon from './components/PublicIcon.jsx'
 import useScrollReveal from './hooks/useScrollReveal.js'
+import useWebsiteServices from './hooks/useWebsiteServices.js'
+import PublicServiceCatalog from './components/PublicServiceCatalog.jsx'
 import {
   careSteps,
   experienceValues,
   frequentlyAskedQuestions,
   publicSiteConfig,
-  serviceCategories,
 } from './siteConfig.js'
 import './publicSite.css'
 
 const trustMessages = ['Imagen', 'Cuidado', 'Confianza', 'Atención personalizada', 'Belleza que se siente']
 
 function PublicHome() {
-  useScrollReveal()
-  const totalServices = serviceCategories.reduce((total, category) => total + category.items.length, 0)
+  const serviceCategories = useWebsiteServices()
+  useScrollReveal(serviceCategories)
 
   return (
     <div className="public-site">
@@ -115,72 +116,7 @@ function PublicHome() {
             <p>Antes de recomendar, escuchamos. Cada experiencia comienza conociéndote y se adapta a lo que tú necesitas.</p>
           </div>
 
-          <div className="public-services-intro" data-reveal="up">
-            <article className="public-service-menu-card">
-              <span className="public-service-menu-label">Menú de servicios</span>
-              <strong>{totalServices}</strong>
-              <p>Opciones faciales y corporales organizadas para que encuentres fácilmente el cuidado que buscas.</p>
-              <a href={publicSiteConfig.recommendationWhatsapp} target="_blank" rel="noreferrer">
-                Pedir recomendación <PublicIcon name="arrow" />
-              </a>
-            </article>
-
-            <div className="public-service-pills" aria-label="Categorías de servicios">
-              {serviceCategories.map((category) => (
-                <a
-                  className="public-service-pill"
-                  href={`#${category.id}`}
-                  key={category.id}
-                  style={{ '--category-accent': category.accent, '--category-soft': category.soft }}
-                >
-                  <span><PublicIcon name={category.icon} /></span>
-                  <div>
-                    <small>{category.kicker}</small>
-                    <strong>{category.items.length} opciones</strong>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </div>
-
-          <div className="public-service-catalog">
-            {serviceCategories.map((category, categoryIndex) => (
-              <section
-                className="public-service-category"
-                id={category.id}
-                key={category.id}
-                style={{ '--category-accent': category.accent, '--category-soft': category.soft }}
-                aria-labelledby={`${category.id}-title`}
-              >
-                <div className="public-service-category-header" data-reveal="left">
-                  <span className="public-service-category-index">{String(categoryIndex + 1).padStart(2, '0')}</span>
-                  <p>{category.kicker}</p>
-                  <h3 id={`${category.id}-title`}>{category.title}</h3>
-                  <p>{category.description}</p>
-                </div>
-
-                <div className="public-service-list">
-                  {category.items.map((service, index) => (
-                    <article
-                      className="public-service-item"
-                      key={service.title}
-                      data-reveal="up"
-                      style={{ '--reveal-delay': `${Math.min(index * 45, 360)}ms` }}
-                    >
-                      <div className="public-card-shine" aria-hidden="true" />
-                      <div className="public-service-item-header">
-                        <span className="public-service-symbol"><PublicIcon name={service.icon} /></span>
-                        <span className="public-service-item-number">{String(index + 1).padStart(2, '0')}</span>
-                      </div>
-                      <p className="public-service-tag">{service.tag}</p>
-                      <h4>{service.title}</h4>
-                      <p>{service.description}</p>
-                    </article>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
+          <PublicServiceCatalog categories={serviceCategories} />
 
           <div className="public-services-note" data-reveal="up">
             <span><PublicIcon name="heart" /></span>

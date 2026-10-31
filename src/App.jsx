@@ -13,6 +13,8 @@ import UsersView from './views/pages/UsersView.jsx'
 import ValoracionesPendientesView from './views/pages/ValoracionesPendientesView.jsx'
 import ExpedientesView from './views/pages/ExpedientesView.jsx'
 import PreRegistrationsView from './views/pages/PreRegistrationsView.jsx'
+import WebsiteView from './views/pages/WebsiteView.jsx'
+import WebsiteServicesView from './views/pages/WebsiteServicesView.jsx'
 import PublicHome from './publicSite/PublicHome.jsx'
 import PreRegistrationView from './publicSite/PreRegistrationView.jsx'
 import PrivacyNoticeView from './publicSite/PrivacyNoticeView.jsx'
@@ -30,6 +32,8 @@ function AppRoutes() {
           <Route index element={<MenuView />} />
           <Route path="clientes" element={<ClientesView />} />
           <Route path="activos" element={<ActivosView />} />
+          <Route path="pagina-web" element={<WebsiteView />} />
+          <Route path="pagina-web/servicios" element={<WebsiteServicesView />} />
           <Route path="nueva-valoracion" element={<NuevaValoracionView />} />
           <Route path="nueva-valoracion/:valuationId" element={<NuevaValoracionView />} />
           <Route path="valoraciones-pendientes" element={<ValoracionesPendientesView />} />

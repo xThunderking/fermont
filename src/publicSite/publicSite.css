@@ -942,8 +942,29 @@
 
 .public-service-pills {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 160px), 1fr));
   gap: 1rem;
+}
+
+.public-service-pill div,
+.public-service-category-header,
+.public-service-item {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.public-service-item > p:last-child,
+.public-service-category-header > p:last-child {
+  white-space: pre-line;
+}
+
+.public-catalog-empty {
+  padding: 1.5rem;
+  border: 1px solid var(--public-border);
+  border-radius: 20px;
+  background: var(--public-paper);
+  color: var(--public-ink-soft);
+  line-height: 1.7;
 }
 
 .public-service-pill {

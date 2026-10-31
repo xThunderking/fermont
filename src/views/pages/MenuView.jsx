@@ -57,6 +57,14 @@ function MenuView() {
         >
         </button>
 
+        <button
+          type="button"
+          className="module-card module-card-pagina-web"
+          aria-label="Página web"
+          title="Página web"
+          onClick={() => navigate('/app/pagina-web')}
+        />
+
         {isAdmin ? (
           <button
             type="button"

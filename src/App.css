@@ -199,6 +199,65 @@ h2 {
   background-image: url('./img/activos.png');
 }
 
+.module-card-pagina-web {
+  background-image: url('./img/paginaweb.png');
+}
+
+.website-screen {
+  display: grid;
+  gap: 1rem;
+}
+
+.website-screen .module-screen-head {
+  align-items: center;
+}
+
+.website-page-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.8rem;
+}
+
+.website-page-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid #dcc7b0;
+  border-radius: 16px;
+  background: rgba(255, 250, 243, 0.82);
+}
+
+.website-page-card-mark {
+  display: grid;
+  width: 46px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid #c7a98a;
+  border-radius: 50%;
+  background: #efe0cf;
+  color: #76563d;
+  font: 700 1.4rem Georgia, 'Times New Roman', serif;
+}
+
+.website-page-card h2 {
+  font-size: 1.1rem;
+}
+
+.website-page-card p {
+  margin: 0.3rem 0 0;
+  color: #6f5b45;
+  font-size: 0.92rem;
+}
+
+.website-page-card .main-button {
+  grid-column: 1 / -1;
+  text-align: center;
+  text-decoration: none;
+}
+
 .activos-screen,
 .activos-form,
 .activos-fields,
@@ -3068,6 +3127,19 @@ textarea {
 @media (min-width: 700px) {
   .module-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .website-page-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .website-page-card {
+    align-content: start;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .website-page-card .main-button {
+    align-self: end;
   }
 
   .user-form {

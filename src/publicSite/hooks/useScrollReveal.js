@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 
-function useScrollReveal() {
+function useScrollReveal(refreshKey) {
   useEffect(() => {
     const root = document.querySelector('.public-site')
     const elements = document.querySelectorAll('[data-reveal]')
@@ -29,7 +29,7 @@ function useScrollReveal() {
       observer.disconnect()
       root?.classList.remove('public-reveal-ready')
     }
-  }, [])
+  }, [refreshKey])
 }
 
 export default useScrollReveal
